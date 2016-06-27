@@ -4,10 +4,9 @@ using System.Collections;
 public class Invaders : MonoBehaviour
 {
 	Light dirlight;
-	GameObject[,] invaders = new GameObject[10, 5];
-	GameObject[] invaderBullets = new GameObject[10];
 	GameObject player;
-	GameObject playerBullet;
+	GameObject[,] invaders = new GameObject[10, 5];
+	GameObject[] bullets = new GameObject[3];
 	bool invadersMovingLeft = true;
 	bool invadersMovingDown = false;
 	int score = 0;
@@ -18,6 +17,10 @@ public class Invaders : MonoBehaviour
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;	//dirlight.color = Color.green;
+		player = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		player.transform.position = new Vector3(0, -4, 0);
+		player.transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
+		player.layer = 1;
 		for(int i=0; i<invaders.GetLength(0); i++)
 			for(int j=0; j<invaders.GetLength(1); j++)
 			{
@@ -26,21 +29,13 @@ public class Invaders : MonoBehaviour
 				invaders[i,j].transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
 				invaders[i,j].layer = 2;
 			}
-		for(int i=0; i<invaderBullets.Length; i++)
+		for(int i=0; i<bullets.Length; i++)
 		{
-			invaderBullets[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			invaderBullets[i].transform.localScale = new Vector3(0.1f, 0.5f, 0.5f);
-			invaderBullets[i].SetActive(false);
-			invaderBullets[i].layer = 2;
+			bullets[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			bullets[i].transform.localScale = new Vector3(0.1f, 0.5f, 0.5f);
+			bullets[i].SetActive(false);
+			bullets[i].layer = (i==0)?1:2;	// Bullet 0 is player bullet
 		}
-		player = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		player.transform.position = new Vector3(0, -4, 0);
-		player.transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
-		player.layer = 1;
-		playerBullet = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		playerBullet.transform.localScale = new Vector3(0.1f, 0.5f, 0.5f);
-		playerBullet.SetActive(false);
-		playerBullet.layer = 1;
 	}
 
 	void Update()
@@ -81,34 +76,42 @@ public class Invaders : MonoBehaviour
 						}
 					}
 					invaders[i,j].transform.position = newPos;
+					if( !bullets[(i%(bullets.Length-1))+1].activeSelf && ((j == 0) || !invaders[i,j-1].activeSelf) && (Random.value < 0.01f) )
+					{
+						bullets[(i%(bullets.Length-1))+1].transform.position = invaders[i,j].transform.position - (Vector3.up*0.5f);
+						bullets[(i%(bullets.Length-1))+1].SetActive(true);
+					}
 				}
 
-			if(playerBullet.activeSelf)
+			for(int i=0; i<bullets.Length; i++)
 			{
-				Vector2 bulletPos = playerBullet.transform.position;
-				bulletPos.y += 20f * Time.deltaTime;
-				playerBullet.transform.position = bulletPos;
-
-				Collider[] hits = Physics.OverlapBox(playerBullet.GetComponent<Collider>().bounds.center, playerBullet.GetComponent<Collider>().bounds.extents, playerBullet.transform.rotation, 1<<2);
-				if((hits != null) && (hits.Length > 0))
+				if(bullets[i].activeSelf)
 				{
-					playerBullet.SetActive(false);
-					hits[0].gameObject.SetActive(false);
-					score++;
-				}
+					Vector2 bulletPos = bullets[i].transform.position;
+					bulletPos.y += ((i==0)?20f:-1f) * Time.deltaTime;
+					bullets[i].transform.position = bulletPos;
 
-				if(bulletPos.y > 4)
-					playerBullet.SetActive(false);
+					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i==0)?1<<2:1<<1);
+					if((hits != null) && (hits.Length > 0))
+					{
+						bullets[i].SetActive(false);
+						hits[0].gameObject.SetActive(false);
+						if(hits[0].gameObject.layer == 2)
+							score++;
+					}
+
+					if((bulletPos.y < -4) || (bulletPos.y > 4))
+						bullets[i].SetActive(false);
+				}
 			}
-				
 			float xPos = player.transform.position.x + (Input.GetAxis("Horizontal") * 10f * Time.deltaTime);
 			Vector3 playerPos = new Vector3(Mathf.Clamp(xPos, -7f, 7f), -4f, 0f);
 			player.transform.position = playerPos;
 
-			if(Input.GetButtonDown("Fire1") && !playerBullet.activeSelf)
+			if(Input.GetButtonDown("Fire1") && !bullets[0].activeSelf)
 			{
-				playerBullet.transform.position = player.transform.position;
-				playerBullet.SetActive(true);
+				bullets[0].transform.position = player.transform.position;
+				bullets[0].SetActive(true);
 			}
 		}
 	}
