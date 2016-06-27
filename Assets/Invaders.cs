@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class Invaders : MonoBehaviour
@@ -7,6 +8,8 @@ public class Invaders : MonoBehaviour
 	GameObject player;
 	GameObject[,] invaders = new GameObject[10, 5];
 	GameObject[] bullets = new GameObject[3];
+	Canvas uiCanvas;
+	Text uiScore;
 	bool invadersMovingLeft = true;
 	bool invadersMovingDown = false;
 	int score = 0;
@@ -36,6 +39,11 @@ public class Invaders : MonoBehaviour
 			bullets[i].SetActive(false);
 			bullets[i].layer = (i==0)?1:2;	// Bullet 0 is player bullet
 		}
+		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
+		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+		uiScore = uiCanvas.gameObject.AddComponent<Text>();
+		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+		uiScore.fontSize = 50;
 	}
 
 	void Update()
@@ -98,6 +106,8 @@ public class Invaders : MonoBehaviour
 						hits[0].gameObject.SetActive(false);
 						if(hits[0].gameObject.layer == 2)
 							score++;
+						else if(hits[0].gameObject.layer == 1)
+							gameOver = true;
 					}
 
 					if((bulletPos.y < -4) || (bulletPos.y > 4))
@@ -108,11 +118,12 @@ public class Invaders : MonoBehaviour
 			Vector3 playerPos = new Vector3(Mathf.Clamp(xPos, -7f, 7f), -4f, 0f);
 			player.transform.position = playerPos;
 
-			if(Input.GetButtonDown("Fire1") && !bullets[0].activeSelf)
+			if(Input.GetKeyDown(KeyCode.LeftShift) && !bullets[0].activeSelf)
 			{
 				bullets[0].transform.position = player.transform.position;
 				bullets[0].SetActive(true);
 			}
 		}
+		uiScore.text = string.Format("SCORE: {0:00000000}", score);
 	}
 }
