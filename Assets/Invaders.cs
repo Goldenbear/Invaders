@@ -32,6 +32,15 @@ public class Invaders : MonoBehaviour
 				invaders[i,j].transform.localScale = new Vector3((j==(invaders.GetLength(1)-1))?0.4f:0.6f, 0.4f, 0.5f);	// Top row are smaller and harder to hit
 				invaders[i,j].layer = 2;
 			}
+		for(int b=0; b<4; b++)
+			for(int i=0; i<5; i++)
+				for(int j=0; j<4; j++)
+				{
+					GameObject baseBrick = GameObject.CreatePrimitive(PrimitiveType.Cube);
+					baseBrick.transform.position = new Vector3((b*2.2f)+(i*0.2f)-3.6f, (j*0.2f)-3, 0);
+					baseBrick.transform.localScale = new Vector3(0.2f, 0.2f, 0.5f);
+					baseBrick.layer = 3;
+				}
 		for(int i=0; i<bullets.Length; i++)
 		{
 			bullets[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -99,13 +108,13 @@ public class Invaders : MonoBehaviour
 					bulletPos.y += ((i==0)?20f:-5f) * Time.deltaTime;
 					bullets[i].transform.position = bulletPos;
 
-					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i==0)?1<<2:1<<1);
+					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, ((i==0)?1<<2:1<<1)+(1<<3));
 					if((hits != null) && (hits.Length > 0))
 					{
 						bullets[i].SetActive(false);
 						hits[0].gameObject.SetActive(false);
 						if(hits[0].gameObject.layer == 2)
-							score++;
+							score+=10;
 						else if(hits[0].gameObject.layer == 1)
 							gameOver = true;
 					}
@@ -124,6 +133,11 @@ public class Invaders : MonoBehaviour
 				bullets[0].SetActive(true);
 			}
 		}
-		uiScore.text = string.Format("SCORE: {0:00000000}", score);
+		else
+		{
+			if(Input.GetKeyDown(KeyCode.Space))
+				UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+		}
+		uiScore.text = string.Format("SCORE: {0:0000} {1}", score, gameOver?"GAME OVER!":"");
 	}
 }
