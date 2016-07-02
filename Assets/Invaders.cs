@@ -21,7 +21,7 @@ public class Invaders : MonoBehaviour
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;	//dirlight.color = Color.green;
 		player = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		player.transform.position = new Vector3(0, -4, 0);
+		player.transform.position = new Vector3(-7, -4, 0);
 		player.transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
 		player.layer = 1;
 		for(int i=0; i<invaders.GetLength(0); i++)
@@ -138,6 +138,6 @@ public class Invaders : MonoBehaviour
 			if(Input.GetKeyDown(KeyCode.Space))
 				UnityEngine.SceneManagement.SceneManager.LoadScene(0);
 		}
-		uiScore.text = string.Format("SCORE: {0:0000} {1}", score, gameOver?"GAME OVER!":"");
+		uiScore.text = string.Format("SCORE: {0:0000}         {1}", score, gameOver?"GAME OVER!":"");
 	}
 }
