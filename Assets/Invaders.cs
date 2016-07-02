@@ -7,7 +7,7 @@ public class Invaders : MonoBehaviour
 	Light dirlight;
 	GameObject player;
 	GameObject[,] invaders = new GameObject[10, 5];
-	GameObject[] bullets = new GameObject[3];
+	GameObject[] bullets = new GameObject[4];		// Bullet 0 is player's, rest are invader's
 	Canvas uiCanvas;
 	Text uiScore;
 	bool invadersMovingLeft = true;
@@ -28,8 +28,8 @@ public class Invaders : MonoBehaviour
 			for(int j=0; j<invaders.GetLength(1); j++)
 			{
 				invaders[i,j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				invaders[i,j].transform.position = new Vector3(i-5, j, 0);
-				invaders[i,j].transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
+				invaders[i,j].transform.position = new Vector3(i-5, (j*0.5f)+1, 0);
+				invaders[i,j].transform.localScale = new Vector3((j==(invaders.GetLength(1)-1))?0.4f:0.6f, 0.4f, 0.5f);	// Top row are smaller and harder to hit
 				invaders[i,j].layer = 2;
 			}
 		for(int i=0; i<bullets.Length; i++)
@@ -96,7 +96,7 @@ public class Invaders : MonoBehaviour
 				if(bullets[i].activeSelf)
 				{
 					Vector2 bulletPos = bullets[i].transform.position;
-					bulletPos.y += ((i==0)?20f:-1f) * Time.deltaTime;
+					bulletPos.y += ((i==0)?20f:-5f) * Time.deltaTime;
 					bullets[i].transform.position = bulletPos;
 
 					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i==0)?1<<2:1<<1);
