@@ -75,31 +75,29 @@ public class Invaders : MonoBehaviour
 			float invaderSpeed = 0.3f+((numInvadersDead/10)*0.1f)+((numInvadersAlive<=3)?((4-numInvadersAlive)*1f):0.0f);
 			for(int i=0; i<invaders.GetLength(0); i++)
 				for(int j=0; j<invaders.GetLength(1); j++)
-				{
-					if(!invaders[i,j].activeSelf)
-						continue;
-					Vector3 newPos = invaders[i,j].transform.position;
-					if(moveDownThisUpdate)
+					if(invaders[i,j].activeSelf)
 					{
-						newPos.y -= 0.25f;
-						if(newPos.y < -2f)
-							gameOver = true;
+						Vector3 newPos = invaders[i,j].transform.position;
+						if(moveDownThisUpdate)
+						{
+							newPos.y -= 0.25f;
+							if(newPos.y < -2f)
+								gameOver = true;
+						}
+						newPos.x -= (moveLeftThisUpdate?invaderSpeed:-invaderSpeed) * Time.deltaTime;
+						if( (invadersMovingLeft&&(newPos.x < -7.0f)) || ((!invadersMovingLeft)&&(newPos.x > 7.0f)) )
+						{
+							invadersMovingLeft = !invadersMovingLeft;
+							invadersMovingDown = true;
+						}
+						invaders[i,j].transform.position = newPos;
+						if( !bullets[(i%(bullets.Length-1))+1].activeSelf && ((j == 0) || !invaders[i,j-1].activeSelf) && (Random.value < 0.01f) )
+						{
+							bullets[(i%(bullets.Length-1))+1].transform.position = invaders[i,j].transform.position - (Vector3.up*0.5f);
+							bullets[(i%(bullets.Length-1))+1].SetActive(true);
+						}
 					}
-					newPos.x -= (moveLeftThisUpdate?invaderSpeed:-invaderSpeed) * Time.deltaTime;
-					if( (invadersMovingLeft&&(newPos.x < -7.0f)) || ((!invadersMovingLeft)&&(newPos.x > 7.0f)) )
-					{
-						invadersMovingLeft = !invadersMovingLeft;
-						invadersMovingDown = true;
-					}
-					invaders[i,j].transform.position = newPos;
-					if( !bullets[(i%(bullets.Length-1))+1].activeSelf && ((j == 0) || !invaders[i,j-1].activeSelf) && (Random.value < 0.01f) )
-					{
-						bullets[(i%(bullets.Length-1))+1].transform.position = invaders[i,j].transform.position - (Vector3.up*0.5f);
-						bullets[(i%(bullets.Length-1))+1].SetActive(true);
-					}
-				}
 			for(int i=0; i<bullets.Length; i++)
-			{
 				if(bullets[i].activeSelf)
 				{
 					float newBulletY = bullets[i].transform.position.y + ((i==0)?20f:-5f) * Time.deltaTime;
@@ -127,11 +125,9 @@ public class Invaders : MonoBehaviour
 								gameOver = true;
 						}
 					}
-
 					if((bullets[i].transform.position.y < -4) || (bullets[i].transform.position.y > 4))
 						bullets[i].SetActive(false);
 				}
-			}
 			float newPlayerX = player.transform.position.x + (Input.GetAxis("Horizontal") * 10f * Time.deltaTime);
 			player.transform.position = new Vector3(Mathf.Clamp(newPlayerX, -7f, 7f), -4f, 0f);
 			if(Input.GetKeyDown(KeyCode.LeftShift) && !bullets[0].activeSelf)
