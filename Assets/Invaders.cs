@@ -51,13 +51,11 @@ public class Invaders : MonoBehaviour
 			bullets[i].SetActive(false);
 			bullets[i].layer = (i==0)?4:5;	// Bullet 0 is player bullet
 		}
-		for(int i=0; i<playerLives.Length; i++)
+		for(int i=0; (i<playerLives.Length)&&(i<lives); i++)
 		{
 			playerLives[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			playerLives[i].transform.position = new Vector3(-7+(i*1f), -5, 0);
+			playerLives[i].transform.position = new Vector3(-6+(i*1f), -5, 0);
 			playerLives[i].transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
-			playerLives[i].SetActive(i<lives);
-			playerLives[i].layer = 0;
 		}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -87,23 +85,11 @@ public class Invaders : MonoBehaviour
 						if(newPos.y < -2f)
 							gameOver = true;
 					}
-					if(moveLeftThisUpdate)
+					newPos.x -= (moveLeftThisUpdate?invaderSpeed:-invaderSpeed) * Time.deltaTime;
+					if( (invadersMovingLeft&&(newPos.x < -7.0f)) || ((!invadersMovingLeft)&&(newPos.x > 7.0f)) )
 					{
-						newPos.x -= invaderSpeed * Time.deltaTime;
-						if(newPos.x < -7.0f)
-						{
-							invadersMovingLeft = false;
-							invadersMovingDown = true;
-						}
-					}
-					else
-					{
-						newPos.x += invaderSpeed * Time.deltaTime;
-						if(newPos.x > 7.0f)
-						{
-							invadersMovingLeft = true;
-							invadersMovingDown = true;
-						}
+						invadersMovingLeft = !invadersMovingLeft;
+						invadersMovingDown = true;
 					}
 					invaders[i,j].transform.position = newPos;
 					if( !bullets[(i%(bullets.Length-1))+1].activeSelf && ((j == 0) || !invaders[i,j-1].activeSelf) && (Random.value < 0.01f) )
@@ -112,15 +98,12 @@ public class Invaders : MonoBehaviour
 						bullets[(i%(bullets.Length-1))+1].SetActive(true);
 					}
 				}
-
 			for(int i=0; i<bullets.Length; i++)
 			{
 				if(bullets[i].activeSelf)
 				{
-					Vector2 bulletPos = bullets[i].transform.position;
-					bulletPos.y += ((i==0)?20f:-5f) * Time.deltaTime;
-					bullets[i].transform.position = bulletPos;
-
+					float newBulletY = bullets[i].transform.position.y + ((i==0)?20f:-5f) * Time.deltaTime;
+					bullets[i].transform.position = new Vector3(bullets[i].transform.position.x, newBulletY, bullets[i].transform.position.z);
 					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, ((i==0)?(1<<2)+(1<<5):(1<<1)+(1<<4))+(1<<3));
 					if((hits != null) && (hits.Length > 0))
 					{
@@ -133,9 +116,9 @@ public class Invaders : MonoBehaviour
 						}
 						else if(hits[0].gameObject.layer == 1)
 						{
-							lives--;
-							if(lives >= 0)
+							if(lives > 0)
 							{
+								lives--;
 								playerLives[lives].SetActive(false);
 								player.SetActive(true);
 								player.transform.position = new Vector3(-7, -4, 0);
@@ -145,14 +128,12 @@ public class Invaders : MonoBehaviour
 						}
 					}
 
-					if((bulletPos.y < -4) || (bulletPos.y > 4))
+					if((bullets[i].transform.position.y < -4) || (bullets[i].transform.position.y > 4))
 						bullets[i].SetActive(false);
 				}
 			}
-			float xPos = player.transform.position.x + (Input.GetAxis("Horizontal") * 10f * Time.deltaTime);
-			Vector3 playerPos = new Vector3(Mathf.Clamp(xPos, -7f, 7f), -4f, 0f);
-			player.transform.position = playerPos;
-
+			float newPlayerX = player.transform.position.x + (Input.GetAxis("Horizontal") * 10f * Time.deltaTime);
+			player.transform.position = new Vector3(Mathf.Clamp(newPlayerX, -7f, 7f), -4f, 0f);
 			if(Input.GetKeyDown(KeyCode.LeftShift) && !bullets[0].activeSelf)
 			{
 				bullets[0].transform.position = player.transform.position;
