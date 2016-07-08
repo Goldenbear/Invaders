@@ -79,11 +79,9 @@ public class Invaders : MonoBehaviour
 					{
 						Vector3 newPos = invaders[i,j].transform.position;
 						if(moveDownThisUpdate)
-						{
 							newPos.y -= 0.25f;
-							if(newPos.y < -2f)
-								gameOver = true;
-						}
+						if(newPos.y < -2f)
+							gameOver = true;								// Invaders reached bases = game over
 						newPos.x -= (moveLeftThisUpdate?invaderSpeed:-invaderSpeed) * Time.deltaTime;
 						if( (invadersMovingLeft&&(newPos.x < -7.0f)) || ((!invadersMovingLeft)&&(newPos.x > 7.0f)) )
 						{
@@ -114,15 +112,14 @@ public class Invaders : MonoBehaviour
 						}
 						else if(hits[0].gameObject.layer == 1)
 						{
-							if(lives > 0)
+							if(--lives >= 0)
 							{
-								lives--;
 								playerLives[lives].SetActive(false);
 								player.SetActive(true);
 								player.transform.position = new Vector3(-7, -4, 0);
 							}
 							else
-								gameOver = true;
+								gameOver = true;							// Player dead = game over
 						}
 					}
 					if((bullets[i].transform.position.y < -4) || (bullets[i].transform.position.y > 4))
@@ -133,10 +130,10 @@ public class Invaders : MonoBehaviour
 			if(Input.GetKeyDown(KeyCode.LeftShift) && !bullets[0].activeSelf)
 			{
 				bullets[0].transform.position = player.transform.position;
-				bullets[0].SetActive(true);
+				bullets[0].SetActive(true);									// Fire a player bullet
 			}
 			if(numInvadersAlive == 0)
-				UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+				UnityEngine.SceneManagement.SceneManager.LoadScene(0);		// Reload scene for a new attack wave
 		}
 		else
 		{
@@ -144,7 +141,7 @@ public class Invaders : MonoBehaviour
 			{
 				score = 0;
 				lives = 2;
-				UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+				UnityEngine.SceneManagement.SceneManager.LoadScene(0);		// Reload scene and reset score & lives for a new game
 			}
 		}
 		uiScore.text = string.Format("SCORE: {0:0000}         {1}", score, gameOver?"GAME OVER!\n   PRESS SPACE TO RESTART":"");
