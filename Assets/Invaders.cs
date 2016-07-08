@@ -4,15 +4,18 @@ using System.Collections;
 
 public class Invaders : MonoBehaviour
 {
+	static int score = 0;
+	static int lives = 2;
 	Light dirlight;
 	GameObject player;
 	GameObject[,] invaders = new GameObject[10, 5];
 	GameObject[] bullets = new GameObject[4];		// Bullet 0 is player's, rest are invader's
+	GameObject[] playerLives = new GameObject[2];
 	Canvas uiCanvas;
 	Text uiScore;
 	bool invadersMovingLeft = true;
 	bool invadersMovingDown = false;
-	int score = 0;
+	int numInvadersDead = 0;
 	bool gameOver = false;
 
 	void Start()
@@ -46,7 +49,15 @@ public class Invaders : MonoBehaviour
 			bullets[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
 			bullets[i].transform.localScale = new Vector3(0.1f, 0.5f, 0.5f);
 			bullets[i].SetActive(false);
-			bullets[i].layer = (i==0)?1:2;	// Bullet 0 is player bullet
+			bullets[i].layer = (i==0)?4:5;	// Bullet 0 is player bullet
+		}
+		for(int i=0; i<playerLives.Length; i++)
+		{
+			playerLives[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			playerLives[i].transform.position = new Vector3(-7+(i*1f), -5, 0);
+			playerLives[i].transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
+			playerLives[i].SetActive(i<lives);
+			playerLives[i].layer = 0;
 		}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -62,6 +73,8 @@ public class Invaders : MonoBehaviour
 			bool moveLeftThisUpdate = invadersMovingLeft;
 			bool moveDownThisUpdate = invadersMovingDown;
 			invadersMovingDown = false;
+			int numInvadersAlive = (invaders.GetLength(0)*invaders.GetLength(1)) - numInvadersDead;
+			float invaderSpeed = 0.3f+((numInvadersDead/10)*0.1f)+((numInvadersAlive<=3)?((4-numInvadersAlive)*1f):0.0f);
 			for(int i=0; i<invaders.GetLength(0); i++)
 				for(int j=0; j<invaders.GetLength(1); j++)
 				{
@@ -71,12 +84,12 @@ public class Invaders : MonoBehaviour
 					if(moveDownThisUpdate)
 					{
 						newPos.y -= 0.25f;
-						if(newPos.y < -4f)
+						if(newPos.y < -2f)
 							gameOver = true;
 					}
 					if(moveLeftThisUpdate)
 					{
-						newPos.x -= 0.5f * Time.deltaTime;
+						newPos.x -= invaderSpeed * Time.deltaTime;
 						if(newPos.x < -7.0f)
 						{
 							invadersMovingLeft = false;
@@ -85,7 +98,7 @@ public class Invaders : MonoBehaviour
 					}
 					else
 					{
-						newPos.x += 0.5f * Time.deltaTime;
+						newPos.x += invaderSpeed * Time.deltaTime;
 						if(newPos.x > 7.0f)
 						{
 							invadersMovingLeft = true;
@@ -108,15 +121,28 @@ public class Invaders : MonoBehaviour
 					bulletPos.y += ((i==0)?20f:-5f) * Time.deltaTime;
 					bullets[i].transform.position = bulletPos;
 
-					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, ((i==0)?1<<2:1<<1)+(1<<3));
+					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, ((i==0)?(1<<2)+(1<<5):(1<<1)+(1<<4))+(1<<3));
 					if((hits != null) && (hits.Length > 0))
 					{
 						bullets[i].SetActive(false);
 						hits[0].gameObject.SetActive(false);
 						if(hits[0].gameObject.layer == 2)
+						{
 							score+=10;
+							numInvadersDead++;
+						}
 						else if(hits[0].gameObject.layer == 1)
-							gameOver = true;
+						{
+							lives--;
+							if(lives >= 0)
+							{
+								playerLives[lives].SetActive(false);
+								player.SetActive(true);
+								player.transform.position = new Vector3(-7, -4, 0);
+							}
+							else
+								gameOver = true;
+						}
 					}
 
 					if((bulletPos.y < -4) || (bulletPos.y > 4))
@@ -132,12 +158,18 @@ public class Invaders : MonoBehaviour
 				bullets[0].transform.position = player.transform.position;
 				bullets[0].SetActive(true);
 			}
+			if(numInvadersAlive == 0)
+				UnityEngine.SceneManagement.SceneManager.LoadScene(0);
 		}
 		else
 		{
 			if(Input.GetKeyDown(KeyCode.Space))
+			{
+				score = 0;
+				lives = 2;
 				UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+			}
 		}
-		uiScore.text = string.Format("SCORE: {0:0000}         {1}", score, gameOver?"GAME OVER!":"");
+		uiScore.text = string.Format("SCORE: {0:0000}         {1}", score, gameOver?"GAME OVER!\n   PRESS SPACE TO RESTART":"");
 	}
 }
