@@ -4,3 +4,6 @@
 *.sln
 *.userprefs
 *.csproj
+/.vs/
+/Logs/
+/Packages/
