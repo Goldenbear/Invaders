@@ -122,7 +122,8 @@ public class Breakout : MonoBehaviour
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Breakout");									// Reload scene and reset score & lives for a new game
 			}
 		}
-		float newBatX = bat.transform.position.x + (Input.GetAxis("Horizontal") * 20f * Time.deltaTime);
+		//float newBatX = bat.transform.position.x + (Input.GetAxis("Horizontal") * 30f * Time.deltaTime);
+		float newBatX = ((Input.mousePosition.x / Screen.width) * 10f) - 5f;
 		bat.transform.position = new Vector3(Mathf.Clamp(newBatX, borderLeft.transform.position.x + 0.4f, borderRight.transform.position.x - 0.4f), -4f, 0f);
 		uiScore.text = string.Format("{0}\n  {1:000}         {2}", 3-lives, score, gameOver ? "SPACE TO RESTART":"");
 	}
