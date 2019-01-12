@@ -6,13 +6,12 @@ public class Asteroids : MonoBehaviour
 	static int score = 0;
 	static int lives = 2;
 	static int level = 1;
-	Light dirlight;
 	GameObject player;
 	Rigidbody playerBody;
 	GameObject saucer;
 	List<GameObject> asteroids = new List<GameObject>();
 	GameObject[] bullets = new GameObject[2];       // Bullet 0 is player's, 1 is saucer's
-	GameObject[] playerLives = new GameObject[3];
+	GameObject[] playerLives = new GameObject[20];	// Max 20 lives
 	Vector3[] playershape = { new Vector3(-1f, -1f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(1f, -1f, 0f), new Vector3(0f, 1f, 0f) };
 	Vector3[] bulletshape = { new Vector3(0f, -1f, 0f), new Vector3(0f, 1f, 0f) };
 	Vector3[] astAshape = { new Vector3(-1f, -0.4f, 0f), new Vector3(-0.6f, 0f, 0f), new Vector3(-1f, 0.4f, 0f), new Vector3(-0.2f, 0.8f, 0f), new Vector3(0f, 0.6f, 0f), new Vector3(0.2f, 0.8f, 0f), new Vector3(0.6f, 0.4f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.8f, 0f, 0f), new Vector3(0.4f, -0.8f, 0f), new Vector3(-0.2f, -0.6f, 0f), new Vector3(-0.3f, -0.7f, 0f) };
@@ -28,8 +27,6 @@ public class Asteroids : MonoBehaviour
 	Vector3 RandomPosition { get { return new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
-		dirlight = new GameObject("Light").AddComponent<Light>();
-		dirlight.type = LightType.Directional;  //dirlight.color = Color.green;
 		player = CreateVectorObject("Player", playershape, Vector3.zero, 0.2f, 1);
 		playerBody = player.AddComponent<Rigidbody>();
 		playerBody.useGravity = false;
@@ -43,8 +40,8 @@ public class Asteroids : MonoBehaviour
 		}
 		bullets[0] = CreateVectorObject("PlayerBullet", bulletshape, Vector3.zero, 0.1f, 6, false);   // Bullet 0 is player bullet
 		bullets[1] = CreateVectorObject("SaucerBullet", bulletshape, Vector3.zero, 0.1f, 7, false);   // Bullet 1 is saucer bullet
-		for (int i = 0; (i < playerLives.Length) && (i <= lives); i++) {
-			playerLives[i] = CreateVectorObject("Life", playershape, new Vector3(-6 + (i * 0.4f), 4, 0), 0.2f, 0);
+		for (int i = 0; i < playerLives.Length; i++) {
+			playerLives[i] = CreateVectorObject("Life", playershape, new Vector3(-6 + (i * 0.4f), 4, 0), 0.2f, 0, (i <= lives));
 		}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -58,8 +55,7 @@ public class Asteroids : MonoBehaviour
 		go.layer = layer;
 		go.transform.position = pos;
 		go.transform.localScale = new Vector3(radius, radius, radius);
-		SphereCollider sphereColl = go.AddComponent<SphereCollider>();
-		sphereColl.radius = 1f;
+		go.AddComponent<SphereCollider>().radius = 1f;
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
 		line.widthMultiplier = 0.02f;
@@ -77,6 +73,11 @@ public class Asteroids : MonoBehaviour
 			player.SetActive(false);
 			gameOver = true;                            // Player dead = game over
 		}
+	}
+	void Score(int add) {
+		lives = (score / 10000) < ((score+add) / 10000) ? ((lives<(playerLives.Length-1)) ?lives+1:lives) : lives;
+		playerLives[lives].SetActive(true);
+		score += add;
 	}
 	void Update() {
 		uiScore.text = string.Format("{0:00000}{1}", score, gameOver ? "\n\n\n\n                        GAME OVER" : "");
@@ -110,7 +111,7 @@ public class Asteroids : MonoBehaviour
 				if ((hits != null) && (hits.Length > 0)) {
 					bullets[i].SetActive(false);
 					if (hits[0].gameObject.layer == 5) {
-						score += 1000;
+						Score(1000);
 						saucer.SetActive(false);
 						saucerTime = Time.time + 15f;// + Random.value * 30f;
 					}
@@ -120,12 +121,13 @@ public class Asteroids : MonoBehaviour
 								GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4);	// 0.2 = medium size, 0.1 = small asteroids
 								asteroids.Add(asteroid);
 							}
-						score += hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100;
+						Score( hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100 );
 						asteroids.Remove(hits[0].gameObject);
 						Destroy(hits[0].gameObject);
 					}
 					else if (hits[0].gameObject.layer == 1) {
 						KillPlayer();
+						saucerTime = saucer.activeSelf ? Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f) : saucerTime;  // Delay before firing at player. Small saucer waits longer as more accurate.
 					}
 				}
 				if ((bullets[i].transform.position.x < -5) || (bullets[i].transform.position.x > 5) || (bullets[i].transform.position.y < -5) || (bullets[i].transform.position.y > 5))
