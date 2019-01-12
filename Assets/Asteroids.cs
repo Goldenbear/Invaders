@@ -23,30 +23,28 @@ public class Asteroids : MonoBehaviour
 	Text uiScore;
 	bool gameOver = false;
 	float saucerTime = 0f;
-	Vector3[] RandomAsteroidShape() { float r = Random.value; return r < 0.33f ? astAshape : r < 0.66f ? astBshape : astCshape;  }
-	int RandomDirection() { return (int)(Random.value * 3.9999f); }
+	Vector3[] RandomAsteroidShape { get { float r = Random.value; return r < 0.33f ? astAshape : r < 0.66f ? astBshape : astCshape; } }
+	int RandomDirection { get { return (int)(Random.value * 3.9999f); } }
+	Vector3 RandomPosition { get { return new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;  //dirlight.color = Color.green;
-		player = CreateVectorObject("Player", playershape, 0.2f, 1);
-		player.transform.position = new Vector3(0, 0, 0);
+		player = CreateVectorObject("Player", playershape, Vector3.zero, 0.2f, 1);
 		playerBody = player.AddComponent<Rigidbody>();
 		playerBody.useGravity = false;
 		playerBody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
 		playerBody.drag = 0.5f;
-		saucer = CreateVectorObject("Saucer", saucershape, 0.3f, 5, false);
+		saucer = CreateVectorObject("Saucer", saucershape, Vector3.zero, 0.3f, 5, false);
 		saucerTime = Time.time + 15f;// + Random.value * 30f;
 		for (int i = 0; i < (2 + level * 2); i++) {
-			GameObject asteroid = CreateVectorObject(RandomDirection().ToString(), RandomAsteroidShape(), 0.4f, 2);	// 0.4 = Large size asteroids
-			asteroid.transform.position = new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0);
+			GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, RandomPosition, 0.4f, 2);	// 0.4 = Large size asteroids
 			asteroids.Add(asteroid);
 		}
-		bullets[0] = CreateVectorObject("PlayerBullet", bulletshape, 0.1f, 6, false);   // Bullet 0 is player bullet
-		bullets[1] = CreateVectorObject("SaucerBullet", bulletshape, 0.1f, 7, false);   // Bullet 1 is saucer bullet
+		bullets[0] = CreateVectorObject("PlayerBullet", bulletshape, Vector3.zero, 0.1f, 6, false);   // Bullet 0 is player bullet
+		bullets[1] = CreateVectorObject("SaucerBullet", bulletshape, Vector3.zero, 0.1f, 7, false);   // Bullet 1 is saucer bullet
 		for (int i = 0; (i < playerLives.Length) && (i <= lives); i++) {
-			playerLives[i] = CreateVectorObject("Life", playershape, 0.2f, 0);
-			playerLives[i].transform.position = new Vector3(-6 + (i * 0.4f), 4, 0);
+			playerLives[i] = CreateVectorObject("Life", playershape, new Vector3(-6 + (i * 0.4f), 4, 0), 0.2f, 0);
 		}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -54,9 +52,11 @@ public class Asteroids : MonoBehaviour
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 		uiScore.fontSize = 50;
 	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, float radius, int layer, bool active=true) {
+	GameObject CreateVectorObject(string label, Vector3[] shape, Vector3 pos, float radius, int layer, bool active=true) {
 		GameObject go = new GameObject(label);
+		go.SetActive(active);
 		go.layer = layer;
+		go.transform.position = pos;
 		go.transform.localScale = new Vector3(radius, radius, radius);
 		SphereCollider sphereColl = go.AddComponent<SphereCollider>();
 		sphereColl.radius = 1f;
@@ -71,7 +71,7 @@ public class Asteroids : MonoBehaviour
 	}
 	void KillPlayer() {
 		playerLives[lives].SetActive(false);
-		player.transform.position = new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0);
+		player.transform.position = RandomPosition;
 		playerBody.velocity = Vector3.zero;
 		if (--lives < 0) {
 			player.SetActive(false);
@@ -117,8 +117,7 @@ public class Asteroids : MonoBehaviour
 					else if (hits[0].gameObject.layer >= 2) {
 						if (hits[0].gameObject.layer < 4)
 							for (int p = 0; p < 2; p++) {
-								GameObject asteroid = CreateVectorObject(RandomDirection().ToString(), RandomAsteroidShape(), hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4);	// 0.2 = medium size, 0.1 = small asteroids
-								asteroid.transform.position = hits[0].gameObject.transform.position;
+								GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4);	// 0.2 = medium size, 0.1 = small asteroids
 								asteroids.Add(asteroid);
 							}
 						score += hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100;
