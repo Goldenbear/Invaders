@@ -74,6 +74,10 @@ public class Asteroids : MonoBehaviour
 			gameOver = true;                            // Player dead = game over
 		}
 	}
+	void KillSaucer() {
+		saucer.SetActive(false);
+		saucerTime = Time.time + 5f + Random.value * 10f;
+	}
 	void Score(int add) {
 		lives = (score / 10000) < ((score+add) / 10000) ? ((lives<(playerLives.Length-1)) ?lives+1:lives) : lives;
 		playerLives[lives].SetActive(true);
@@ -99,21 +103,23 @@ public class Asteroids : MonoBehaviour
 				newX = Mathf.Abs(newX) < 5f ? newX : -newX;
 				newY = Mathf.Abs(newY) < 5f ? newY : -newY;
 				asteroids[i].transform.position = new Vector3(newX, newY, asteroids[i].transform.position.z);
-				Collider[] hits = Physics.OverlapBox(asteroids[i].GetComponent<Collider>().bounds.center, asteroids[i].GetComponent<Collider>().bounds.extents, asteroids[i].transform.rotation, (1 << 1));
+				Collider[] hits = Physics.OverlapBox(asteroids[i].GetComponent<Collider>().bounds.center, asteroids[i].GetComponent<Collider>().bounds.extents, asteroids[i].transform.rotation, (1 << 1)+(1 << 5));
 				if ((hits != null) && (hits.Length > 0)) {
-					KillPlayer();
+					if (hits[0].gameObject.layer == 1)
+						KillPlayer();
+					else if (hits[0].gameObject.layer == 5)
+						KillSaucer();
 				}
 			}
 		for (int i = 0; i < bullets.Length; i++)
 			if (bullets[i].activeSelf) {
 				bullets[i].transform.position = bullets[i].transform.position + bullets[i].transform.up * ((i == 0) ? 20f : 5f) * Time.deltaTime;
-				Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i == 0) ? (1 << 2) + (1 << 3) + (1 << 4) + (1<<5) : (1 << 1));
+				Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i == 0) ? (1 << 2) + (1 << 3) + (1 << 4) + (1<<5) : (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4));
 				if ((hits != null) && (hits.Length > 0)) {
 					bullets[i].SetActive(false);
 					if (hits[0].gameObject.layer == 5) {
 						Score(1000);
-						saucer.SetActive(false);
-						saucerTime = Time.time + 15f;// + Random.value * 30f;
+						KillSaucer();
 					}
 					else if (hits[0].gameObject.layer >= 2) {
 						if (hits[0].gameObject.layer < 4)
@@ -141,10 +147,8 @@ public class Asteroids : MonoBehaviour
 				bullets[1].transform.position = saucer.transform.position + bullets[1].transform.up * 0.4f;
 				bullets[1].SetActive(true);                                 // Fire a saucer bullet
 			}
-			if ((saucer.transform.position.x < -5) || (saucer.transform.position.x > 5) || (saucer.transform.position.y < -5) || (saucer.transform.position.y > 5)) {
-				saucer.SetActive(false);
-				saucerTime = Time.time + 15f;// + Random.value * 30f;
-			}
+			if ((saucer.transform.position.x < -5) || (saucer.transform.position.x > 5) || (saucer.transform.position.y < -5) || (saucer.transform.position.y > 5))
+				KillSaucer();
 		}
 		else if (Time.time > saucerTime) {
 			saucer.transform.position = Random.value < 0.5 ? new Vector3(4.9f, 3f, 0f) : new Vector3(-4.9f, -3f, 0f);
