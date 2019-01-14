@@ -140,10 +140,11 @@ public class Asteroids : MonoBehaviour
 					bullets[i].SetActive(false);
 			}
 		if (saucer.activeSelf) {
-			saucer.transform.position = saucer.transform.position + saucer.transform.right * Time.deltaTime * (saucer.transform.position.y > 0f ? -1f : 1f);
+			saucer.transform.position = saucer.transform.position + saucer.transform.right * (saucer.transform.position.y > 0f ? -1f : 1f) * Time.deltaTime;
+			saucer.transform.position = saucer.transform.position + saucer.transform.up * ((Mathf.Abs(saucer.transform.position.x) < 2.5f && Mathf.Abs(saucer.transform.position.y) > 1f) ? (saucer.transform.position.y > 0f ? -1f : 1f) : 0f) * Time.deltaTime;
 			if (!bullets[1].activeSelf && (Time.time > saucerTime)) {
 				bullets[1].transform.LookAt( (bullets[1].transform.position + Vector3.forward), Vector3.Normalize(player.transform.position - saucer.transform.position) );
-				bullets[1].transform.Rotate(0f, 0f, (saucer.transform.localScale.x > 0.2f ? 10f : 3f) * (Mathf.RoundToInt(Random.value) == 0 ? 1f : -1f) );					// Higher angle = less accuracy
+				bullets[1].transform.Rotate(0f, 0f, (saucer.transform.localScale.x > 0.2f ? 10f : 3f) * (Mathf.RoundToInt(Random.value) == 0 ? 1f : -1f) );	// Small saucer more accurate
 				bullets[1].transform.position = saucer.transform.position + bullets[1].transform.up * 0.4f;
 				bullets[1].SetActive(true);                                 // Fire a saucer bullet
 			}
@@ -152,7 +153,7 @@ public class Asteroids : MonoBehaviour
 		}
 		else if (Time.time > saucerTime) {
 			saucer.transform.position = Random.value < 0.5 ? new Vector3(4.9f, 3f, 0f) : new Vector3(-4.9f, -3f, 0f);
-			saucer.transform.localScale = (score > (Random.value * 40000)) ? new Vector3(0.15f, 0.15f, 0.15f) : new Vector3(0.3f, 0.3f, 0.3f);
+			saucer.transform.localScale = (score > (Random.value * 40000)) ? new Vector3(0.15f, 0.15f, 0.15f) : new Vector3(0.3f, 0.3f, 0.3f);	// Big saucer or small saucer?
 			saucer.SetActive(true);
 			saucerTime = Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f);	// Delay before firing at player. Small saucer waits longer as more accurate.
 		}
