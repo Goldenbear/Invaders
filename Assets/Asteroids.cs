@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-public class Asteroids : MonoBehaviour
-{
+public class Asteroids : MonoBehaviour {
 	static int score = 0;
 	static int lives = 2;
 	static int level = 1;
@@ -36,7 +35,7 @@ public class Asteroids : MonoBehaviour
 		saucer = CreateVectorObject("Saucer", saucershape, Vector3.zero, 0.3f, 5, false);
 		saucerTime = Time.time + 15f;// + Random.value * 30f;
 		for (int i = 0; i < (2 + level * 2); i++) {
-			GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, RandomPosition, 0.4f, 2);	// 0.4 = Large size asteroids
+			GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, RandomPosition, 0.4f, 2); // 0.4 = Large size asteroids
 			asteroids.Add(asteroid);
 		}
 		bullets[0] = CreateVectorObject("PlayerBullet", bulletshape, Vector3.zero, 0.1f, 6, false);   // Bullet 0 is player bullet
@@ -59,7 +58,7 @@ public class Asteroids : MonoBehaviour
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 		uiScore.fontSize = 50;
 	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, Vector3 pos, float radius, int layer, bool active=true) {
+	GameObject CreateVectorObject(string label, Vector3[] shape, Vector3 pos, float radius, int layer, bool active = true) {
 		GameObject go = new GameObject(label);
 		go.SetActive(active);
 		go.layer = layer;
@@ -89,67 +88,59 @@ public class Asteroids : MonoBehaviour
 		saucerTime = Time.time + 5f + Random.value * 10f;
 	}
 	void Score(int add) {
-		lives = (score / 10000) < ((score+add) / 10000) ? ((lives<(playerLives.Length-1)) ?lives+1:lives) : lives;
+		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
 		playerLives[lives].SetActive(true);
 		score += add;
+	}
+	void DetectCollisions(GameObject projectile, int layerMask, bool stayActive) {
+		Collider[] hits = Physics.OverlapBox(projectile.GetComponent<Collider>().bounds.center, projectile.GetComponent<Collider>().bounds.extents, projectile.transform.rotation, layerMask);
+		if ((hits != null) && (hits.Length > 0)) {
+			projectile.SetActive(stayActive);
+			explosion.transform.position = hits[0].gameObject.transform.position;
+			explosion.GetComponent<ParticleSystem>().Emit(10);
+			if (hits[0].gameObject.layer == 1) {
+				KillPlayer();
+				saucerTime = saucer.activeSelf ? Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f) : saucerTime;  // Delay before firing at player. Small saucer waits longer as more accurate.
+			}
+			else if (hits[0].gameObject.layer == 5) {
+				Score( projectile.layer == 6 ? 1000 : 0);
+				KillSaucer();
+			}
+			else if (hits[0].gameObject.layer >= 2) {
+				if (hits[0].gameObject.layer < 4)
+					for (int p = 0; p < 2; p++) {
+						GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4);   // 0.2 = medium size, 0.1 = small asteroids
+						asteroids.Add(asteroid);
+					}
+				Score( projectile.layer == 6 ? (hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100) : 0 );
+				asteroids.Remove(hits[0].gameObject);
+				Destroy(hits[0].gameObject);
+			}
+		}
 	}
 	void Update() {
 		uiScore.text = string.Format("{0:00000}{1}", score, gameOver ? "\n\n\n\n                        GAME OVER" : "");
 		if(gameOver) {
 			if (Input.GetKeyDown(KeyCode.Space)) {
-				score = 0;
-				lives = 2;
-				level = 1;
+				score = 0; lives = 2; level = 1;
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Asteroids");      // Reload scene and reset score, lives & level for a new game
 			}
 			return;
 		}
-		for (int i = 0; i < asteroids.Count; i++)
-			if (asteroids[i].activeSelf) {
-				int dir = int.Parse(asteroids[i].name);	// Name = direction to travel out of 4 possible diagonals (0-3)
-				float speed = asteroids[i].layer == 2 ? 0.5f : asteroids[i].layer == 3 ? 0.75f : 1f;
-				float newX = asteroids[i].transform.position.x + ((dir % 2 == 0) ? speed : -speed) * Time.deltaTime;
-				float newY = asteroids[i].transform.position.y + ((dir >= 2) ? speed : -speed) * Time.deltaTime;
-				newX = Mathf.Abs(newX) < 5f ? newX : -newX;
-				newY = Mathf.Abs(newY) < 5f ? newY : -newY;
-				asteroids[i].transform.position = new Vector3(newX, newY, asteroids[i].transform.position.z);
-				Collider[] hits = Physics.OverlapBox(asteroids[i].GetComponent<Collider>().bounds.center, asteroids[i].GetComponent<Collider>().bounds.extents, asteroids[i].transform.rotation, (1 << 1)+(1 << 5));
-				if ((hits != null) && (hits.Length > 0)) {
-					explosion.transform.position = hits[0].gameObject.transform.position;
-					explosion.GetComponent<ParticleSystem>().Emit(10);
-					if (hits[0].gameObject.layer == 1)
-						KillPlayer();
-					else if (hits[0].gameObject.layer == 5)
-						KillSaucer();
-				}
-			}
+		for (int i = 0; i < asteroids.Count; i++) {
+			int dir = int.Parse(asteroids[i].name);	// Name = direction to travel out of 4 possible diagonals (0-3)
+			float speed = asteroids[i].layer == 2 ? 0.5f : asteroids[i].layer == 3 ? 0.75f : 1f;
+			float newX = asteroids[i].transform.position.x + ((dir % 2 == 0) ? speed : -speed) * Time.deltaTime;
+			float newY = asteroids[i].transform.position.y + ((dir >= 2) ? speed : -speed) * Time.deltaTime;
+			newX = Mathf.Abs(newX) < 5f ? newX : -newX;
+			newY = Mathf.Abs(newY) < 5f ? newY : -newY;
+			asteroids[i].transform.position = new Vector3(newX, newY, asteroids[i].transform.position.z);
+			DetectCollisions(asteroids[i], (1 << 1) + (1 << 5), true);
+		}
 		for (int i = 0; i < bullets.Length; i++)
 			if (bullets[i].activeSelf) {
 				bullets[i].transform.position = bullets[i].transform.position + bullets[i].transform.up * ((i == 0) ? 20f : 5f) * Time.deltaTime;
-				Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i == 0) ? (1 << 2) + (1 << 3) + (1 << 4) + (1<<5) : (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4));
-				if ((hits != null) && (hits.Length > 0)) {
-					bullets[i].SetActive(false);
-					explosion.transform.position = hits[0].gameObject.transform.position;
-					explosion.GetComponent<ParticleSystem>().Emit(10);
-					if (hits[0].gameObject.layer == 5) {
-						Score(1000);
-						KillSaucer();
-					}
-					else if (hits[0].gameObject.layer >= 2) {
-						if (hits[0].gameObject.layer < 4)
-							for (int p = 0; p < 2; p++) {
-								GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4);	// 0.2 = medium size, 0.1 = small asteroids
-								asteroids.Add(asteroid);
-							}
-						Score( hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100 );
-						asteroids.Remove(hits[0].gameObject);
-						Destroy(hits[0].gameObject);
-					}
-					else if (hits[0].gameObject.layer == 1) {
-						KillPlayer();
-						saucerTime = saucer.activeSelf ? Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f) : saucerTime;  // Delay before firing at player. Small saucer waits longer as more accurate.
-					}
-				}
+				DetectCollisions(bullets[i], (i == 0) ? (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) : (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4), false);
 				if ((bullets[i].transform.position.x < -5) || (bullets[i].transform.position.x > 5) || (bullets[i].transform.position.y < -5) || (bullets[i].transform.position.y > 5))
 					bullets[i].SetActive(false);
 			}
