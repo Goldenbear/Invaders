@@ -11,7 +11,8 @@ public class Asteroids : MonoBehaviour
 	GameObject saucer;
 	List<GameObject> asteroids = new List<GameObject>();
 	GameObject[] bullets = new GameObject[2];       // Bullet 0 is player's, 1 is saucer's
-	GameObject[] playerLives = new GameObject[20];	// Max 20 lives
+	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
+	GameObject explosion;
 	Vector3[] playershape = { new Vector3(-1f, -1f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(1f, -1f, 0f), new Vector3(0f, 1f, 0f) };
 	Vector3[] bulletshape = { new Vector3(0f, -1f, 0f), new Vector3(0f, 1f, 0f) };
 	Vector3[] astAshape = { new Vector3(-1f, -0.4f, 0f), new Vector3(-0.6f, 0f, 0f), new Vector3(-1f, 0.4f, 0f), new Vector3(-0.2f, 0.8f, 0f), new Vector3(0f, 0.6f, 0f), new Vector3(0.2f, 0.8f, 0f), new Vector3(0.6f, 0.4f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.8f, 0f, 0f), new Vector3(0.4f, -0.8f, 0f), new Vector3(-0.2f, -0.6f, 0f), new Vector3(-0.3f, -0.7f, 0f) };
@@ -43,6 +44,15 @@ public class Asteroids : MonoBehaviour
 		for (int i = 0; i < playerLives.Length; i++) {
 			playerLives[i] = CreateVectorObject("Life", playershape, new Vector3(-6 + (i * 0.4f), 4, 0), 0.2f, 0, (i <= lives));
 		}
+		explosion = new GameObject("Explosion");
+		explosion.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+		explosion.AddComponent<ParticleSystem>().Pause();
+		explosion.GetComponent<ParticleSystemRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+		ParticleSystem.MainModule main = explosion.GetComponent<ParticleSystem>().main;
+		main.startSize = 0.025f;
+		main.startLifetime = 1f;
+		main.startSpeed = 0.7f;
+		main.scalingMode = ParticleSystemScalingMode.Shape;
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
@@ -105,6 +115,8 @@ public class Asteroids : MonoBehaviour
 				asteroids[i].transform.position = new Vector3(newX, newY, asteroids[i].transform.position.z);
 				Collider[] hits = Physics.OverlapBox(asteroids[i].GetComponent<Collider>().bounds.center, asteroids[i].GetComponent<Collider>().bounds.extents, asteroids[i].transform.rotation, (1 << 1)+(1 << 5));
 				if ((hits != null) && (hits.Length > 0)) {
+					explosion.transform.position = hits[0].gameObject.transform.position;
+					explosion.GetComponent<ParticleSystem>().Emit(10);
 					if (hits[0].gameObject.layer == 1)
 						KillPlayer();
 					else if (hits[0].gameObject.layer == 5)
@@ -117,6 +129,8 @@ public class Asteroids : MonoBehaviour
 				Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, (i == 0) ? (1 << 2) + (1 << 3) + (1 << 4) + (1<<5) : (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4));
 				if ((hits != null) && (hits.Length > 0)) {
 					bullets[i].SetActive(false);
+					explosion.transform.position = hits[0].gameObject.transform.position;
+					explosion.GetComponent<ParticleSystem>().Emit(10);
 					if (hits[0].gameObject.layer == 5) {
 						Score(1000);
 						KillSaucer();
