@@ -108,10 +108,8 @@ public class Asteroids : MonoBehaviour {
 			}
 			else if (hits[0].gameObject.layer >= 2) {
 				if (hits[0].gameObject.layer < 4)
-					for (int p = 0; p < 2; p++) {
-						GameObject asteroid = CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4);   // 0.2 = medium size, 0.1 = small asteroids
-						asteroids.Add(asteroid);
-					}
+					for (int p = 0; p < 2; p++)
+						asteroids.Add( CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4) );   // 0.2 = medium size, 0.1 = small asteroids
 				Score( projectile.layer == 6 ? (hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100) : 0 );
 				asteroids.Remove(hits[0].gameObject);
 				Destroy(hits[0].gameObject);
