@@ -5,11 +5,11 @@ public class Pacman : MonoBehaviour {
 	static int score = 0;
 	static int lives = 2;
 	static int level = 1;
-	string[] maze = new string[] {	"3333333333333333333333333333","3111111111111331111111111113","3133331333331331333331333313","3133331333331331333331333313","3133331333331331333331333313",
+	string[] maze = new string[] {	"3333333333333333333333333333","3111111111111331111111111113","3133331333331331333331333313","3833331333331331333331333383","3133331333331331333331333313",
 									"3111111111111111111111111113","3133331331333333331331333313","3133331331333333331331333313","3111111331111331111331111113","3333331333330330333331333333",
 									"0000031333330330333331300000","0000031330000400000331300000","0000031330333003330331300000","3333331330350607030331333333","0000001000300000030001000000",
-									"3333331330300000030331333333","0000031330333333330331300000","0000031330000800000331300000","0000031330333333330331300000","3333331330333333330331333333",
-									"3111111111111331111111111113","3133331333331331333331333313","3133331333331331333331333313","3111331111111211111111331113","3331331331333333331331331333",
+									"3333331330300000030331333333","0000031330333333330331300000","0000031330000A00000331300000","0000031330333333330331300000","3333331330333333330331333333",
+									"3111111111111331111111111113","3133331333331331333331333313","3133331333331331333331333313","3811331111111211111111331183","3331331331333333331331331333",
 									"3331331331333333331331331333","3111111331111331111331111113","3133333333331331333333333313","3133333333331331333333333313","3111111111111111111111111113","3333333333333333333333333333"};
 	List<GameObject> pills = new List<GameObject>();
 	GameObject pacman;
@@ -17,10 +17,13 @@ public class Pacman : MonoBehaviour {
 	int pacdir = 0;
 	GameObject[] ghosts = new GameObject[4];
 	int[] ghostdir = new int[4];
+	int[] ghostState = new int[4];
+	GameObject ghostExit;
 	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
 	GameObject[] uiObjects = new GameObject[10];
 	Vector3 msgPos;
-	bool gameOver = false;
+	float blueTime = 0f;
+	int gameState = 0;
 
     void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
@@ -46,12 +49,15 @@ public class Pacman : MonoBehaviour {
 				}
 				else if(maze[i][j] == '6') {
 					ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.3f, 6, new Color(1f, 0.6f, 0.6f, 1f));
-					CreateMazeObject("Exit", PrimitiveType.Cube, j, i, 0.25f, 20, Color.black, false);
+					ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.25f, 20, Color.black, false);
 				}
 				else if(maze[i][j] == '7') {
 					ghosts[3] = CreateMazeObject("Clyde", PrimitiveType.Sphere, j, i, 0.3f, 7, new Color(1f, 0.6f, 0f, 1f));
 				}
-				else if(maze[i][j] == '8') {
+				if(maze[i][j] == '8') {
+					pills.Add( CreateMazeObject("Power", PrimitiveType.Sphere, j, i, 0.3f, 8, new Color(1f,0.6f,0.6f,1f)) );
+				}
+				else if(maze[i][j] == 'A') {
 					msgPos = new Vector3(-4.5f+(j*0.3f)+0.15f, 4.5f-(i*0.3f), 0);
 				}
 			}
@@ -95,7 +101,7 @@ public class Pacman : MonoBehaviour {
 		pacdir = 0;
 		if (--lives < 0) {
 			pacman.SetActive(false);
-			gameOver = true;                            // Player dead = game over
+			gameState = 2;                            // Player dead = game over
 		}
 	}
 	void Score(int add) {
@@ -103,12 +109,16 @@ public class Pacman : MonoBehaviour {
 		playerLives[lives].SetActive(true);
 		score += add;
 	}
-    void Update()
-    {
+	int DirectionTo(GameObject objA, GameObject objB, int currDir) {
+		Vector3 diff = objB.transform.position - objA.transform.position;
+		return ((currDir == 1) || (currDir == 2)) ? ((diff.y < 0f) ? 3 : 4) : ((diff.x < 0f) ? 1 : 2);
+	}
+    void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
-		uiObjects[2].GetComponent<Text>().text = gameOver ? "GAME OVER" : "";
-		if(gameOver) {
-			if (Input.GetKeyDown(KeyCode.Space)) {
+		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY?" : gameState == 2 ? "GAME OVER" : "";
+		if( (gameState == 0) || (gameState == 2) ) {
+			gameState = (gameState == 0) && Input.GetKeyDown(KeyCode.Space) ? 1 : gameState;
+			if ((gameState == 2) && Input.GetKeyDown(KeyCode.Space)) {
 				score = 0; lives = 2; level = 1;
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");      // Reload scene and reset score, lives & level for a new game
 			}
@@ -118,10 +128,11 @@ public class Pacman : MonoBehaviour {
 		float newPacX = pacman.transform.position.x + 1f * Time.deltaTime * (pacdir == 1 ? -1f : pacdir == 2 ? 1f : 0f);
 		float newPacY = pacman.transform.position.y + 1f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
 		pacman.transform.position = new Vector3(newPacX, newPacY, 0f);
-		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7));
+		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8));
 		if ((hits != null) && (hits.Length > 0)) {
 			if(hits[0].gameObject.layer == 1) {
 				hits[0].gameObject.SetActive(false);
+				pills.Remove(hits[0].gameObject);
 				Score(10);
 			}
 			else if(hits[0].gameObject.layer == 3) {
@@ -130,23 +141,42 @@ public class Pacman : MonoBehaviour {
 				int y = Mathf.RoundToInt( (4.5f - pacman.transform.position.y) / 0.3f );
 				pacman.transform.position = new Vector3(-4.5f+(x*0.3f), 4.5f-(y*0.3f), 0);
 			}
-			else if(hits[0].gameObject.layer >= 4) {
-				KillPlayer();
+			else if( (hits[0].gameObject.layer >= 4) && (hits[0].gameObject.layer <= 7) ) {
+				if(ghostState[hits[0].gameObject.layer-4] == 0)
+					KillPlayer();
+				else if(ghostState[hits[0].gameObject.layer-4] == 1) {
+					Score(100);
+					ghostState[hits[0].gameObject.layer-4] = 2;
+				}
+			}
+			else if(hits[0].gameObject.layer == 8) {
+				hits[0].gameObject.SetActive(false);
+				pills.Remove(hits[0].gameObject);
+				Score(10);
+				blueTime = Time.time + 6f;
+				for(int g=0; g<ghosts.Length; g++)
+					ghostState[g] = 1;
 			}
 		}
 		for(int g=0; g<ghosts.Length; g++) {
 			float newX = ghosts[g].transform.position.x + 1f * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
 			float newY = ghosts[g].transform.position.y + 1f * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
 			ghosts[g].transform.position = new Vector3(newX, newY, 0f);
+			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = ghostState[g] == 1 ? Color.blue : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.6f, 0.6f, 1f) : new Color(1f, 0.6f, 0f, 1f);
+			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<20));
 			if ((ghostHits != null) && (ghostHits.Length > 0)) {
 				if( (ghostHits[0].gameObject.layer == 3) || (ghostHits[0].gameObject.layer == 20) ) {
-					ghostdir[g] = (ghostHits[0].gameObject.layer == 20) ? 4 : 1 + (int)(Random.value * 3.9999f);
+					ghostdir[g] = (ghostHits[0].gameObject.layer == 20) ? 4 : DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g]);
 					int x = Mathf.RoundToInt( (ghosts[g].transform.position.x + 4.5f) / 0.3f );
 					int y = Mathf.RoundToInt( (4.5f - ghosts[g].transform.position.y) / 0.3f );
 					ghosts[g].transform.position = new Vector3(-4.5f+(x*0.3f), 4.5f-(y*0.3f), 0);
 				}
 			}
+		}
+		if (pills.Count == 0) {
+			level++;
+			UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");      // Reload scene for a new level
 		}
     }
 }
