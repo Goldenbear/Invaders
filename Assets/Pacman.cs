@@ -23,6 +23,7 @@ public class Pacman : MonoBehaviour {
 	GameObject[] uiObjects = new GameObject[10];
 	Vector3 msgPos;
 	float blueTime = 0f;
+	int blueScore = 200;
 	int gameState = 0;
 	int XToMazeJ(float x) { return Mathf.RoundToInt((x + 4.5f) / 0.3f); }
 	int YToMazeI(float y) { return Mathf.RoundToInt((4.5f - y) / 0.3f); }
@@ -114,10 +115,11 @@ public class Pacman : MonoBehaviour {
 		playerLives[lives].GetComponent<MeshRenderer>().enabled = true;
 		score += add;
 	}
-	int DirectionTo(GameObject objA, GameObject objB, int currDir) {
+	int DirectionTo(GameObject objA, GameObject objB, int currDir, float randomness) {
 		Vector3 diff = objB.transform.position - objA.transform.position;
-		//return ((currDir == 1) || (currDir == 2)) ? ((diff.y < 0f) ? 3 : 4) : ((diff.x < 0f) ? 1 : 2);
-		return ((currDir == 1) || (currDir == 2)) ? ((Random.value < 0.5f) ? 3 : 4) : ((Random.value < 0.5f) ? 1 : 2);
+		if(Random.value < randomness)
+			return ((currDir == 1) || (currDir == 2)) ? ((Random.value < 0.5f) ? 3 : 4) : ((Random.value < 0.5f) ? 1 : 2);
+		return ((currDir == 1) || (currDir == 2)) ? ((diff.y < 0f) ? 3 : 4) : ((diff.x < 0f) ? 1 : 2);
 	}
     void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
@@ -131,8 +133,8 @@ public class Pacman : MonoBehaviour {
 			return;
 		}
 		pacdir = Input.GetKeyDown(KeyCode.LeftArrow) ? 1 : Input.GetKeyDown(KeyCode.RightArrow) ? 2 : Input.GetKeyDown(KeyCode.DownArrow) ? 3 : Input.GetKeyDown(KeyCode.UpArrow) ? 4 : pacdir;
-		float newPacX = pacman.transform.position.x + 1f * Time.deltaTime * (pacdir == 1 ? -1f : pacdir == 2 ? 1f : 0f);
-		float newPacY = pacman.transform.position.y + 1f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
+		float newPacX = pacman.transform.position.x + 1.5f * Time.deltaTime * (pacdir == 1 ? -1f : pacdir == 2 ? 1f : 0f);
+		float newPacY = pacman.transform.position.y + 1.5f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
 		newPacX = newPacX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newPacX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newPacX;	// Wrap around left-right
 		pacman.transform.position = new Vector3((pacdir == 0) || (pacdir >= 3) ? MazeJToX(XToMazeJ(newPacX)) : newPacX, pacdir <= 2 ? MazeIToY(YToMazeI(newPacY)) : newPacY, 0);
 		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8));
@@ -152,7 +154,8 @@ public class Pacman : MonoBehaviour {
 				if(ghostState[hits[0].gameObject.layer-4] == 0)
 					KillPlayer();
 				else if(ghostState[hits[0].gameObject.layer-4] == 1) {
-					Score(100);
+					Score(blueScore);
+					blueScore *= 2;
 					ghostState[hits[0].gameObject.layer-4] = 2;
 				}
 			}
@@ -161,7 +164,8 @@ public class Pacman : MonoBehaviour {
 				pills.Remove(hits[0].gameObject);
 				Score(10);
 				blueTime = Time.time + 6f;
-				for(int g=0; g<ghosts.Length; g++)
+				blueScore = 200;
+				for (int g=0; g<ghosts.Length; g++)
 					ghostState[g] = 1;
 			}
 		}
@@ -174,7 +178,7 @@ public class Pacman : MonoBehaviour {
 			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
 			if ((ghostHits != null) && (ghostHits.Length > 0))
-				ghostdir[g] = (ghostHits[0].gameObject.layer == 9) ? 4 : DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g]);
+				ghostdir[g] = (ghostHits[0].gameObject.layer == 9) ? 4 : DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f+(g*0.2f));
 		}
 		if (pills.Count == 0) {
 			level++;
