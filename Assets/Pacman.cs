@@ -35,44 +35,33 @@ public class Pacman : MonoBehaviour {
 		Physics.IgnoreLayerCollision(2, 1, true);
         for(int i=0; i<maze.Length; i++)
 			for(int j=0; j<maze[i].Length; j++) {
-				if(maze[i][j] == '1') {
+				if(maze[i][j] == '1')
 					pills.Add( CreateMazeObject("Pill", PrimitiveType.Cube, j, i, 0.1f, 1, new Color(1f,0.6f,0.6f,1f)) );
-				}
-				else if(maze[i][j] == '2') {
+				else if(maze[i][j] == '2')
 					pacman = CreateMazeObject("Pacman", PrimitiveType.Sphere, j, i, 0.3f, 2, Color.yellow);
-					pacStart = pacman.transform.position;
-				}
-				else if(maze[i][j] == '3') {
+				else if(maze[i][j] == '3')
 					CreateMazeObject("Wall", PrimitiveType.Cube, j, i, 0.25f, 3, Color.blue);
-				}
-				else if(maze[i][j] == '4') {
+				else if(maze[i][j] == '4')
 					ghosts[0] = CreateMazeObject("Blinky", PrimitiveType.Sphere, j, i, 0.3f, 4, Color.red);
-				}
-				else if(maze[i][j] == '5') {
+				else if(maze[i][j] == '5')
 					ghosts[1] = CreateMazeObject("Inky", PrimitiveType.Sphere, j, i, 0.3f, 5, Color.cyan);
-				}
-				else if(maze[i][j] == '6') {
+				else if(maze[i][j] == '6')
 					ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.3f, 6, new Color(1f, 0.6f, 0.6f, 1f));
-				}
-				else if(maze[i][j] == '7') {
+				else if(maze[i][j] == '7')
 					ghosts[3] = CreateMazeObject("Clyde", PrimitiveType.Sphere, j, i, 0.3f, 7, new Color(1f, 0.6f, 0f, 1f));
-				}
-				else if (maze[i][j] == '8') {
+				else if(maze[i][j] == '8')
 					pills.Add( CreateMazeObject("Power", PrimitiveType.Sphere, j, i, 0.3f, 8, new Color(1f,0.6f,0.6f,1f)) );
-				}
-				else if (maze[i][j] == '9') {
+				else if(maze[i][j] == '9')
 					ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.25f, 9, Color.black, false);
-					ghostExit.transform.position = new Vector3(ghostExit.transform.position.x + 0.15f, ghostExit.transform.position.y - 0.15f, 0f);
-				}
-				else if(maze[i][j] == 'A') {
+				else if(maze[i][j] == 'A')
 					msgPos = new Vector3(MazeJToX(j) + 0.15f, MazeIToY(i), 0);
-				}
 			}
+		pacStart = pacman.transform.position;
+		ghostExit.transform.position = new Vector3(ghostExit.transform.position.x + 0.15f, ghostExit.transform.position.y - 0.15f, 0f);
 		for(int g=0; g<ghosts.Length; g++)
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
-		for (int i = 0; i < playerLives.Length; i++) {
+		for (int i = 0; i < playerLives.Length; i++)
 			playerLives[i] = CreateMazeObject("Life", PrimitiveType.Sphere, 3+i, maze.Length, 0.3f, 2, Color.yellow, (i <= lives));
-		}
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>();
 		uiObjects[0].GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
