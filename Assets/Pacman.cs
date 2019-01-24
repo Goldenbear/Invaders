@@ -18,6 +18,7 @@ public class Pacman : MonoBehaviour {
 	GameObject[] ghosts = new GameObject[4];
 	int[] ghostdir = new int[4];
 	int[] ghostState = new int[4];
+	int[][] sideTry = { new int[3], new int[3], new int[3], new int[3] };     // An attempt to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
 	GameObject ghostExit;
 	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
 	GameObject[] uiObjects = new GameObject[10];
@@ -29,6 +30,9 @@ public class Pacman : MonoBehaviour {
 	int YToMazeI(float y) { return Mathf.RoundToInt((4.5f - y) / 0.3f); }
 	float MazeJToX(int j) { return -4.5f + (j * 0.3f); }
 	float MazeIToY(int i) { return 4.5f - (i * 0.3f); }
+	bool NearCellCentre(Vector3 pos) { return (pos - new Vector3(MazeJToX(XToMazeJ(pos.x)), MazeIToY(YToMazeI(pos.y)), 0f)).magnitude < 0.05f; }
+	char MazeChar(int i, int j) { return (i >= 0) && (i < maze.Length) && (j >= 0) && (j < maze[0].Length) ? maze[i][j] : (char)0; }
+	char MazeChar(int i, int j, int dir) { return (dir == 1) ? MazeChar(i, j - 1) : (dir == 2) ? MazeChar(i, j + 1) : (dir == 3) ? MazeChar(i + 1, j) : MazeChar(i - 1, j); }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		new GameObject("Light").AddComponent<Light>().type = LightType.Directional;
@@ -104,13 +108,17 @@ public class Pacman : MonoBehaviour {
 		playerLives[lives].GetComponent<MeshRenderer>().enabled = true;
 		score += add;
 	}
-	int DirectionTo(GameObject objA, GameObject objB, int currDir, float randomness) {
+	int ChangeDirectionTo(GameObject objA, GameObject objB, int currDir, float randomness) {
 		Vector3 diff = objB.transform.position - objA.transform.position;
 		if(Random.value < randomness)
 			return ((currDir == 1) || (currDir == 2)) ? ((Random.value < 0.5f) ? 3 : 4) : ((Random.value < 0.5f) ? 1 : 2);
 		return ((currDir == 1) || (currDir == 2)) ? ((diff.y < 0f) ? 3 : 4) : ((diff.x < 0f) ? 1 : 2);
 	}
-    void Update() {
+	int DirectionTo(GameObject objA, GameObject objB) { 
+		Vector3 diff = objB.transform.position - objA.transform.position;
+		return Mathf.Abs(diff.y) > Mathf.Abs(diff.x) ? ((diff.y < 0f) ? 3 : 4) : ((diff.x < 0f) ? 1 : 2);
+	}
+	void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
 		if( (gameState == 0) || (gameState == 2) ) {
@@ -165,9 +173,16 @@ public class Pacman : MonoBehaviour {
 			ghosts[g].transform.position = new Vector3(ghostdir[g] >= 3 ? MazeJToX(XToMazeJ(newX)) : newX, ghostdir[g] <= 2 ? MazeIToY(YToMazeI(newY)) : newY, 0);
 			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = ghostState[g] == 1 ? Color.blue : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.6f, 0.6f, 1f) : new Color(1f, 0.6f, 0f, 1f);
 			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
+			if (NearCellCentre(ghosts[g].transform.position) && ((YToMazeI(newY) != sideTry[g][1]) || (XToMazeJ(newX) != sideTry[g][2]))) { // if not attempted sideways move this cell then try it
+				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f + (g * 0.2f));
+				sideTry[g][1] = YToMazeI(newY);
+				sideTry[g][2] = XToMazeJ(newX);
+				if((sideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && MazeChar(sideTry[g][1], sideTry[g][2], sideTry[g][0]) != '3')
+					ghostdir[g] = sideTry[g][0];
+			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
-			if ((ghostHits != null) && (ghostHits.Length > 0))
-				ghostdir[g] = (ghostHits[0].gameObject.layer == 9) ? 4 : DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f+(g*0.2f));
+			if ((ghostHits != null) && (ghostHits.Length > 0)) 
+				ghostdir[g] = (ghostHits[0].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f+(g*0.2f));
 		}
 		if (pills.Count == 0) {
 			level++;
