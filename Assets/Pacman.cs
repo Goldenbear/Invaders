@@ -7,7 +7,7 @@ public class Pacman : MonoBehaviour {
 	static int level = 1;
 	string[] maze = new string[] {	"3333333333333333333333333333","3111111111111331111111111113","3133331333331331333331333313","3833331333331331333331333383","3133331333331331333331333313",
 									"3111111111111111111111111113","3133331331333333331331333313","3133331331333333331331333313","3111111331111331111331111113","3333331333330330333331333333",
-									"0000031333330330333331300000","0000031330000400000331300000","0000031330333903330331300000","3333331330350607030331333333","0000001000300000030001000000",
+									"0000031333330330333331300000","0000031330000400000331300000","0000031330333903330331300000","3333331330300000030331333333","0000001000350607030001000000",
 									"3333331330300000030331333333","0000031330333333330331300000","0000031330000A00000331300000","0000031330333333330331300000","3333331330333333330331333333",
 									"3111111111111331111111111113","3133331333331331333331333313","3133331333331331333331333313","3811331111111211111111331183","3331331331333333331331331333",
 									"3331331331333333331331331333","3111111331111331111331111113","3133333333331331333333333313","3133333333331331333333333313","3111111111111111111111111113","3333333333333333333333333333"};
@@ -174,7 +174,7 @@ public class Pacman : MonoBehaviour {
 			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = ghostState[g] == 1 ? Color.blue : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.6f, 0.6f, 1f) : new Color(1f, 0.6f, 0f, 1f);
 			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
 			if (NearCellCentre(ghosts[g].transform.position) && ((YToMazeI(newY) != sideTry[g][1]) || (XToMazeJ(newX) != sideTry[g][2]))) { // if not attempted sideways move this cell then try it
-				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f + (g * 0.2f));
+				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.25f + (g * 0.25f));
 				sideTry[g][1] = YToMazeI(newY);
 				sideTry[g][2] = XToMazeJ(newX);
 				if((sideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && MazeChar(sideTry[g][1], sideTry[g][2], sideTry[g][0]) != '3')
@@ -182,7 +182,7 @@ public class Pacman : MonoBehaviour {
 			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
 			for (int h = 0; (ghostHits != null) && (h < ghostHits.Length); h++) 
-				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f+(g*0.2f));
+				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.25f + (g * 0.25f));
 		}
 		if (pills.Count == 0) {
 			level++;
