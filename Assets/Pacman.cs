@@ -135,30 +135,30 @@ public class Pacman : MonoBehaviour {
 		newPacX = newPacX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newPacX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newPacX;	// Wrap around left-right
 		pacman.transform.position = new Vector3((pacdir == 0) || (pacdir >= 3) ? MazeJToX(XToMazeJ(newPacX)) : newPacX, pacdir <= 2 ? MazeIToY(YToMazeI(newPacY)) : newPacY, 0);
 		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8));
-		if ((hits != null) && (hits.Length > 0)) {
-			if(hits[0].gameObject.layer == 1) {
-				hits[0].gameObject.SetActive(false);
-				pills.Remove(hits[0].gameObject);
+		for(int h=0; (hits != null) && (h < hits.Length); h++) {
+			if(hits[h].gameObject.layer == 1) {
+				hits[h].gameObject.SetActive(false);
+				pills.Remove(hits[h].gameObject);
 				Score(10);
 			}
-			else if(hits[0].gameObject.layer == 3) {
+			else if(hits[h].gameObject.layer == 3) {
 				pacdir = 0;
 				int x = Mathf.RoundToInt( (pacman.transform.position.x + 4.5f) / 0.3f );
 				int y = Mathf.RoundToInt( (4.5f - pacman.transform.position.y) / 0.3f );
 				pacman.transform.position = new Vector3(-4.5f+(x*0.3f), 4.5f-(y*0.3f), 0);
 			}
-			else if( (hits[0].gameObject.layer >= 4) && (hits[0].gameObject.layer <= 7) ) {
-				if(ghostState[hits[0].gameObject.layer-4] == 0)
+			else if( (hits[h].gameObject.layer >= 4) && (hits[h].gameObject.layer <= 7) ) {
+				if(ghostState[hits[h].gameObject.layer-4] == 0)
 					KillPlayer();
-				else if(ghostState[hits[0].gameObject.layer-4] == 1) {
+				else if(ghostState[hits[h].gameObject.layer-4] == 1) {
 					Score(blueScore);
 					blueScore *= 2;
-					ghostState[hits[0].gameObject.layer-4] = 2;
+					ghostState[hits[h].gameObject.layer-4] = 2;
 				}
 			}
-			else if(hits[0].gameObject.layer == 8) {
-				hits[0].gameObject.SetActive(false);
-				pills.Remove(hits[0].gameObject);
+			else if(hits[h].gameObject.layer == 8) {
+				hits[h].gameObject.SetActive(false);
+				pills.Remove(hits[h].gameObject);
 				Score(10);
 				blueTime = Time.time + 6f;
 				blueScore = 200;
@@ -181,8 +181,8 @@ public class Pacman : MonoBehaviour {
 					ghostdir[g] = sideTry[g][0];
 			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
-			if ((ghostHits != null) && (ghostHits.Length > 0)) 
-				ghostdir[g] = (ghostHits[0].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f+(g*0.2f));
+			for (int h = 0; (ghostHits != null) && (h < ghostHits.Length); h++) 
+				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.2f+(g*0.2f));
 		}
 		if (pills.Count == 0) {
 			level++;
