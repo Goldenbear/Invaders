@@ -16,6 +16,7 @@ public class Pacman : MonoBehaviour {
 	Vector3 pacStart;
 	int pacdir = 0;
 	GameObject[] ghosts = new GameObject[4];
+	Vector3[] ghostStarts = new Vector3[4];
 	int[] ghostdir = new int[4];
 	int[] ghostState = new int[4];
 	int[][] sideTry = { new int[3], new int[3], new int[3], new int[3] };     // An attempt to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
@@ -62,8 +63,10 @@ public class Pacman : MonoBehaviour {
 			}
 		pacStart = pacman.transform.position;
 		ghostExit.transform.position = new Vector3(ghostExit.transform.position.x + 0.15f, ghostExit.transform.position.y - 0.15f, 0f);
-		for(int g=0; g<ghosts.Length; g++)
+		for(int g=0; g<ghosts.Length; g++) {
+			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
+		}
 		for (int i = 0; i < playerLives.Length; i++)
 			playerLives[i] = CreateMazeObject("Life", PrimitiveType.Sphere, 3+i, maze.Length, 0.3f, 2, Color.yellow, (i <= lives));
 		uiObjects[0] = new GameObject("UICanvas");
@@ -97,7 +100,10 @@ public class Pacman : MonoBehaviour {
 	void KillPlayer() {
 		playerLives[lives].GetComponent<MeshRenderer>().enabled = false;
 		pacman.transform.position = pacStart;
+		for(int g=0; g<ghosts.Length; g++)
+			ghosts[g].transform.position = ghostStarts[g];
 		pacdir = 0;
+		gameState = 0;
 		if (--lives < 0) {
 			pacman.SetActive(false);
 			gameState = 2;                            // Player dead = game over
@@ -134,14 +140,14 @@ public class Pacman : MonoBehaviour {
 		float newPacY = pacman.transform.position.y + 1.5f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
 		newPacX = newPacX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newPacX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newPacX;	// Wrap around left-right
 		pacman.transform.position = new Vector3((pacdir == 0) || (pacdir >= 3) ? MazeJToX(XToMazeJ(newPacX)) : newPacX, pacdir <= 2 ? MazeIToY(YToMazeI(newPacY)) : newPacY, 0);
-		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8));
+		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8)+(1<<9));
 		for(int h=0; (hits != null) && (h < hits.Length); h++) {
 			if(hits[h].gameObject.layer == 1) {
 				hits[h].gameObject.SetActive(false);
 				pills.Remove(hits[h].gameObject);
 				Score(10);
 			}
-			else if(hits[h].gameObject.layer == 3) {
+			else if( (hits[h].gameObject.layer == 3) || (hits[h].gameObject.layer == 9) ) {
 				pacdir = 0;
 				int x = Mathf.RoundToInt( (pacman.transform.position.x + 4.5f) / 0.3f );
 				int y = Mathf.RoundToInt( (4.5f - pacman.transform.position.y) / 0.3f );
@@ -159,7 +165,7 @@ public class Pacman : MonoBehaviour {
 			else if(hits[h].gameObject.layer == 8) {
 				hits[h].gameObject.SetActive(false);
 				pills.Remove(hits[h].gameObject);
-				Score(10);
+				Score(50);
 				blueTime = Time.time + 6f;
 				blueScore = 200;
 				for (int g=0; g<ghosts.Length; g++)
@@ -167,22 +173,24 @@ public class Pacman : MonoBehaviour {
 			}
 		}
 		for(int g=0; g<ghosts.Length; g++) {
-			float newX = ghosts[g].transform.position.x + 1f * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
-			float newY = ghosts[g].transform.position.y + 1f * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
+			float newX = ghosts[g].transform.position.x + ((ghostState[g] == 2) ? 2f : 1f) * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
+			float newY = ghosts[g].transform.position.y + ((ghostState[g] == 2) ? 2f : 1f) * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
 			newX = newX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newX;    // Wrap around left-right
 			ghosts[g].transform.position = new Vector3(ghostdir[g] >= 3 ? MazeJToX(XToMazeJ(newX)) : newX, ghostdir[g] <= 2 ? MazeIToY(YToMazeI(newY)) : newY, 0);
 			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = ghostState[g] == 1 ? Color.blue : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.6f, 0.6f, 1f) : new Color(1f, 0.6f, 0f, 1f);
 			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
 			if (NearCellCentre(ghosts[g].transform.position) && ((YToMazeI(newY) != sideTry[g][1]) || (XToMazeJ(newX) != sideTry[g][2]))) { // if not attempted sideways move this cell then try it
-				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.25f + (g * 0.25f));
+				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
 				sideTry[g][1] = YToMazeI(newY);
 				sideTry[g][2] = XToMazeJ(newX);
 				if((sideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && MazeChar(sideTry[g][1], sideTry[g][2], sideTry[g][0]) != '3')
 					ghostdir[g] = sideTry[g][0];
 			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
-			for (int h = 0; (ghostHits != null) && (h < ghostHits.Length); h++) 
-				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], 0.25f + (g * 0.25f));
+			for (int h = 0; (ghostHits != null) && (h < ghostHits.Length); h++) {
+				ghostState[g] = (ghostHits[h].gameObject.layer == 9) ? 0 : ghostState[g];
+				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
+			}
 		}
 		if (pills.Count == 0) {
 			level++;
