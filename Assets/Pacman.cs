@@ -18,6 +18,7 @@ public class Pacman : MonoBehaviour {
 	Vector3[] wallTR = { new Vector3(0f, -1f, 0f), new Vector3(0f, -0.7f, 0f), new Vector3(-0.2f, -0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
 	Vector3[] wallBL = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(0.2f, 0.2f, 0f), new Vector3(0.7f, 0f, 0f), new Vector3(1f, 0f, 0f) };
 	Vector3[] wallBR = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(-0.2f, 0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
+	Vector3[] strawb = { new Vector3(0f, -1f, 0f), new Vector3(-1f, 0.5f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0f, 0.8f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(1f, 0.5f, 0f), new Vector3(0f, -1f, 0f) };
 	List<GameObject> pills = new List<GameObject>();
 	GameObject pacman;
 	Vector3 pacStart;
@@ -28,6 +29,8 @@ public class Pacman : MonoBehaviour {
 	int[] ghostState = new int[4];
 	int[][] sideTry = { new int[3], new int[3], new int[3], new int[3] };     // An attempt to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
 	GameObject ghostExit;
+	List<GameObject> fruit = new List<GameObject>();
+	float fruitTime = 0f;
 	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
 	GameObject[] uiObjects = new GameObject[10];
 	Vector3 msgPos;
@@ -47,7 +50,7 @@ public class Pacman : MonoBehaviour {
         for(int i=0; i<maze.Length; i++)
 			for(int j=0; j<maze[i].Length; j++) {
 				if(maze[i][j] == '1')
-					pills.Add( CreateMazeObject("Pill", PrimitiveType.Cube, j, i, 0.1f, 1, new Color(1f,0.6f,0.6f,1f)) );
+					pills.Add( CreateMazeObject("Pill", PrimitiveType.Cube, j, i, 0.1f, 1, new Color(1f, 0.6f, 0.4f, 1f)) );
 				else if(maze[i][j] == '2')
 					pacman = CreateMazeObject("Pacman", PrimitiveType.Sphere, j, i, 0.4f, 2, Color.yellow);
 				else if(maze[i][j] == '3')
@@ -57,11 +60,11 @@ public class Pacman : MonoBehaviour {
 				else if(maze[i][j] == '5')
 					ghosts[1] = CreateMazeObject("Inky", PrimitiveType.Sphere, j, i, 0.4f, 5, Color.cyan);
 				else if(maze[i][j] == '6')
-					ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.4f, 6, new Color(1f, 0.6f, 0.6f, 1f));
+					ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.4f, 6, new Color(1f, 0.8f, 0.8f, 1f));
 				else if(maze[i][j] == '7')
 					ghosts[3] = CreateMazeObject("Clyde", PrimitiveType.Sphere, j, i, 0.4f, 7, new Color(1f, 0.6f, 0f, 1f));
 				else if(maze[i][j] == '8')
-					pills.Add( CreateMazeObject("Power", PrimitiveType.Sphere, j, i, 0.3f, 8, new Color(1f,0.6f,0.6f,1f)) );
+					pills.Add( CreateMazeObject("Power", PrimitiveType.Sphere, j, i, 0.3f, 8, new Color(1f, 0.6f, 0.4f, 1f)) );
 				else if(maze[i][j] == '9')
 					ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.3f, 9, Color.black, false);
 				else if(maze[i][j] == 'A')
@@ -80,6 +83,9 @@ public class Pacman : MonoBehaviour {
 					CreateVectorObject("WallBR", wallBR, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
 			}
 		pacStart = pacman.transform.position;
+		for(int i=0; i<2; i++)
+			fruit.Add( CreateVectorObject("Fruit", strawb, XToMazeJ(msgPos.x), YToMazeI(msgPos.y), 0.15f, 0.15f, 0.3f, 10, Color.red, false) );
+		fruitTime = Time.time + 15f;
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
@@ -174,7 +180,7 @@ public class Pacman : MonoBehaviour {
 		float newPacY = pacman.transform.position.y + 1.5f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
 		newPacX = newPacX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newPacX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newPacX;	// Wrap around left-right
 		pacman.transform.position = new Vector3((pacdir == 0) || (pacdir >= 3) ? MazeJToX(XToMazeJ(newPacX)) : newPacX, pacdir <= 2 ? MazeIToY(YToMazeI(newPacY)) : newPacY, 0);
-		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8)+(1<<9));
+		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8)+(1<<9)+(1<<10));
 		for(int h=0; (hits != null) && (h < hits.Length); h++) {
 			if(hits[h].gameObject.layer == 1) {
 				hits[h].gameObject.SetActive(false);
@@ -205,6 +211,12 @@ public class Pacman : MonoBehaviour {
 				for (int g=0; g<ghosts.Length; g++)
 					ghostState[g] = 1;
 			}
+			else if(hits[h].gameObject.layer == 10) {
+				hits[h].gameObject.SetActive(false);
+				fruit.Remove(hits[h].gameObject);
+				Score( level == 1 ? 100 : level == 2 ? 300 : level <= 4 ? 500 : level <= 6 ? 700 : level <= 8 ? 1000 : level <= 10 ? 2000 : level <= 12 ? 3000 : 5000 );
+				fruitTime = Time.time + 15f;
+			}
 		}
 		for(int g=0; g<ghosts.Length; g++) {
 			float newX = ghosts[g].transform.position.x + ((ghostState[g] == 2) ? 2f : 1f) * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
@@ -226,6 +238,9 @@ public class Pacman : MonoBehaviour {
 				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
 			}
 		}
+		if(Time.time > fruitTime)
+			if(fruit.Count > 0)
+				fruit[0].gameObject.SetActive(true);		// Activate next fruit if any remaining
 		if (pills.Count == 0) {
 			level++;
 			UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");      // Reload scene for a new level
