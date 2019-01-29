@@ -5,12 +5,19 @@ public class Pacman : MonoBehaviour {
 	static int score = 0;
 	static int lives = 2;
 	static int level = 1;
-	string[] maze = new string[] {	"3333333333333333333333333333","3111111111111331111111111113","3133331333331331333331333313","3833331333331331333331333383","3133331333331331333331333313",
-									"3111111111111111111111111113","3133331331333333331331333313","3133331331333333331331333313","3111111331111331111331111113","3333331333330330333331333333",
-									"0000031333330330333331300000","0000031330000400000331300000","0000031330333903330331300000","3333331330300000030331333333","0000001000350607030001000000",
-									"3333331330300000030331333333","0000031330333333330331300000","0000031330000A00000331300000","0000031330333333330331300000","3333331330333333330331333333",
-									"3111111111111331111111111113","3133331333331331333331333313","3133331333331331333331333313","3811331111111211111111331183","3331331331333333331331331333",
-									"3331331331333333331331331333","3111111331111331111331111113","3133333333331331333333333313","3133333333331331333333333313","3111111111111111111111111113","3333333333333333333333333333"};
+	string[] maze = new string[] {	"[------------][------------]","|111111111111||111111111111|","|1[--]1[---]1||1[---]1[--]1|","|8|  |1|   |1||1|   |1|  |8|","|1<-->1<--->1<>1<--->1<-->1|",
+									"|11111111111111111111111111|","|1[--]1[]1[------]1[]1[--]1|","|1<-->1||1<--][-->1||1<-->1|","|111111||1111||1111||111111|","<----]1|<--]0||0[-->|1[---->",
+									"00000|1|[-->0<>0<--]|1|00000","00000|1||0000400000||1|00000","00000|1||0[--00--]0||1|00000","----->1<>0|000000|0<>1<-----","0000001000|506070|0001000000",
+									"-----]1[]0|009000|0[]1[-----","00000|1||0<------>0||1|00000","00000|1||0000A00000||1|00000","00000|1||0[------]0||1|00000","[---->1<>0<--][-->0<>1<----]",
+									"|111111111111||111111111111|","|1[--]1[---]1||1[---]1[--]1|","|1<-]|1<--->1<>1<--->1|[->1|","|811||1111111211111111||118|","<-]1||1[]1[------]1[]1||1[->",
+									"[->1<>1||1<--][-->1||1<>1<-]","|111111||1111||1111||111111|","|1[----><--]1||1[--><----]1|","|1<-------->1<>1<-------->1|","|11111111111111111111111111|","<-------------------------->"};
+	string wallChars = "3|-[]<>";
+	Vector3[] wallV = { new Vector3(0f, -1f, 0f), new Vector3(0f, 1f, 0f) };
+	Vector3[] wallH = { new Vector3(-1f, 0f, 0f), new Vector3(1f, 0f, 0f) };
+	Vector3[] wallTL = { new Vector3(0f, -1f, 0f), new Vector3(0f, -0.7f, 0f), new Vector3(0.2f, -0.2f, 0f), new Vector3(0.7f, 0f, 0f), new Vector3(1f, 0f, 0f) };
+	Vector3[] wallTR = { new Vector3(0f, -1f, 0f), new Vector3(0f, -0.7f, 0f), new Vector3(-0.2f, -0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
+	Vector3[] wallBL = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(0.2f, 0.2f, 0f), new Vector3(0.7f, 0f, 0f), new Vector3(1f, 0f, 0f) };
+	Vector3[] wallBR = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(-0.2f, 0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
 	List<GameObject> pills = new List<GameObject>();
 	GameObject pacman;
 	Vector3 pacStart;
@@ -37,32 +44,42 @@ public class Pacman : MonoBehaviour {
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		new GameObject("Light").AddComponent<Light>().type = LightType.Directional;
-		Physics.IgnoreLayerCollision(2, 1, true);
         for(int i=0; i<maze.Length; i++)
 			for(int j=0; j<maze[i].Length; j++) {
 				if(maze[i][j] == '1')
 					pills.Add( CreateMazeObject("Pill", PrimitiveType.Cube, j, i, 0.1f, 1, new Color(1f,0.6f,0.6f,1f)) );
 				else if(maze[i][j] == '2')
-					pacman = CreateMazeObject("Pacman", PrimitiveType.Sphere, j, i, 0.3f, 2, Color.yellow);
+					pacman = CreateMazeObject("Pacman", PrimitiveType.Sphere, j, i, 0.4f, 2, Color.yellow);
 				else if(maze[i][j] == '3')
 					CreateMazeObject("Wall", PrimitiveType.Cube, j, i, 0.25f, 3, Color.blue);
 				else if(maze[i][j] == '4')
-					ghosts[0] = CreateMazeObject("Blinky", PrimitiveType.Sphere, j, i, 0.3f, 4, Color.red);
+					ghosts[0] = CreateMazeObject("Blinky", PrimitiveType.Sphere, j, i, 0.4f, 4, Color.red);
 				else if(maze[i][j] == '5')
-					ghosts[1] = CreateMazeObject("Inky", PrimitiveType.Sphere, j, i, 0.3f, 5, Color.cyan);
+					ghosts[1] = CreateMazeObject("Inky", PrimitiveType.Sphere, j, i, 0.4f, 5, Color.cyan);
 				else if(maze[i][j] == '6')
-					ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.3f, 6, new Color(1f, 0.6f, 0.6f, 1f));
+					ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.4f, 6, new Color(1f, 0.6f, 0.6f, 1f));
 				else if(maze[i][j] == '7')
-					ghosts[3] = CreateMazeObject("Clyde", PrimitiveType.Sphere, j, i, 0.3f, 7, new Color(1f, 0.6f, 0f, 1f));
+					ghosts[3] = CreateMazeObject("Clyde", PrimitiveType.Sphere, j, i, 0.4f, 7, new Color(1f, 0.6f, 0f, 1f));
 				else if(maze[i][j] == '8')
 					pills.Add( CreateMazeObject("Power", PrimitiveType.Sphere, j, i, 0.3f, 8, new Color(1f,0.6f,0.6f,1f)) );
 				else if(maze[i][j] == '9')
-					ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.25f, 9, Color.black, false);
+					ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.3f, 9, Color.black, false);
 				else if(maze[i][j] == 'A')
 					msgPos = new Vector3(MazeJToX(j) + 0.15f, MazeIToY(i), 0);
+				else if(maze[i][j] == '|')
+					CreateVectorObject("WallV", wallV, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
+				else if(maze[i][j] == '-')
+					CreateVectorObject("WallH", wallH, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
+				else if(maze[i][j] == '[')
+					CreateVectorObject("WallTL", wallTL, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
+				else if(maze[i][j] == ']')
+					CreateVectorObject("WallTR", wallTR, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
+				else if(maze[i][j] == '<')
+					CreateVectorObject("WallBL", wallBL, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
+				else if(maze[i][j] == '>')
+					CreateVectorObject("WallBR", wallBR, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue);
 			}
 		pacStart = pacman.transform.position;
-		ghostExit.transform.position = new Vector3(ghostExit.transform.position.x + 0.15f, ghostExit.transform.position.y - 0.15f, 0f);
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
@@ -82,6 +99,7 @@ public class Pacman : MonoBehaviour {
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
 			uiObjects[1+i].GetComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = 30;
+			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(100f, 0f, 0) : new Vector3((msgPos.x+4.5f)*100f, (msgPos.y-4.8f)*100f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().localScale = new Vector3(1f, 1f, 1f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
@@ -95,6 +113,22 @@ public class Pacman : MonoBehaviour {
 		go.layer = layer;
 		go.GetComponent<MeshRenderer>().materials[0].color = color;
 		go.GetComponent<MeshRenderer>().enabled = visible;
+		return go;
+	}
+	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true) {
+		GameObject go = new GameObject(label);
+		go.SetActive(active);
+		go.layer = layer;
+		go.transform.position = new Vector3(MazeJToX(x), MazeIToY(y), 0);
+		go.transform.localScale = new Vector3(sX, sY, sZ);
+		go.AddComponent<BoxCollider>();
+		LineRenderer line = go.AddComponent<LineRenderer>();
+		line.useWorldSpace = false;
+		line.widthMultiplier = 0.06f;
+		line.material = new Material(Shader.Find("Sprites/Default"));
+		line.material.color = color;
+		line.positionCount = shape.Length;
+		line.SetPositions(shape);
 		return go;
 	}
 	void KillPlayer() {
@@ -183,7 +217,7 @@ public class Pacman : MonoBehaviour {
 				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
 				sideTry[g][1] = YToMazeI(newY);
 				sideTry[g][2] = XToMazeJ(newX);
-				if((sideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && MazeChar(sideTry[g][1], sideTry[g][2], sideTry[g][0]) != '3')
+				if((sideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && (wallChars.IndexOf( MazeChar(sideTry[g][1], sideTry[g][2], sideTry[g][0]) ) == -1) )
 					ghostdir[g] = sideTry[g][0];
 			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
