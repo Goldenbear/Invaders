@@ -85,7 +85,6 @@ public class Pacman : MonoBehaviour {
 		pacStart = pacman.transform.position;
 		for(int i=0; i<2; i++)
 			fruit.Add( CreateVectorObject("Fruit", strawb, XToMazeJ(msgPos.x), YToMazeI(msgPos.y), 0.15f, 0.15f, 0.3f, 10, Color.red, false) );
-		fruitTime = Time.time + 15f;
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
@@ -168,6 +167,7 @@ public class Pacman : MonoBehaviour {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
 		if( (gameState == 0) || (gameState == 2) ) {
+			fruitTime = Time.time + 15f;
 			gameState = (gameState == 0) && Input.GetKeyDown(KeyCode.Space) ? 1 : gameState;
 			if ((gameState == 2) && Input.GetKeyDown(KeyCode.Space)) {
 				score = 0; lives = 2; level = 1;
@@ -175,7 +175,8 @@ public class Pacman : MonoBehaviour {
 			}
 			return;
 		}
-		pacdir = Input.GetKeyDown(KeyCode.LeftArrow) ? 1 : Input.GetKeyDown(KeyCode.RightArrow) ? 2 : Input.GetKeyDown(KeyCode.DownArrow) ? 3 : Input.GetKeyDown(KeyCode.UpArrow) ? 4 : pacdir;
+		int trydir = Input.GetKey(KeyCode.LeftArrow) ? 1 : Input.GetKey(KeyCode.RightArrow) ? 2 : Input.GetKey(KeyCode.DownArrow) ? 3 : Input.GetKey(KeyCode.UpArrow) ? 4 : pacdir;
+		pacdir = NearCellCentre(pacman.transform.position) && (wallChars.IndexOf( MazeChar(YToMazeI(pacman.transform.position.y), XToMazeJ(pacman.transform.position.x), trydir) ) == -1) ? trydir : pacdir;
 		float newPacX = pacman.transform.position.x + 1.5f * Time.deltaTime * (pacdir == 1 ? -1f : pacdir == 2 ? 1f : 0f);
 		float newPacY = pacman.transform.position.y + 1.5f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
 		newPacX = newPacX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newPacX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newPacX;	// Wrap around left-right
@@ -189,9 +190,7 @@ public class Pacman : MonoBehaviour {
 			}
 			else if( (hits[h].gameObject.layer == 3) || (hits[h].gameObject.layer == 9) ) {
 				pacdir = 0;
-				int x = Mathf.RoundToInt( (pacman.transform.position.x + 4.5f) / 0.3f );
-				int y = Mathf.RoundToInt( (4.5f - pacman.transform.position.y) / 0.3f );
-				pacman.transform.position = new Vector3(-4.5f+(x*0.3f), 4.5f-(y*0.3f), 0);
+				pacman.transform.position = new Vector3(MazeJToX(XToMazeJ(newPacX)), MazeIToY(YToMazeI(newPacY)), 0);
 			}
 			else if( (hits[h].gameObject.layer >= 4) && (hits[h].gameObject.layer <= 7) ) {
 				if(ghostState[hits[h].gameObject.layer-4] == 0)
