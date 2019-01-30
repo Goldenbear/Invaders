@@ -205,7 +205,7 @@ public class Pacman : MonoBehaviour {
 				hits[h].gameObject.SetActive(false);
 				pills.Remove(hits[h].gameObject);
 				Score(50);
-				blueTime = Time.time + 6f;
+				blueTime = Time.time + (level == 1 ? 6f : level == 2 ? 5f : level == 3 ? 4f : level == 4 ? 3f : level <= 8 ? 2f : level <= 16 ? 1f : 0f);
 				blueScore = 200;
 				for (int g=0; g<ghosts.Length; g++)
 					ghostState[g] = 1;
