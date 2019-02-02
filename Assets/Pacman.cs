@@ -84,7 +84,7 @@ public class Pacman : MonoBehaviour {
 			}
 		pacStart = pacman.transform.position;
 		for(int i=0; i<2; i++)
-			fruit.Add( CreateVectorObject("Fruit", strawb, XToMazeJ(msgPos.x), YToMazeI(msgPos.y), 0.15f, 0.15f, 0.3f, 10, Color.red, false) );
+			fruit.Add( CreateVectorObject("Fruit", strawb, XToMazeJ(msgPos.x-0.15f), YToMazeI(msgPos.y), 0.15f, 0.15f, 0.3f, 10, Color.red, false, 0.15f) );
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
@@ -110,21 +110,21 @@ public class Pacman : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
 		}
     }
-	GameObject CreateMazeObject(string label, PrimitiveType shape, int x, int y, float size, int layer, Color color, bool visible = true) {
+	GameObject CreateMazeObject(string label, PrimitiveType shape, int x, int y, float size, int layer, Color color, bool visible = true, float xOffset=0f, float yOffset=0f) {
 		GameObject go = GameObject.CreatePrimitive(shape);
 		go.name = label;
-		go.transform.position = new Vector3(MazeJToX(x), MazeIToY(y), 0);
+		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, 0);
 		go.transform.localScale = new Vector3(size, size, size);
 		go.layer = layer;
 		go.GetComponent<MeshRenderer>().materials[0].color = color;
 		go.GetComponent<MeshRenderer>().enabled = visible;
 		return go;
 	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true) {
+	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, float xOffset=0f, float yOffset=0f) {
 		GameObject go = new GameObject(label);
 		go.SetActive(active);
 		go.layer = layer;
-		go.transform.position = new Vector3(MazeJToX(x), MazeIToY(y), 0);
+		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, 0);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.AddComponent<BoxCollider>();
 		LineRenderer line = go.AddComponent<LineRenderer>();
