@@ -18,9 +18,12 @@ public class Pacman : MonoBehaviour {
 	Vector3[] wallTR = { new Vector3(0f, -1f, 0f), new Vector3(0f, -0.7f, 0f), new Vector3(-0.2f, -0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
 	Vector3[] wallBL = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(0.2f, 0.2f, 0f), new Vector3(0.7f, 0f, 0f), new Vector3(1f, 0f, 0f) };
 	Vector3[] wallBR = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(-0.2f, 0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
-	Vector3[] strawb = { new Vector3(0f, -1f, 0f), new Vector3(-1f, 0.5f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0f, 0.8f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(1f, 0.5f, 0f), new Vector3(0f, -1f, 0f) };
-	Vector3[] pacverts  = { new Vector3(0f, 0f, 0f), new Vector3(-0.5f, -0.1f, 0f), new Vector3(-0.5f, 0.1f, 0f), new Vector3(-0.35f, 0.35f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.35f, 0f), new Vector3(0.5f, 0.1f, 0f), new Vector3(0.5f, -0.1f, 0f), new Vector3(0.35f, -0.35f, 0f), new Vector3(0.1f, -0.5f, 0f), new Vector3(-0.1f, -0.5f, 0f), new Vector3(-0.35f, -0.35f, 0f) };
+	Vector3[] strawb = { new Vector3(0f, -1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(-1f, 0.5f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0f, 0.8f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(1f, 0.5f, 0f), new Vector3(1f, 0f, 0f) };
+	int[] strawbTris = new int[] {0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 7};
+	Vector3[] pacverts = { new Vector3(0f, 0f, 0f), new Vector3(-0.5f, -0.1f, 0f), new Vector3(-0.5f, 0.1f, 0f), new Vector3(-0.35f, 0.35f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.35f, 0f), new Vector3(0.5f, 0.1f, 0f), new Vector3(0.5f, -0.1f, 0f), new Vector3(0.35f, -0.35f, 0f), new Vector3(0.1f, -0.5f, 0f), new Vector3(-0.1f, -0.5f, 0f), new Vector3(-0.35f, -0.35f, 0f) };
 	int[] pactris = new int[] {0, 12, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 3, 4, 0, 4, 5, 0, 5, 6};
+	Vector3[] ghostverts = { new Vector3(0f, 0f, -1f), new Vector3(-0.5f, -0.1f, -1f), new Vector3(-0.5f, 0.1f, -1f), new Vector3(-0.35f, 0.35f, -1f), new Vector3(-0.1f, 0.5f, -1f), new Vector3(0.1f, 0.5f, -1f), new Vector3(0.35f, 0.35f, -1f), new Vector3(0.5f, 0.1f, -1f), new Vector3(0.5f, -0.1f, -1f), new Vector3(0.5f, -0.5f, -1f), new Vector3(0.25f, -0.35f, -1f), new Vector3(0f, -0.5f, -1f), new Vector3(-0.25f, -0.35f, -1f), new Vector3(-0.5f, -0.5f, -1f) };
+	int[] ghosttris = new int[] {0, 13, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 12, 13, 0, 3, 4, 0, 4, 5, 0, 5, 6};
 	List<GameObject> pills = new List<GameObject>();
 	GameObject pacman;
 	Vector3 pacStart;
@@ -55,12 +58,12 @@ public class Pacman : MonoBehaviour {
 					case '1': pills.Add( CreateMazeObject("Pill", PrimitiveType.Cube, j, i, 0.1f, 1, new Color(1f, 0.6f, 0.4f, 1f)) ); break;
 					case '2': pacman = CreateMeshObject("Pacman", pacverts, pactris, j, i, 0.4f, 2, Color.yellow); break;
 					case '3': CreateMazeObject("Wall", PrimitiveType.Cube, j, i, 0.25f, 3, Color.blue); break;
-					case '4': ghosts[0] = CreateMazeObject("Blinky", PrimitiveType.Sphere, j, i, 0.4f, 4, Color.red); break;
-					case '5': ghosts[1] = CreateMazeObject("Inky", PrimitiveType.Sphere, j, i, 0.4f, 5, Color.cyan); break;
-					case '6': ghosts[2] = CreateMazeObject("Pinky", PrimitiveType.Sphere, j, i, 0.4f, 6, new Color(1f, 0.8f, 0.8f, 1f)); break;
-					case '7': ghosts[3] = CreateMazeObject("Clyde", PrimitiveType.Sphere, j, i, 0.4f, 7, new Color(1f, 0.6f, 0f, 1f)); break;
+					case '4': ghosts[0] = CreateMeshObject("Blinky", ghostverts, ghosttris, j, i, 0.4f, 4, Color.red); break;
+					case '5': ghosts[1] = CreateMeshObject("Inky", ghostverts, ghosttris, j, i, 0.4f, 5, Color.cyan); break;
+					case '6': ghosts[2] = CreateMeshObject("Pinky", ghostverts, ghosttris, j, i, 0.4f, 6, new Color(1f, 0.8f, 0.8f, 1f)); break;
+					case '7': ghosts[3] = CreateMeshObject("Clyde", ghostverts, ghosttris, j, i, 0.4f, 7, new Color(1f, 0.6f, 0f, 1f)); break;
 					case '8': pills.Add( CreateMazeObject("Power", PrimitiveType.Sphere, j, i, 0.3f, 8, new Color(1f, 0.6f, 0.4f, 1f)) ); break;
-					case '9': ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.3f, 9, Color.black, false); break;
+					case '9': ghostExit = CreateMazeObject("GhostExit", PrimitiveType.Cube, j, i, 0.3f, 9, Color.black, true, false); break;
 					case 'A': msgPos = new Vector3(MazeJToX(j) + 0.15f, MazeIToY(i), 0); break;
 					case '|': CreateVectorObject("WallV", wallV, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
 					case '-': CreateVectorObject("WallH", wallH, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
@@ -72,7 +75,7 @@ public class Pacman : MonoBehaviour {
 			}
 		pacStart = pacman.transform.position;
 		for(int i=0; i<2; i++)
-			fruit.Add( CreateVectorObject("Fruit", strawb, XToMazeJ(msgPos.x-0.15f), YToMazeI(msgPos.y), 0.15f, 0.15f, 0.3f, 10, Color.red, false, 0.15f) );
+			fruit.Add( CreateMeshObject("Fruit", strawb, strawbTris, XToMazeJ(msgPos.x-0.15f), YToMazeI(msgPos.y), 0.2f, 10, new Color(0.5f, 0f, 0f, 1f), false, true, 0.15f) );
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
@@ -80,17 +83,15 @@ public class Pacman : MonoBehaviour {
 		for (int i = 0; i < playerLives.Length; i++)
 			playerLives[i] = CreateMazeObject("Life", PrimitiveType.Sphere, 3+i, maze.Length, 0.3f, 2, Color.yellow, (i <= lives));
 		uiObjects[0] = new GameObject("UICanvas");
-		uiObjects[0].AddComponent<Canvas>();
-		uiObjects[0].GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
 		uiObjects[0].GetComponent<RectTransform>().pivot = new Vector2(0f, 1f);						// Position = top-left
 		uiObjects[0].GetComponent<RectTransform>().localPosition = new Vector3(-4.5f, 4.8f, 0);
 		uiObjects[0].GetComponent<RectTransform>().sizeDelta = new Vector2(1000f, 1000f);
 		uiObjects[0].GetComponent<RectTransform>().localScale = new Vector3(0.01f, 0.01f, 1f);
 		for(int i=0; i<2; i++) {
 			uiObjects[1+i] = new GameObject("UIText");
-			uiObjects[1+i].AddComponent<Text>();
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
-			uiObjects[1+i].GetComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = 30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(100f, 0f, 0) : new Vector3((msgPos.x+4.5f)*100f, (msgPos.y-4.8f)*100f, 0f);
@@ -98,31 +99,30 @@ public class Pacman : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
 		}
     }
-	GameObject CreateMazeObject(string label, PrimitiveType shape, int x, int y, float size, int layer, Color color, bool visible = true, float xOffset=0f, float yOffset=0f) {
+	GameObject CreateMazeObject(string label, PrimitiveType shape, int x, int y, float size, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		GameObject go = GameObject.CreatePrimitive(shape);
 		go.name = label;
-		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, 0);
-		go.transform.localScale = new Vector3(size, size, size);
+		go.SetActive(active);
 		go.layer = layer;
-		go.GetComponent<MeshRenderer>().materials[0].color = color;
-		go.GetComponent<MeshRenderer>().enabled = visible;
-		return go;
-	}
-	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, int x, int y, float size, int layer, Color color, bool visible = true, float xOffset=0f, float yOffset=0f) {
-		GameObject go = CreateMazeObject(label, PrimitiveType.Sphere, x, y, size, layer, color, visible, xOffset, yOffset);
-		go.GetComponent<MeshFilter>().mesh = new Mesh();
-		go.GetComponent<MeshFilter>().mesh.vertices = verts;
-		go.GetComponent<MeshFilter>().mesh.triangles = tris;
+		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, zOffset);
+		go.transform.localScale = new Vector3(size, size, size);
 		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
 		go.GetComponent<MeshRenderer>().materials[0].color = color;
 		go.GetComponent<MeshRenderer>().enabled = visible;
 		return go;
 	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, float xOffset=0f, float yOffset=0f) {
+	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, int x, int y, float size, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
+		GameObject go = CreateMazeObject(label, PrimitiveType.Sphere, x, y, size, layer, color, active, visible, xOffset, yOffset, zOffset);
+		go.GetComponent<MeshFilter>().mesh = new Mesh();
+		go.GetComponent<MeshFilter>().mesh.vertices = verts;
+		go.GetComponent<MeshFilter>().mesh.triangles = tris;
+		return go;
+	}
+	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		GameObject go = new GameObject(label);
 		go.SetActive(active);
 		go.layer = layer;
-		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, 0);
+		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, zOffset);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.AddComponent<BoxCollider>();
 		LineRenderer line = go.AddComponent<LineRenderer>();
@@ -130,6 +130,7 @@ public class Pacman : MonoBehaviour {
 		line.widthMultiplier = 0.06f;
 		line.material = new Material(Shader.Find("Sprites/Default"));
 		line.material.color = color;
+		line.enabled = visible;
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
 		return go;
