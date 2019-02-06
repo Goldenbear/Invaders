@@ -32,7 +32,7 @@ public class Pacman : MonoBehaviour {
 	Vector3[] ghostStarts = new Vector3[4];
 	int[] ghostdir = new int[4];
 	int[] ghostState = new int[4];
-	int[][] sideTry = { new int[3], new int[3], new int[3], new int[3] };     // An attempt to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
+	int[][] ghostSideTry = { new int[3], new int[3], new int[3], new int[3] };     // Ghosts' attempts to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
 	GameObject ghostExit;
 	List<GameObject> fruit = new List<GameObject>();
 	float fruitTime = 0f;
@@ -188,16 +188,16 @@ public class Pacman : MonoBehaviour {
 		pacman.transform.position = new Vector3((pacdir == 0) || (pacdir >= 3) ? MazeJToX(XToMazeJ(newPacX)) : newPacX, pacdir <= 2 ? MazeIToY(YToMazeI(newPacY)) : newPacY, 0);
 		Collider[] hits = Physics.OverlapBox(pacman.GetComponent<Collider>().bounds.center, pacman.GetComponent<Collider>().bounds.extents, pacman.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<5)+(1<<6)+(1<<7)+(1<<8)+(1<<9)+(1<<10));
 		for(int h=0; (hits != null) && (h < hits.Length); h++) {
-			if(hits[h].gameObject.layer == 1) {
+			if(hits[h].gameObject.layer == 1) {												// Pill
 				hits[h].gameObject.SetActive(false);
 				pills.Remove(hits[h].gameObject);
 				Score(10);
 			}
-			else if( (hits[h].gameObject.layer == 3) || (hits[h].gameObject.layer == 9) ) {
+			else if( (hits[h].gameObject.layer == 3) || (hits[h].gameObject.layer == 9) ) {	// Wall
 				pacdir = 0;
 				pacman.transform.position = new Vector3(MazeJToX(XToMazeJ(newPacX)), MazeIToY(YToMazeI(newPacY)), 0);
 			}
-			else if( (hits[h].gameObject.layer >= 4) && (hits[h].gameObject.layer <= 7) ) {
+			else if( (hits[h].gameObject.layer >= 4) && (hits[h].gameObject.layer <= 7) ) {	// Ghost
 				if(ghostState[hits[h].gameObject.layer-4] == 0)
 					KillPlayer();
 				else if(ghostState[hits[h].gameObject.layer-4] == 1) {
@@ -206,7 +206,7 @@ public class Pacman : MonoBehaviour {
 					ghostState[hits[h].gameObject.layer-4] = 2;
 				}
 			}
-			else if(hits[h].gameObject.layer == 8) {
+			else if(hits[h].gameObject.layer == 8) {										// Power pill
 				hits[h].gameObject.SetActive(false);
 				pills.Remove(hits[h].gameObject);
 				Score(50);
@@ -215,7 +215,7 @@ public class Pacman : MonoBehaviour {
 				for (int g=0; g<ghosts.Length; g++)
 					ghostState[g] = 1;
 			}
-			else if(hits[h].gameObject.layer == 10) {
+			else if(hits[h].gameObject.layer == 10) {										// Fruit
 				hits[h].gameObject.SetActive(false);
 				fruit.Remove(hits[h].gameObject);
 				Score( level == 1 ? 100 : level == 2 ? 300 : level <= 4 ? 500 : level <= 6 ? 700 : level <= 8 ? 1000 : level <= 10 ? 2000 : level <= 12 ? 3000 : 5000 );
@@ -229,12 +229,12 @@ public class Pacman : MonoBehaviour {
 			ghosts[g].transform.position = new Vector3(ghostdir[g] >= 3 ? MazeJToX(XToMazeJ(newX)) : newX, ghostdir[g] <= 2 ? MazeIToY(YToMazeI(newY)) : newY, 0);
 			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = (ghostState[g] == 1) ? ( (Time.time < (blueTime-2.5f)) || ((Time.time % 0.5f) < 0.25f) ) ? Color.blue : Color.white : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.6f, 0.6f, 1f) : new Color(1f, 0.6f, 0f, 1f);
 			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
-			if (NearCellCentre(ghosts[g].transform.position) && ((YToMazeI(newY) != sideTry[g][1]) || (XToMazeJ(newX) != sideTry[g][2]))) { // if not attempted sideways move this cell then try it
-				sideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
-				sideTry[g][1] = YToMazeI(newY);
-				sideTry[g][2] = XToMazeJ(newX);
-				if((sideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && (wallChars.IndexOf( MazeChar(sideTry[g][1], sideTry[g][2], sideTry[g][0]) ) == -1) )
-					ghostdir[g] = sideTry[g][0];
+			if (NearCellCentre(ghosts[g].transform.position) && ((YToMazeI(newY) != ghostSideTry[g][1]) || (XToMazeJ(newX) != ghostSideTry[g][2]))) { // if not attempted sideways move this cell then try it
+				ghostSideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
+				ghostSideTry[g][1] = YToMazeI(newY);
+				ghostSideTry[g][2] = XToMazeJ(newX);
+				if((ghostSideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && (wallChars.IndexOf( MazeChar(ghostSideTry[g][1], ghostSideTry[g][2], ghostSideTry[g][0]) ) == -1) )
+					ghostdir[g] = ghostSideTry[g][0];
 			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
 			for (int h = 0; (ghostHits != null) && (h < ghostHits.Length); h++) {
