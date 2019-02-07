@@ -2,9 +2,7 @@
 using UnityEngine.UI;
 using System.Collections.Generic;
 public class Pacman : MonoBehaviour {
-	static int score = 0;
-	static int lives = 2;
-	static int level = 1;
+	static int score = 0, lives = 2, level = 1;
 	string[] maze = new string[] {	"[------------][------------]","|111111111111||111111111111|","|1[--]1[---]1||1[---]1[--]1|","|8|  |1|   |1||1|   |1|  |8|","|1<-->1<--->1<>1<--->1<-->1|",
 									"|11111111111111111111111111|","|1[--]1[]1[------]1[]1[--]1|","|1<-->1||1<--][-->1||1<-->1|","|111111||1111||1111||111111|","<----]1|<--]0||0[-->|1[---->",
 									"00000|1|[-->0<>0<--]|1|00000","00000|1||0000400000||1|00000","00000|1||0[--00--]0||1|00000","----->1<>0|000000|0<>1<-----","0000001000|506070|0001000000",
@@ -28,24 +26,20 @@ public class Pacman : MonoBehaviour {
 	int[] pacDTris   = new int[] {0, 12, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	Vector3[] ghostVerts = { new Vector3(0f, 0f, -1f), new Vector3(-0.5f, -0.1f, -1f), new Vector3(-0.5f, 0.1f, -1f), new Vector3(-0.35f, 0.35f, -1f), new Vector3(-0.1f, 0.5f, -1f), new Vector3(0.1f, 0.5f, -1f), new Vector3(0.35f, 0.35f, -1f), new Vector3(0.5f, 0.1f, -1f), new Vector3(0.5f, -0.1f, -1f), new Vector3(0.5f, -0.5f, -1f), new Vector3(0.25f, -0.35f, -1f), new Vector3(0f, -0.5f, -1f), new Vector3(-0.25f, -0.35f, -1f), new Vector3(-0.5f, -0.5f, -1f) };
 	int[] ghostTris = new int[] {0, 13, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 12, 13, 0, 3, 4, 0, 4, 5, 0, 5, 6};
+	int[] ghostEyesTris = new int[] { 0, 3, 4, 0, 5, 6 };
 	List<GameObject> pills = new List<GameObject>();
-	GameObject pacman;
-	Vector3 pacStart;
-	int pacdir = 0;
-	GameObject[] ghosts = new GameObject[4];
+	List<GameObject> fruit = new List<GameObject>();
+	GameObject pacman, ghostExit;
+	Vector3 pacStart, msgPos;
 	Vector3[] ghostStarts = new Vector3[4];
+	int pacdir = 0, blueScore = 200, gameState = 0;
+	float fruitTime = 0f, blueTime = 0f;
+	GameObject[] ghosts = new GameObject[4];
+	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
+	GameObject[] uiObjects = new GameObject[10];
 	int[] ghostdir = new int[4];
 	int[] ghostState = new int[4];
 	int[][] ghostSideTry = { new int[3], new int[3], new int[3], new int[3] };     // Ghosts' attempts to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
-	GameObject ghostExit;
-	List<GameObject> fruit = new List<GameObject>();
-	float fruitTime = 0f;
-	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
-	GameObject[] uiObjects = new GameObject[10];
-	Vector3 msgPos;
-	float blueTime = 0f;
-	int blueScore = 200;
-	int gameState = 0;
 	int XToMazeJ(float x) { return Mathf.RoundToInt((x + 4.5f) / 0.3f); }
 	int YToMazeI(float y) { return Mathf.RoundToInt((4.5f - y) / 0.3f); }
 	float MazeJToX(int j) { return -4.5f + (j * 0.3f); }
@@ -220,6 +214,7 @@ public class Pacman : MonoBehaviour {
 			}
 		}
 		for(int g=0; g<ghosts.Length; g++) {
+			ghosts[g].GetComponent<MeshFilter>().mesh.triangles = (ghostState[g] == 2) ? ghostEyesTris : ghostTris;
 			float newX = ghosts[g].transform.position.x + ((ghostState[g] == 2) ? 3f : 1f) * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
 			float newY = ghosts[g].transform.position.y + ((ghostState[g] == 2) ? 3f : 1f) * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
 			newX = newX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newX;    // Wrap around left-right
