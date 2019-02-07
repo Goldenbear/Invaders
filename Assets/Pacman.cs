@@ -90,7 +90,7 @@ public class Pacman : MonoBehaviour {
 		uiObjects[0].GetComponent<RectTransform>().localPosition = new Vector3(-4.5f, 4.8f, 0);
 		uiObjects[0].GetComponent<RectTransform>().sizeDelta = new Vector2(1000f, 1000f);
 		uiObjects[0].GetComponent<RectTransform>().localScale = new Vector3(0.01f, 0.01f, 1f);
-		for(int i=0; i<2; i++) {
+		for(int i=0; i<3; i++) {
 			uiObjects[1+i] = new GameObject("UIText");
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
 			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
@@ -145,10 +145,12 @@ public class Pacman : MonoBehaviour {
 			gameState = 2;                            // Player dead = game over
 		}
 	}
-	void Score(int add) {
+	void Score(int add, GameObject go=null) {
 		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
 		playerLives[lives].SetActive(true);
 		score += add;
+		uiObjects[3].GetComponent<RectTransform>().localPosition = go != null ? new Vector3((go.transform.position.x+4.5f)*100f, (go.transform.position.y-4.8f)*100f, 0f) : uiObjects[3].GetComponent<RectTransform>().localPosition;
+		uiObjects[3].GetComponent<Text>().text = go != null ? string.Format("{0}", add) : uiObjects[3].GetComponent<Text>().text;
 	}
 	int ChangeDirectionTo(GameObject objA, GameObject objB, int currDir, float randomness) {
 		Vector3 diff = objB.transform.position - objA.transform.position;
@@ -163,6 +165,7 @@ public class Pacman : MonoBehaviour {
 	void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
+		uiObjects[3].GetComponent<Text>().text = ((Time.time % 2f) < 1.9f) ? uiObjects[3].GetComponent<Text>().text : "";
 		if( (gameState == 0) || (gameState == 2) ) {
 			fruitTime = Time.time + 15f;
 			gameState = (gameState == 0) && Input.anyKeyDown ? 1 : gameState;
@@ -195,7 +198,7 @@ public class Pacman : MonoBehaviour {
 				if(ghostState[hits[h].gameObject.layer-4] == 0)
 					KillPlayer();
 				else if(ghostState[hits[h].gameObject.layer-4] == 1) {
-					Score(blueScore);
+					Score(blueScore, hits[h].gameObject);
 					blueScore *= 2;
 					ghostState[hits[h].gameObject.layer-4] = 2;
 				}
@@ -212,7 +215,7 @@ public class Pacman : MonoBehaviour {
 			else if(hits[h].gameObject.layer == 10) {										// Fruit
 				hits[h].gameObject.SetActive(false);
 				fruit.Remove(hits[h].gameObject);
-				Score( level == 1 ? 100 : level == 2 ? 300 : level <= 4 ? 500 : level <= 6 ? 700 : level <= 8 ? 1000 : level <= 10 ? 2000 : level <= 12 ? 3000 : 5000 );
+				Score( level == 1 ? 100 : level == 2 ? 300 : level <= 4 ? 500 : level <= 6 ? 700 : level <= 8 ? 1000 : level <= 10 ? 2000 : level <= 12 ? 3000 : 5000, hits[h].gameObject );
 				fruitTime = Time.time + 15f;
 			}
 		}
