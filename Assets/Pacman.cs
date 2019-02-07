@@ -165,7 +165,6 @@ public class Pacman : MonoBehaviour {
 	void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
-		uiObjects[3].GetComponent<Text>().text = ((Time.time % 2f) < 1.9f) ? uiObjects[3].GetComponent<Text>().text : "";
 		if( (gameState == 0) || (gameState == 2) ) {
 			fruitTime = Time.time + 15f;
 			gameState = (gameState == 0) && Input.anyKeyDown ? 1 : gameState;
@@ -175,6 +174,7 @@ public class Pacman : MonoBehaviour {
 			}
 			return;
 		}
+		uiObjects[3].GetComponent<Text>().text = (pacdir == 0) ? "" : uiObjects[3].GetComponent<Text>().text;
 		if(pacdir > 0)
 			pacman.GetComponent<MeshFilter>().mesh.triangles = ((Time.time % 0.2f) < 0.1f) ? (pacdir == 1 ? pacLTris : pacdir == 2 ? pacRTris : pacdir == 3 ? pacUTris : pacDTris) : sphereTris;
 		int trydir = Input.GetKey(KeyCode.LeftArrow) ? 1 : Input.GetKey(KeyCode.RightArrow) ? 2 : Input.GetKey(KeyCode.DownArrow) ? 3 : Input.GetKey(KeyCode.UpArrow) ? 4 : pacdir;
@@ -220,8 +220,8 @@ public class Pacman : MonoBehaviour {
 			}
 		}
 		for(int g=0; g<ghosts.Length; g++) {
-			float newX = ghosts[g].transform.position.x + ((ghostState[g] == 2) ? 2f : 1f) * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
-			float newY = ghosts[g].transform.position.y + ((ghostState[g] == 2) ? 2f : 1f) * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
+			float newX = ghosts[g].transform.position.x + ((ghostState[g] == 2) ? 3f : 1f) * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
+			float newY = ghosts[g].transform.position.y + ((ghostState[g] == 2) ? 3f : 1f) * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
 			newX = newX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newX;    // Wrap around left-right
 			ghosts[g].transform.position = new Vector3(ghostdir[g] >= 3 ? MazeJToX(XToMazeJ(newX)) : newX, ghostdir[g] <= 2 ? MazeIToY(YToMazeI(newY)) : newY, 0);
 			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = (ghostState[g] == 1) ? ( (Time.time < (blueTime-2.5f)) || ((Time.time % 0.5f) < 0.25f) ) ? Color.blue : Color.white : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.8f, 1f, 1f) : new Color(1f, 0.6f, 0f, 1f);
