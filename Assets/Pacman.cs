@@ -66,7 +66,7 @@ public class Pacman : MonoBehaviour {
 					case '6': ghosts[2] = CreateMeshObject("Pinky", ghostVerts, ghostTris, j, i, 0.4f, 6, new Color(1f, 0.8f, 1f, 1f)); break;
 					case '7': ghosts[3] = CreateMeshObject("Clyde", ghostVerts, ghostTris, j, i, 0.4f, 7, new Color(1f, 0.6f, 0f, 1f)); break;
 					case '8': pills.Add( CreateMeshObject("Power", sphereVerts, sphereTris, j, i, 0.3f, 8, new Color(1f, 0.6f, 0.4f, 1f)) ); break;
-					case '9': ghostExit = CreateVectorObject("GhostExit", wallH, j, i, 0.3f, 0.3f, 0.3f, 9, Color.black, true, false); break;
+					case '9': ghostExit = CreateVectorObject("GhostExit", wallH, j, i, 0.15f, 0.15f, 0.3f, 9, Color.black, true, false); break;
 					case '|': CreateVectorObject("WallV", wallV, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
 					case '-': CreateVectorObject("WallH", wallH, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
 					case '[': CreateVectorObject("WallTL", wallTL, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
@@ -165,7 +165,7 @@ public class Pacman : MonoBehaviour {
 		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
 		if( (gameState == 0) || (gameState == 2) ) {
 			fruitTime = Time.time + 15f;
-			gameState = (gameState == 0) && Input.GetKeyDown(KeyCode.Space) ? 1 : gameState;
+			gameState = (gameState == 0) && Input.anyKeyDown ? 1 : gameState;
 			if ((gameState == 2) && Input.GetKeyDown(KeyCode.Space)) {
 				score = 0; lives = 2; level = 1;
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");      // Reload scene and reset score, lives & level for a new game
