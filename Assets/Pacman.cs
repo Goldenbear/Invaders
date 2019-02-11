@@ -84,13 +84,13 @@ public class Pacman : MonoBehaviour {
 		uiObjects[0].GetComponent<RectTransform>().localPosition = new Vector3(-4.5f, 4.8f, 0);
 		uiObjects[0].GetComponent<RectTransform>().sizeDelta = new Vector2(1000f, 1000f);
 		uiObjects[0].GetComponent<RectTransform>().localScale = new Vector3(0.01f, 0.01f, 1f);
-		for(int i=0; i<3; i++) {
+		for(int i=0; i<4; i++) {
 			uiObjects[1+i] = new GameObject("UIText");
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
 			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = 30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(100f, 0f, 0) : new Vector3((msgPos.x+4.5f)*100f, (msgPos.y-4.8f)*100f, 0f);
+			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i <= 1 ? new Vector3(100f+i*300f, 0f, 0) : new Vector3((msgPos.x+4.5f)*100f, (msgPos.y-4.8f)*100f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().localScale = new Vector3(1f, 1f, 1f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
 		}
@@ -143,8 +143,9 @@ public class Pacman : MonoBehaviour {
 		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
 		playerLives[lives].SetActive(true);
 		score += add;
-		uiObjects[3].GetComponent<RectTransform>().localPosition = go != null ? new Vector3((go.transform.position.x+4.5f)*100f, (go.transform.position.y-4.8f)*100f, 0f) : uiObjects[3].GetComponent<RectTransform>().localPosition;
-		uiObjects[3].GetComponent<Text>().text = go != null ? string.Format("{0}", add) : uiObjects[3].GetComponent<Text>().text;
+		PlayerPrefs.SetInt("HighScore", score > PlayerPrefs.GetInt("HighScore") ? score : PlayerPrefs.GetInt("HighScore"));
+		uiObjects[4].GetComponent<RectTransform>().localPosition = go != null ? new Vector3((go.transform.position.x+4.5f)*100f, (go.transform.position.y-4.8f)*100f, 0f) : uiObjects[4].GetComponent<RectTransform>().localPosition;
+		uiObjects[4].GetComponent<Text>().text = go != null ? string.Format("{0}", add) : uiObjects[4].GetComponent<Text>().text;
 	}
 	int ChangeDirectionTo(GameObject objA, GameObject objB, int currDir, float randomness) {
 		Vector3 diff = objB.transform.position - objA.transform.position;
@@ -158,7 +159,8 @@ public class Pacman : MonoBehaviour {
 	}
 	void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
-		uiObjects[2].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
+		uiObjects[2].GetComponent<Text>().text = string.Format("{0:00000}", PlayerPrefs.GetInt("HighScore"));
+		uiObjects[3].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
 		if( (gameState == 0) || (gameState == 2) ) {
 			fruitTime = Time.time + 15f;
 			gameState = (gameState == 0) && Input.anyKeyDown ? 1 : gameState;
@@ -168,7 +170,7 @@ public class Pacman : MonoBehaviour {
 			}
 			return;
 		}
-		uiObjects[3].GetComponent<Text>().text = (pacdir == 0) ? "" : uiObjects[3].GetComponent<Text>().text;
+		uiObjects[4].GetComponent<Text>().text = (pacdir == 0) ? "" : uiObjects[4].GetComponent<Text>().text;
 		if(pacdir > 0)
 			pacman.GetComponent<MeshFilter>().mesh.triangles = ((Time.time % 0.2f) < 0.1f) ? (pacdir == 1 ? pacLTris : pacdir == 2 ? pacRTris : pacdir == 3 ? pacUTris : pacDTris) : sphereTris;
 		int trydir = Input.GetKey(KeyCode.LeftArrow) ? 1 : Input.GetKey(KeyCode.RightArrow) ? 2 : Input.GetKey(KeyCode.DownArrow) ? 3 : Input.GetKey(KeyCode.UpArrow) ? 4 : pacdir;
