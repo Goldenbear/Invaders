@@ -10,14 +10,15 @@ public class Pacman : MonoBehaviour {
 									"|111111111111||111111111111|","|1[--]1[---]1||1[---]1[--]1|","|1<-]|1<--->1<>1<--->1|[->1|","|811||1111111211111111||118|","<-]1||1[]1[------]1[]1||1[->",
 									"[->1<>1||1<--][-->1||1<>1<-]","|111111||1111||1111||111111|","|1[----><--]1||1[--><----]1|","|1<-------->1<>1<-------->1|","|11111111111111111111111111|","<-------------------------->"};
 	string wallChars = "|-[]<>";
+	Color[] fruitColors = { new Color(0.5f, 0f, 0f, 1f), new Color(1f, 0.6f, 0f, 1f), new Color(1f, 0f, 0f, 1f), new Color(0f, 1f, 0f, 1f), new Color(0f, 0f, 1f, 1f), new Color(1f, 0.9f, 0f, 1f), new Color(1f, 1f, 0f, 1f) };
 	Vector3[] wallV = { new Vector3(0f, -1f, 0f), new Vector3(0f, 1f, 0f) };
 	Vector3[] wallH = { new Vector3(-1f, 0f, 0f), new Vector3(1f, 0f, 0f) };
 	Vector3[] wallTL = { new Vector3(0f, -1f, 0f), new Vector3(0f, -0.7f, 0f), new Vector3(0.2f, -0.2f, 0f), new Vector3(0.7f, 0f, 0f), new Vector3(1f, 0f, 0f) };
 	Vector3[] wallTR = { new Vector3(0f, -1f, 0f), new Vector3(0f, -0.7f, 0f), new Vector3(-0.2f, -0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
 	Vector3[] wallBL = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(0.2f, 0.2f, 0f), new Vector3(0.7f, 0f, 0f), new Vector3(1f, 0f, 0f) };
 	Vector3[] wallBR = { new Vector3(0f, 1f, 0f), new Vector3(0f, 0.7f, 0f), new Vector3(-0.2f, 0.2f, 0f), new Vector3(-0.7f, 0f, 0f), new Vector3(-1f, 0f, 0f) };
-	Vector3[] strawbVerts = { new Vector3(0f, -1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(-1f, 0.5f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0f, 0.8f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(1f, 0.5f, 0f), new Vector3(1f, 0f, 0f) };
-	int[] strawbTris = new int[] {0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 7};
+	Vector3[] strawbVerts = { new Vector3(0f, -1f, 0f), new Vector3(-0.3f, -0.9f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(-1f, 0.5f, 0f), new Vector3(-0.5f, 1f, 0f), new Vector3(0f, 0.8f, 0f), new Vector3(0.5f, 1f, 0f), new Vector3(1f, 0.5f, 0f), new Vector3(1f, 0f, 0f), new Vector3(0.3f, -0.9f, 0f) };
+	int[] strawbTris = new int[] {0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 7, 0, 7, 8, 0, 8, 9};
 	Vector3[] sphereVerts = { new Vector3(0f, 0f, 0f), new Vector3(-0.5f, -0.1f, 0f), new Vector3(-0.5f, 0.1f, 0f), new Vector3(-0.35f, 0.35f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.35f, 0f), new Vector3(0.5f, 0.1f, 0f), new Vector3(0.5f, -0.1f, 0f), new Vector3(0.35f, -0.35f, 0f), new Vector3(0.1f, -0.5f, 0f), new Vector3(-0.1f, -0.5f, 0f), new Vector3(-0.35f, -0.35f, 0f) };
 	int[] sphereTris = new int[] {0, 12, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 3, 4, 0, 4, 5, 0, 5, 6};
 	int[] pacLTris   = new int[] {0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 3, 4, 0, 4, 5, 0, 5, 6};
@@ -71,7 +72,7 @@ public class Pacman : MonoBehaviour {
 			}
 		pacStart = pacman.transform.position;
 		for(int i=0; i<2; i++)
-			fruit.Add( CreateMeshObject("Fruit", strawbVerts, strawbTris, XToMazeJ(msgPos.x-0.15f), YToMazeI(msgPos.y), 0.2f, 10, new Color(0.5f, 0f, 0f, 1f), false, true, 0.15f) );
+			fruit.Add( CreateMeshObject("Fruit", strawbVerts, strawbTris, XToMazeJ(msgPos.x-0.15f), YToMazeI(msgPos.y), 0.2f, 10, fruitColors[System.Math.Min((level-1)/2, fruitColors.Length-1)], false, true, 0.15f) );
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
