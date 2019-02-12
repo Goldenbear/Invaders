@@ -34,7 +34,7 @@ public class Pacman : MonoBehaviour {
 	Vector3 pacStart, msgPos;
 	Vector3[] ghostStarts = new Vector3[4];
 	int pacdir = 0, blueScore = 200, gameState = 0;
-	float fruitTime = 0f, blueTime = 0f;
+	float fruitTime = 0f, blueTime = 0f, pauseTime = 0f;
 	GameObject[] ghosts = new GameObject[4];
 	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
 	GameObject[] uiObjects = new GameObject[10];
@@ -171,6 +171,7 @@ public class Pacman : MonoBehaviour {
 			}
 			return;
 		}
+		Time.timeScale = Time.realtimeSinceStartup > pauseTime ? 1f : 0f;
 		uiObjects[4].GetComponent<Text>().text = (pacdir == 0) ? "" : uiObjects[4].GetComponent<Text>().text;
 		if(pacdir > 0)
 			pacman.GetComponent<MeshFilter>().mesh.triangles = ((Time.time % 0.2f) < 0.1f) ? (pacdir == 1 ? pacLTris : pacdir == 2 ? pacRTris : pacdir == 3 ? pacUTris : pacDTris) : sphereTris;
@@ -198,6 +199,7 @@ public class Pacman : MonoBehaviour {
 					Score(blueScore, hits[h].gameObject);
 					blueScore *= 2;
 					ghostState[hits[h].gameObject.layer-4] = 2;
+					pauseTime = Time.realtimeSinceStartup + 0.5f;
 				}
 			}
 			else if(hits[h].gameObject.layer == 8) {										// Power pill
