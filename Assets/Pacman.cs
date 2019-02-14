@@ -224,18 +224,18 @@ public class Pacman : MonoBehaviour {
 			newX = newX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newX;    // Wrap around left-right
 			ghosts[g].transform.position = new Vector3(ghostdir[g] >= 3 ? MazeJToX(XToMazeJ(newX)) : newX, ghostdir[g] <= 2 ? MazeIToY(YToMazeI(newY)) : newY, 0);
 			ghosts[g].GetComponent<MeshRenderer>().materials[0].color = (ghostState[g] == 1) ? ( (Time.time < (blueTime-2.5f)) || ((Time.time % 0.5f) < 0.25f) ) ? Color.blue : Color.white : ghostState[g] == 2 ? Color.white : g == 0 ? Color.red : g == 1 ? Color.cyan : g == 2 ? new Color(1f, 0.8f, 1f, 1f) : new Color(1f, 0.6f, 0f, 1f);
-			ghostState[g] = Time.time > blueTime ? 0 : ghostState[g];
+			ghostState[g] = ((ghostState[g] != 2) && (Time.time > blueTime)) ? 0 : ghostState[g];
 			if (NearCellCentre(ghosts[g].transform.position) && ((YToMazeI(newY) != ghostSideTry[g][1]) || (XToMazeJ(newX) != ghostSideTry[g][2]))) { // if not attempted sideways move this cell then try it
-				ghostSideTry[g][0] = ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
+				ghostSideTry[g][0] = ChangeDirectionTo(ghosts[g], (ghostState[g] == 0) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
 				ghostSideTry[g][1] = YToMazeI(newY);
 				ghostSideTry[g][2] = XToMazeJ(newX);
-				if((ghostSideTry[g][0] == DirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit)) && (wallChars.IndexOf( MazeChar(ghostSideTry[g][1], ghostSideTry[g][2], ghostSideTry[g][0]) ) == -1) )
+				if((ghostSideTry[g][0] == DirectionTo(ghosts[g], (ghostState[g] == 0) ? pacman : ghostExit)) && (wallChars.IndexOf( MazeChar(ghostSideTry[g][1], ghostSideTry[g][2], ghostSideTry[g][0]) ) == -1) )
 					ghostdir[g] = ghostSideTry[g][0];
 			}
 			Collider[] ghostHits = Physics.OverlapBox(ghosts[g].GetComponent<Collider>().bounds.center, ghosts[g].GetComponent<Collider>().bounds.extents, ghosts[g].transform.rotation, (1<<3)+(1<<9));
 			for (int h = 0; (ghostHits != null) && (h < ghostHits.Length); h++) {
 				ghostState[g] = (ghostHits[h].gameObject.layer == 9) ? 0 : ghostState[g];
-				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
+				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (ghostState[g] == 0) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
 			}
 			ghosts[g].transform.GetChild(0).localPosition = new Vector3(ghostdir[g] == 1 ? -0.05f : ghostdir[g] == 2 ? 0.05f : 0f, ghostdir[g] == 3 ? -0.05f : ghostdir[g] == 4 ? 0.05f : 0f, 0f);
 			ghosts[g].transform.GetChild(0).GetChild(0).localPosition = new Vector3(ghostdir[g] == 1 ? -0.05f : ghostdir[g] == 2 ? 0.05f : 0f, ghostdir[g] == 3 ? -0.1f : ghostdir[g] == 4 ? 0.1f : 0f, 0f);
