@@ -27,19 +27,18 @@ public class Pacman : MonoBehaviour {
 	int[] pacDTris   = new int[] {0, 12, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	Vector3[] ghostVerts = { new Vector3(0f, 0f, -1f), new Vector3(-0.5f, -0.1f, -1f), new Vector3(-0.5f, 0.1f, -1f), new Vector3(-0.35f, 0.35f, -1f), new Vector3(-0.1f, 0.5f, -1f), new Vector3(0.1f, 0.5f, -1f), new Vector3(0.35f, 0.35f, -1f), new Vector3(0.5f, 0.1f, -1f), new Vector3(0.5f, -0.1f, -1f), new Vector3(0.5f, -0.5f, -1f), new Vector3(0.25f, -0.35f, -1f), new Vector3(0f, -0.5f, -1f), new Vector3(-0.25f, -0.35f, -1f), new Vector3(-0.5f, -0.5f, -1f) };
 	int[] ghostTris = new int[] {0, 13, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 12, 13, 0, 3, 4, 0, 4, 5, 0, 5, 6};
-	int[] ghostEyesTris = new int[] { 0, 3, 4, 0, 5, 6 };
-	List<GameObject> pills = new List<GameObject>();
-	List<GameObject> fruit = new List<GameObject>();
+	Vector3[] eyesVerts = { new Vector3(-0.35f, 0.1f, -3f), new Vector3(-0.35f, 0.25f, -3f), new Vector3(-0.3f, 0.35f, -3f), new Vector3(-0.15f, 0.35f, 0f), new Vector3(-0.1f, 0.25f, -2f), new Vector3(-0.1f, 0.1f, -2f), new Vector3(-0.15f, 0f, -2f), new Vector3(-0.3f, 0f, -2f), new Vector3(0.1f, 0.1f, -3f), new Vector3(0.1f, 0.25f, -3f), new Vector3(0.15f, 0.35f, -3f), new Vector3(0.3f, 0.35f, 0f), new Vector3(0.35f, 0.25f, -2f), new Vector3(0.35f, 0.1f, -2f), new Vector3(0.3f, 0f, -2f), new Vector3(0.15f, 0f, -2f) };
+	int[] eyesTris = new int[] {0, 1, 4, 0, 4, 5, 1, 2, 3, 1, 3, 4, 0, 5, 6, 0, 6, 7, 8, 9, 12, 8, 12, 13, 9, 10, 11, 9, 11, 12, 8, 13, 14, 8, 14, 15};
+	Vector3[] pupilVerts = { new Vector3(-0.3f, 0.1f, -4f), new Vector3(-0.15f, 0.1f, -4f), new Vector3(-0.15f, 0.25f, -4f), new Vector3(-0.3f, 0.25f, -4f), new Vector3(0.15f, 0.1f, -4f), new Vector3(0.3f, 0.1f, -4f), new Vector3(0.3f, 0.25f, -4f), new Vector3(0.15f, 0.25f, -4f) };
+	int[] pupilTris = new int[] {0, 1, 2, 0, 3, 2, 4, 5, 6, 4, 7, 6};
+	List<GameObject> pills = new List<GameObject>(), fruit = new List<GameObject>();
 	GameObject pacman, ghostExit;
 	Vector3 pacStart, msgPos;
 	Vector3[] ghostStarts = new Vector3[4];
 	int pacdir = 0, blueScore = 200, gameState = 0;
 	float fruitTime = 0f, blueTime = 0f, pauseTime = 0f;
-	GameObject[] ghosts = new GameObject[4];
-	GameObject[] playerLives = new GameObject[20];  // Max 20 lives
-	GameObject[] uiObjects = new GameObject[10];
-	int[] ghostdir = new int[4];
-	int[] ghostState = new int[4];
+	GameObject[] ghosts = new GameObject[4], playerLives = new GameObject[20], uiObjects = new GameObject[10];
+	int[] ghostdir = new int[4], ghostState = new int[4];
 	int[][] ghostSideTry = { new int[3], new int[3], new int[3], new int[3] };     // Ghosts' attempts to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
 	int XToMazeJ(float x) { return Mathf.RoundToInt((x + 4.5f) / 0.3f); }
 	int YToMazeI(float y) { return Mathf.RoundToInt((4.5f - y) / 0.3f); }
@@ -76,6 +75,8 @@ public class Pacman : MonoBehaviour {
 		for(int g=0; g<ghosts.Length; g++) {
 			ghostStarts[g] = ghosts[g].transform.position;
 			ghostdir[g] = 1 + (int)(Random.value * 3.9999f);
+			CreateMeshObject("Eyes", eyesVerts, eyesTris, XToMazeJ(ghosts[g].transform.position.x), YToMazeI(ghosts[g].transform.position.y), 0.4f, 0, Color.white).transform.parent = ghosts[g].transform;
+			CreateMeshObject("Pupils", pupilVerts, pupilTris, XToMazeJ(ghosts[g].transform.position.x), YToMazeI(ghosts[g].transform.position.y), 0.4f, 0, Color.blue).transform.parent = ghosts[g].transform.GetChild(0);
 		}
 		for (int i = 0; i < playerLives.Length; i++)
 			playerLives[i] = CreateMeshObject("Life", sphereVerts, pacLTris, 3+(i*2), maze.Length, 0.4f, 2, Color.yellow, (i <= lives));
@@ -96,36 +97,34 @@ public class Pacman : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
 		}
     }
-	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, int x, int y, float size, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
-		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-		go.name = label;
-		go.SetActive(active);
-		go.layer = layer;
-		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, zOffset);
-		go.transform.localScale = new Vector3(size, size, size);
-		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
-		go.GetComponent<MeshRenderer>().materials[0].color = color;
-		go.GetComponent<MeshRenderer>().enabled = visible;
-		go.GetComponent<MeshFilter>().mesh = new Mesh();
-		go.GetComponent<MeshFilter>().mesh.vertices = verts;
-		go.GetComponent<MeshFilter>().mesh.triangles = tris;
-		return go;
-	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
-		GameObject go = new GameObject(label);
+	void SetupObject(GameObject go, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		go.SetActive(active);
 		go.layer = layer;
 		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, zOffset);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
+		go.GetComponent<Renderer>().material.color = color;
+		go.GetComponent<Renderer>().enabled = visible;
+	}
+	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, int x, int y, float size, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
+		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+		go.name = label;
+		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+		go.GetComponent<MeshFilter>().mesh = new Mesh();
+		go.GetComponent<MeshFilter>().mesh.vertices = verts;
+		go.GetComponent<MeshFilter>().mesh.triangles = tris;
+		SetupObject(go, x, y, size, size, size, layer, color, active, visible, xOffset, yOffset, zOffset);
+		return go;
+	}
+	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
+		GameObject go = new GameObject(label);
 		go.AddComponent<BoxCollider>();
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
 		line.widthMultiplier = 0.06f;
 		line.material = new Material(Shader.Find("Sprites/Default"));
-		line.material.color = color;
-		line.enabled = visible;
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
+		SetupObject(go, x, y, sX, sY, sZ, layer, color, active, visible, xOffset, yOffset, zOffset);
 		return go;
 	}
 	void KillPlayer() {
@@ -219,7 +218,7 @@ public class Pacman : MonoBehaviour {
 			}
 		}
 		for(int g=0; g<ghosts.Length; g++) {
-			ghosts[g].GetComponent<MeshFilter>().mesh.triangles = (ghostState[g] == 2) ? ghostEyesTris : ghostTris;
+			ghosts[g].GetComponent<MeshRenderer>().enabled = (ghostState[g] != 2);
 			float newX = ghosts[g].transform.position.x + ((ghostState[g] == 2) ? 3f : 1f) * Time.deltaTime * (ghostdir[g] == 1 ? -1f : ghostdir[g] == 2 ? 1f : 0f);
 			float newY = ghosts[g].transform.position.y + ((ghostState[g] == 2) ? 3f : 1f) * Time.deltaTime * (ghostdir[g] == 3 ? -1f : ghostdir[g] == 4 ? 1f : 0f);
 			newX = newX < MazeJToX(0) ? MazeJToX(maze[0].Length - 1) : newX > MazeJToX(maze[0].Length - 1) ? MazeJToX(0) : newX;    // Wrap around left-right
@@ -238,9 +237,10 @@ public class Pacman : MonoBehaviour {
 				ghostState[g] = (ghostHits[h].gameObject.layer == 9) ? 0 : ghostState[g];
 				ghostdir[g] = (ghostHits[h].gameObject.layer == 9) ? 4 : ChangeDirectionTo(ghosts[g], (Time.time > blueTime) ? pacman : ghostExit, ghostdir[g], (ghostState[g] == 2) ? 0.25f : 0.25f + (g * 0.25f));
 			}
+			ghosts[g].transform.GetChild(0).localPosition = new Vector3(ghostdir[g] == 1 ? -0.05f : ghostdir[g] == 2 ? 0.05f : 0f, ghostdir[g] == 3 ? -0.05f : ghostdir[g] == 4 ? 0.05f : 0f, 0f);
+			ghosts[g].transform.GetChild(0).GetChild(0).localPosition = new Vector3(ghostdir[g] == 1 ? -0.05f : ghostdir[g] == 2 ? 0.05f : 0f, ghostdir[g] == 3 ? -0.1f : ghostdir[g] == 4 ? 0.1f : 0f, 0f);
 		}
-		if(Time.time > fruitTime)
-			if(fruit.Count > 0)
+		if( (Time.time > fruitTime) && (fruit.Count > 0) )
 				fruit[0].gameObject.SetActive(true);		// Activate next fruit if any remaining
 		if (pills.Count == 0) {
 			level++;
