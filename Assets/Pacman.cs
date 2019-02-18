@@ -47,10 +47,12 @@ public class Pacman : MonoBehaviour {
 	bool NearCellCentre(Vector3 pos) { return (pos - new Vector3(MazeJToX(XToMazeJ(pos.x)), MazeIToY(YToMazeI(pos.y)), 0f)).magnitude < 0.05f; }
 	char MazeChar(int i, int j) { return (i >= 0) && (i < maze.Length) && (j >= 0) && (j < maze[0].Length) ? maze[i][j] : (char)0; }
 	char MazeChar(int i, int j, int dir) { return (dir == 1) ? MazeChar(i, j - 1) : (dir == 2) ? MazeChar(i, j + 1) : (dir == 3) ? MazeChar(i + 1, j) : MazeChar(i - 1, j); }
+	int MouseDir { get { return Input.GetMouseButton(0) ? ((Input.mousePosition.y > Screen.width/3) ? 4 : (Input.mousePosition.x < Screen.width/3) ? 1 : (Input.mousePosition.x > Screen.width*2/3) ? 2 : 3) : 0; } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
+		gameObject.GetComponent<Camera>().orthographicSize = ((float)Screen.height/(float)Screen.width) >= 2f ? 10f : 6f;
         for(int i=0; i<maze.Length; i++)
-			for(int j=0; j<maze[i].Length; j++) {
+			for(int j=0; j<maze[i].Length; j++)
 				switch (maze[i][j]) {
 					case '1': pills.Add( CreateMeshObject("Pill", sphereVerts, sphereTris, j, i, 0.1f, 1, new Color(1f, 0.6f, 0.4f, 1f)) ); break;
 					case '2': pacman = CreateMeshObject("Pacman", sphereVerts, pacLTris, j, i, 0.4f, 2, Color.yellow); break;
@@ -68,7 +70,6 @@ public class Pacman : MonoBehaviour {
 					case '<': CreateVectorObject("WallBL", wallBL, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
 					case '>': CreateVectorObject("WallBR", wallBR, j, i, 0.15f, 0.15f, 0.3f, 3, Color.blue); break;
 				}
-			}
 		pacStart = pacman.transform.position;
 		for(int i=0; i<2; i++)
 			fruit.Add( CreateMeshObject("Fruit", strawbVerts, strawbTris, XToMazeJ(msgPos.x-0.15f), YToMazeI(msgPos.y), 0.2f, 10, fruitColors[System.Math.Min((level-1)/2, fruitColors.Length-1)], false, true, 0.15f) );
@@ -97,13 +98,14 @@ public class Pacman : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
 		}
     }
-	void SetupObject(GameObject go, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
+	GameObject SetupObject(GameObject go, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		go.SetActive(active);
 		go.layer = layer;
 		go.transform.position = new Vector3(MazeJToX(x)+xOffset, MazeIToY(y)+yOffset, zOffset);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
+		return go;
 	}
 	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, int x, int y, float size, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -112,8 +114,7 @@ public class Pacman : MonoBehaviour {
 		go.GetComponent<MeshFilter>().mesh = new Mesh();
 		go.GetComponent<MeshFilter>().mesh.vertices = verts;
 		go.GetComponent<MeshFilter>().mesh.triangles = tris;
-		SetupObject(go, x, y, size, size, size, layer, color, active, visible, xOffset, yOffset, zOffset);
-		return go;
+		return SetupObject(go, x, y, size, size, size, layer, color, active, visible, xOffset, yOffset, zOffset);
 	}
 	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		GameObject go = new GameObject(label);
@@ -124,8 +125,7 @@ public class Pacman : MonoBehaviour {
 		line.material = new Material(Shader.Find("Sprites/Default"));
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
-		SetupObject(go, x, y, sX, sY, sZ, layer, color, active, visible, xOffset, yOffset, zOffset);
-		return go;
+		return SetupObject(go, x, y, sX, sY, sZ, layer, color, active, visible, xOffset, yOffset, zOffset);
 	}
 	void KillPlayer() {
 		playerLives[lives].SetActive(false);
@@ -163,8 +163,8 @@ public class Pacman : MonoBehaviour {
 		uiObjects[3].GetComponent<Text>().text = gameState == 0 ? "READY!" : gameState == 2 ? "GAME OVER" : "";
 		if( (gameState == 0) || (gameState == 2) ) {
 			fruitTime = Time.time + 15f;
-			gameState = (gameState == 0) && Input.anyKeyDown ? 1 : gameState;
-			if ((gameState == 2) && Input.GetKeyDown(KeyCode.Space)) {
+			gameState = (gameState == 0) && (Input.anyKeyDown || Input.GetMouseButtonDown(0)) ? 1 : gameState;
+			if ((gameState == 2) && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)) ) {
 				score = 0; lives = 2; level = 1;
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");      // Reload scene and reset score, lives & level for a new game
 			}
@@ -174,7 +174,7 @@ public class Pacman : MonoBehaviour {
 		uiObjects[4].GetComponent<Text>().text = (pacdir == 0) ? "" : uiObjects[4].GetComponent<Text>().text;
 		if(pacdir > 0)
 			pacman.GetComponent<MeshFilter>().mesh.triangles = ((Time.time % 0.2f) < 0.1f) ? (pacdir == 1 ? pacLTris : pacdir == 2 ? pacRTris : pacdir == 3 ? pacUTris : pacDTris) : sphereTris;
-		int trydir = Input.GetKey(KeyCode.LeftArrow) ? 1 : Input.GetKey(KeyCode.RightArrow) ? 2 : Input.GetKey(KeyCode.DownArrow) ? 3 : Input.GetKey(KeyCode.UpArrow) ? 4 : pacdir;
+		int trydir = Input.GetKey(KeyCode.LeftArrow) ? 1 : Input.GetKey(KeyCode.RightArrow) ? 2 : Input.GetKey(KeyCode.DownArrow) ? 3 : Input.GetKey(KeyCode.UpArrow) ? 4 : MouseDir != 0 ? MouseDir : pacdir;
 		pacdir = NearCellCentre(pacman.transform.position) && (wallChars.IndexOf( MazeChar(YToMazeI(pacman.transform.position.y), XToMazeJ(pacman.transform.position.x), trydir) ) == -1) ? trydir : pacdir;
 		float newPacX = pacman.transform.position.x + 1.5f * Time.deltaTime * (pacdir == 1 ? -1f : pacdir == 2 ? 1f : 0f);
 		float newPacY = pacman.transform.position.y + 1.5f * Time.deltaTime * (pacdir == 3 ? -1f : pacdir == 4 ? 1f : 0f);
