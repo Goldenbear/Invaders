@@ -1,25 +1,44 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
 public class Defender : MonoBehaviour
 {
 	static int score = 0;
 	static int lives = 2;
 	static int level = 1;
-	GameObject player;
+	GameObject explosion, player;
 	List<GameObject> allObjects = new List<GameObject>();
 	Vector3[] playerVs = { new Vector3(-0.3f, 0f, 0f), new Vector3(0.3f, 0f, 0f), new Vector3(0f, 0.1f, 0f), new Vector3(-0.3f, 0.1f, 0f), new Vector3(-0.3f, 0f, 0f) };
 	Vector3[] bulletVs = { new Vector3(0f, 0f, 0f), new Vector3(1f, 0f, 0f) };
-	Vector3[] terrainVs = { new Vector3(-20f, 0f, 0f), new Vector3(-18f, 2f, 0f), new Vector3(-15f, 0f, 0f), new Vector3(-12f, 0f, 0f), new Vector3(-9f, 2f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(-3f, 0f, 0f), new Vector3(-2f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(2f, 0f, 0f), new Vector3(3f, 1f, 0f), new Vector3(4f, 0f, 0f), new Vector3(5f, 0f, 0f), new Vector3(8f, 3f, 0f), new Vector3(11f, 0f, 0f), new Vector3(15f, 0f, 0f), new Vector3(16.5f, 0.5f, 0f), new Vector3(17f, 0.3f, 0f), new Vector3(17.5f, 0.8f, 0f), new Vector3(18f, 0.6f, 0f), new Vector3(18.5f, 1.1f, 0f), new Vector3(19.5f, 0f, 0f), new Vector3(20f, 0f, 0f) };
+	Vector3[] terrainVs = { new Vector3(-20f, 0f, 0f), new Vector3(-18f, 2f, 0f), new Vector3(-15f, 0f, 0f), new Vector3(-12f, 0f, 0f), new Vector3(-9f, 2f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(-3f, 0f, 0f), new Vector3(-2f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(2f, 0f, 0f), new Vector3(3f, 1f, 0f), new Vector3(4f, 0f, 0f), new Vector3(5f, 0f, 0f), new Vector3(8f, 2f, 0f), new Vector3(11f, 0f, 0f), new Vector3(15f, 0f, 0f), new Vector3(16.5f, 0.5f, 0f), new Vector3(17f, 0.3f, 0f), new Vector3(17.5f, 0.8f, 0f), new Vector3(18f, 0.6f, 0f), new Vector3(18.5f, 1.1f, 0f), new Vector3(19.5f, 0f, 0f), new Vector3(20f, 0f, 0f) };
 	Vector3[] sqrVs = { new Vector3(-0.1f, -0.1f, 0f), new Vector3(-0.1f, 0.1f, 0f), new Vector3(0.1f, 0.1f, 0f), new Vector3(0.1f, -0.1f, 0f), new Vector3(-0.1f, -0.1f, 0f) };
 	float camOffset = 0f;
+	Canvas uiCanvas;
+	Text uiScore;
     void Start()
     {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
+		explosion = new GameObject("Explosion");
+		explosion.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+		explosion.AddComponent<ParticleSystem>().Pause();
+		explosion.GetComponent<ParticleSystemRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+		ParticleSystem.MainModule main = explosion.GetComponent<ParticleSystem>().main;
+		main.startSize = 0.025f;
+		main.startLifetime = 2f;
+		main.startSpeed = 10f;
+		main.scalingMode = ParticleSystemScalingMode.Shape;
 		allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 1f, 1f, 1f, 1, Color.white) );
-        allObjects.Add( CreateVectorObject("Terrain1", terrainVs, -10f, -4f, 0f, 1f, 1f, 1f, 0, Color.red) );
-        allObjects.Add( CreateVectorObject("Terrain2", terrainVs, -10f+40f, -4f, 0f, 1f, 1f, 1f, 0, Color.red) );
+        allObjects.Add( CreateVectorObject("Terrain1", terrainVs, -10f,     -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
+        allObjects.Add( CreateVectorObject("Terrain2", terrainVs, -10f+40f, -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
+		for(int i=0; i<100; i++)
+        	allObjects.Add( CreateVectorObject("Star", sqrVs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.1f, 0.1f, 0.1f, 0, new Color(Random.value, Random.value, Random.value, Random.value)) );
+		for(int i=0; i<10; i++)
+        	allObjects.Add( CreateVectorObject("Alien", sqrVs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 1f, 1f, 1f, 3, Color.green) );
+		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
+		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+		uiScore = uiCanvas.gameObject.AddComponent<Text>();
+		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+		uiScore.fontSize = 20;
     }
 
 	GameObject SetupObject(GameObject go, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible) {
@@ -51,9 +70,22 @@ public class Defender : MonoBehaviour
 		line.SetPositions(shape);
 		return SetupObject(go, pX, pY, pZ, sX, sY, sZ, layer, color, active, visible);
 	}
-
+	void KillPlayer() {
+		//playerLives[lives].SetActive(false);
+		//player.transform.position = RandomPosition;
+		if (--lives < 0) {
+			player.SetActive(false);
+			//gameOver = true;                            // Player dead = game over
+		}
+	}
+	void Score(int add) {
+		//lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
+		//playerLives[lives].SetActive(true);
+		score += add;
+	}
     void Update()
     {
+		uiScore.text = string.Format("{0:00000}", score);
 		List<GameObject> destroyed = new List<GameObject>();
 		if( Input.GetKeyDown(KeyCode.Space) )
         	allObjects.Add( CreateVectorObject("Bullet", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 1f, 1f, 2, Color.yellow) );
@@ -74,6 +106,16 @@ public class Defender : MonoBehaviour
 						sX += Mathf.Sign(sX)*30f*Time.deltaTime;
 						if( Mathf.Abs(pX - player.transform.position.x) > 10f )
 							destroyed.Add(go);
+				break;
+				case 3: Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<2) );
+						for(int h=0; (hits != null) && (h < hits.Length); h++) {
+							if(hits[h].gameObject.layer == 2) {							// Bullet
+								explosion.transform.position = go.transform.position;
+								explosion.GetComponent<ParticleSystem>().Emit(20);
+								destroyed.Add(go);
+								Score(10);
+							}
+						}
 				break;
 			}
 			if(pX > player.transform.position.x+40f)
