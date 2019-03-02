@@ -90,6 +90,7 @@ public class Defender : MonoBehaviour
     {
 		uiScore.text = string.Format("{0:00000}", score);
 		List<GameObject> destroyed = new List<GameObject>();
+		int numAliens = 0;
 		if( Input.GetKeyDown(KeyCode.Space) )
         	allObjects.Add( CreateVectorObject("Bullet", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.yellow) );
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
@@ -110,6 +111,7 @@ public class Defender : MonoBehaviour
 							destroyed.Add(go);
 				break;
 				case 4: pY -= pY > -4f ? 0.1f*Time.deltaTime : 0f;
+						numAliens++;
 						Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<2) );
 						for(int h=0; (hits != null) && (h < hits.Length); h++) {
 							if(hits[h].gameObject.layer == 2) {							// Bullet
@@ -135,6 +137,10 @@ public class Defender : MonoBehaviour
 		foreach(GameObject go in destroyed) {
 			allObjects.Remove(go);
 			Destroy(go);
+		}
+		if (numAliens == 0) {
+			level++;
+			UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");      // Reload scene for a new level
 		}
     }
 }
