@@ -1,8 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Linq;
 public class Defender : MonoBehaviour
 {
+	public class GameData : MonoBehaviour {
+		public Dictionary<string, object>	dict = new Dictionary<string, object>();
+	}
 	static int score = 0;
 	static int lives = 2;
 	static int level = 1;
@@ -16,6 +20,8 @@ public class Defender : MonoBehaviour
 	float camOffset = 0f;
 	Canvas uiCanvas;
 	Text uiScore;
+	object GetGameData(GameObject go, string key) { return go.GetComponent<GameData>().dict.ContainsKey(key) ? go.GetComponent<GameData>().dict[key] : null; }
+	void SetGameData(GameObject go, string key, object value) { go.GetComponent<GameData>().dict[key] = value; }
     void Start()
     {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
@@ -51,6 +57,7 @@ public class Defender : MonoBehaviour
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
+		go.AddComponent<GameData>();
 		return go;
 	}
 	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true) {
@@ -103,29 +110,52 @@ public class Defender : MonoBehaviour
 				case 1:	sX = Input.GetKey(KeyCode.LeftArrow) ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow) ? Mathf.Abs(sX) : sX;
 						pX += ((Input.GetKey(KeyCode.LeftArrow) ? -10f : Input.GetKey(KeyCode.RightArrow) ? 10f : 0f) * Time.deltaTime);
 						pY += ((Input.GetKey(KeyCode.DownArrow) ? -5f : Input.GetKey(KeyCode.UpArrow) ? 5f : 0f) * Time.deltaTime);
-						pY = Mathf.Clamp(pY, -4f, 4f); 
+						pY = Mathf.Clamp(pY, -4.5f, 4f); 
 				break;
 				case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
 						sX += Mathf.Sign(sX)*30f*Time.deltaTime;
 						if( Mathf.Abs(pX - player.transform.position.x) > 10f )
 							destroyed.Add(go);
 				break;
-				case 4: pY -= pY > -4f ? 0.1f*Time.deltaTime : 0f;
-						numAliens++;
-						Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<2) );
-						for(int h=0; (hits != null) && (h < hits.Length); h++) {
-							if(hits[h].gameObject.layer == 2) {							// Bullet
-								explosion.transform.position = go.transform.position;
-								explosion.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
-								explosion.GetComponent<ParticleSystem>().Emit(20);
-								destroyed.Add(go);
-								Score(10);
-							}
-							else if(hits[h].gameObject.layer == 3) {					// Human
-								
+				case 3: pY += GetGameData(go, "lander") != null ? (((GameObject)GetGameData(go, "lander")).transform.position.y-0.3f)-pY : pY > -4.5f ? -1f*Time.deltaTime : 0f;
+				break;
+				case 4: if( GetGameData(go, "human") == null ) {
+							float nearest = float.MaxValue;
+							foreach(GameObject human in allObjects.Where(x => x.layer == 3 && GetGameData(x, "lander") == null)) {
+								if(Mathf.Abs(human.transform.position.x-go.transform.position.x) < nearest) {
+									nearest = Mathf.Abs(human.transform.position.x-go.transform.position.x);
+									SetGameData(go, "human", human);
+								}
 							}
 						}
+						if(GetGameData(go, "human") != null) {
+							if(GetGameData((GameObject)GetGameData(go, "human"), "lander") == null) {
+								Vector3 diff = ((GameObject)GetGameData(go, "human")).transform.position - go.transform.position;
+								pX += Mathf.Sign(diff.x) * 0.5f*Time.deltaTime;
+								pY += Mathf.Sign(diff.y) * 0.3f*Time.deltaTime;
+							}
+							else if(GetGameData((GameObject)GetGameData(go, "human"), "lander") == (object)go)
+								pY += pY < 4f ? 0.2f*Time.deltaTime : 0f;
+							else
+								SetGameData(go, "human", null);
+						}
+						numAliens++;
 				break;
+			}
+			Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, go.layer == 3 ? (1<<2) : go.layer >= 4 ? (1<<1)+(1<<2)+(1<<3) : 0);
+			for(int h=0; (hits != null) && (h < hits.Length); h++) {
+				if(hits[h].gameObject.layer == 2) {							// Bullet
+					explosion.transform.position = go.transform.position;
+					explosion.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
+					explosion.GetComponent<ParticleSystem>().Emit(20);
+					destroyed.Add(go);
+					destroyed.Add(hits[h].gameObject);
+					Score(go.layer == 4 ? 10 : 0);
+				}
+				else if(hits[h].gameObject.layer == 3) {					// Human
+					if(GetGameData(go, "human") == (object)hits[h].gameObject)
+						SetGameData(hits[h].gameObject, "lander", go);
+				}
 			}
 			if(pX > player.transform.position.x+40f)
 				pX -= 80f;
@@ -135,6 +165,10 @@ public class Defender : MonoBehaviour
 			go.transform.localScale = new Vector3(sX, go.transform.localScale.y, go.transform.localScale.z);
 		}
 		foreach(GameObject go in destroyed) {
+			foreach(GameObject human in allObjects.Where(x => x.layer == 3 && GetGameData(x, "lander") == (object)go))
+				SetGameData(human, "lander", null);
+			foreach(GameObject lander in allObjects.Where(x => x.layer == 4 && GetGameData(x, "human") == (object)go))
+				SetGameData(lander, "human", null);
 			allObjects.Remove(go);
 			Destroy(go);
 		}
