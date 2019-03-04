@@ -6,6 +6,9 @@ public class Defender : MonoBehaviour
 {
 	public class GameData : MonoBehaviour {
 		public Dictionary<string, object>	dict = new Dictionary<string, object>();
+		void OnTriggerEnter(Collider other) {
+			//Debug.Log(gameObject.name+" collided with "+other.gameObject.name);
+		}
 	}
 	static int score = 0;
 	static int lives = 2;
@@ -42,14 +45,13 @@ public class Defender : MonoBehaviour
 		for(int i=0; i<10; i++)
         	allObjects.Add( CreateMeshObject("Human", sqrVs, sqrTs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, new Color(1f, 0.6f, 0.8f, 1f)) );
 		for(int i=0; i<10; i++)
-        	allObjects.Add( CreateMeshObject("Alien", sqrVs, sqrTs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.3f, 0.3f, 0.2f, 4, Color.green) );
+        	allObjects.Add( CreateMeshObject("Lander", sqrVs, sqrTs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.3f, 0.3f, 0.2f, 4, Color.green) );
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 		uiScore.fontSize = 20;
     }
-
 	GameObject SetupObject(GameObject go, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible) {
 		go.SetActive(active);
 		go.layer = layer;
@@ -57,11 +59,12 @@ public class Defender : MonoBehaviour
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
+		go.AddComponent<Rigidbody>().isKinematic = true;
 		go.AddComponent<GameData>();
 		return go;
 	}
 	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true) {
-		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);	// Adds MeshRenderer, MeshFilter and BoxCollider in one line!
 		go.name = label;
 		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
 		go.GetComponent<MeshFilter>().mesh = new Mesh();
@@ -71,7 +74,7 @@ public class Defender : MonoBehaviour
 	}
 	GameObject CreateVectorObject(string label, Vector3[] shape, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true) {
 		GameObject go = new GameObject(label);
-		go.AddComponent<BoxCollider>();
+		go.AddComponent<BoxCollider>().isTrigger = true;
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
 		line.widthMultiplier = 0.04f;
@@ -81,10 +84,10 @@ public class Defender : MonoBehaviour
 		return SetupObject(go, pX, pY, pZ, sX, sY, sZ, layer, color, active, visible);
 	}
 	void KillPlayer() {
+		Explode(player, 50);
 		//playerLives[lives].SetActive(false);
 		//player.transform.position = RandomPosition;
 		if (--lives < 0) {
-			player.SetActive(false);
 			//gameOver = true;                            // Player dead = game over
 		}
 	}
@@ -92,6 +95,12 @@ public class Defender : MonoBehaviour
 		//lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
 		//playerLives[lives].SetActive(true);
 		score += add;
+	}
+	void Explode(GameObject go, int numParticles=20) {
+		go.SetActive(false);
+		explosion.transform.position = go.transform.position;
+		explosion.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
+		explosion.GetComponent<ParticleSystem>().Emit(numParticles);
 	}
     void Update()
     {
@@ -117,7 +126,13 @@ public class Defender : MonoBehaviour
 						if( Mathf.Abs(pX - player.transform.position.x) > 10f )
 							destroyed.Add(go);
 				break;
-				case 3: pY += GetGameData(go, "lander") != null ? (((GameObject)GetGameData(go, "lander")).transform.position.y-0.3f)-pY : pY > -4.5f ? -1f*Time.deltaTime : 0f;
+				case 3: pX = GetGameData(go, "lander") != null ? ((GameObject)GetGameData(go, "lander")).transform.position.x : pX;
+						pY += GetGameData(go, "lander") != null ? (((GameObject)GetGameData(go, "lander")).transform.position.y-0.3f)-pY : pY > -4.5f ? -1f*Time.deltaTime : 0f;
+						SetGameData(go, "dropheight", GetGameData(go, "lander") != null ? pY : GetGameData(go, "dropheight"));
+						if( (pY < -4.4) && (GetGameData(go, "lander") == null) && (GetGameData(go, "dropheight") != null) ) {
+							Explode(go);
+							destroyed.Add(go);
+						}
 				break;
 				case 4: if( GetGameData(go, "human") == null ) {
 							float nearest = float.MaxValue;
@@ -131,23 +146,25 @@ public class Defender : MonoBehaviour
 						if(GetGameData(go, "human") != null) {
 							if(GetGameData((GameObject)GetGameData(go, "human"), "lander") == null) {
 								Vector3 diff = ((GameObject)GetGameData(go, "human")).transform.position - go.transform.position;
-								pX += Mathf.Sign(diff.x) * 0.5f*Time.deltaTime;
-								pY += Mathf.Sign(diff.y) * 0.3f*Time.deltaTime;
+								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : Random.Range(0f, 2f) - go.transform.position.y;
+								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime;
+								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime;
 							}
 							else if(GetGameData((GameObject)GetGameData(go, "human"), "lander") == (object)go)
-								pY += pY < 4f ? 0.2f*Time.deltaTime : 0f;
+								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;
 							else
 								SetGameData(go, "human", null);
 						}
 						numAliens++;
 				break;
 			}
-			Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, go.layer == 3 ? (1<<2) : go.layer >= 4 ? (1<<1)+(1<<2)+(1<<3) : 0);
+			Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, go.layer == 1 ? (1<<3) : go.layer == 3 ? (1<<2) : go.layer >= 4 ? (1<<1)+(1<<2)+(1<<3) : 0);
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
-				if(hits[h].gameObject.layer == 2) {							// Bullet
-					explosion.transform.position = go.transform.position;
-					explosion.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
-					explosion.GetComponent<ParticleSystem>().Emit(20);
+				if(hits[h].gameObject.layer == 1) {							// Player
+					KillPlayer();
+				}
+				else if(hits[h].gameObject.layer == 2) {					// Bullet
+					Explode(go);
 					destroyed.Add(go);
 					destroyed.Add(hits[h].gameObject);
 					Score(go.layer == 4 ? 10 : 0);
