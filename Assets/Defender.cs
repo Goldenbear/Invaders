@@ -5,10 +5,7 @@ using System.Linq;
 public class Defender : MonoBehaviour
 {
 	public class GameData : MonoBehaviour {
-		public Dictionary<string, object>	dict = new Dictionary<string, object>();
-		void OnTriggerEnter(Collider other) {
-			//Debug.Log(gameObject.name+" collided with "+other.gameObject.name);
-		}
+		public GameObject lander, human;
 	}
 	static int score = 0;
 	static int lives = 2;
@@ -23,10 +20,7 @@ public class Defender : MonoBehaviour
 	float camOffset = 0f;
 	Canvas uiCanvas;
 	Text uiScore;
-	object GetGameData(GameObject go, string key) { return go.GetComponent<GameData>().dict.ContainsKey(key) ? go.GetComponent<GameData>().dict[key] : null; }
-	void SetGameData(GameObject go, string key, object value) { go.GetComponent<GameData>().dict[key] = value; }
-    void Start()
-    {
+    void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		explosion = new GameObject("Explosion");
 		explosion.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
@@ -59,7 +53,6 @@ public class Defender : MonoBehaviour
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
-		go.AddComponent<Rigidbody>().isKinematic = true;
 		go.AddComponent<GameData>();
 		return go;
 	}
@@ -102,8 +95,7 @@ public class Defender : MonoBehaviour
 		explosion.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
 		explosion.GetComponent<ParticleSystem>().Emit(numParticles);
 	}
-    void Update()
-    {
+    void Update() {
 		uiScore.text = string.Format("{0:00000}", score);
 		List<GameObject> destroyed = new List<GameObject>();
 		int numAliens = 0;
@@ -116,44 +108,48 @@ public class Defender : MonoBehaviour
 			float pY = go.transform.position.y;
 			float sX = go.transform.localScale.x;
 			switch(go.layer) {
-				case 1:	sX = Input.GetKey(KeyCode.LeftArrow) ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow) ? Mathf.Abs(sX) : sX;
+/* Player */	case 1:	sX = Input.GetKey(KeyCode.LeftArrow) ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow) ? Mathf.Abs(sX) : sX;
 						pX += ((Input.GetKey(KeyCode.LeftArrow) ? -10f : Input.GetKey(KeyCode.RightArrow) ? 10f : 0f) * Time.deltaTime);
 						pY += ((Input.GetKey(KeyCode.DownArrow) ? -5f : Input.GetKey(KeyCode.UpArrow) ? 5f : 0f) * Time.deltaTime);
 						pY = Mathf.Clamp(pY, -4.5f, 4f); 
 				break;
-				case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
+/* Bullet */	case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
 						sX += Mathf.Sign(sX)*30f*Time.deltaTime;
 						if( Mathf.Abs(pX - player.transform.position.x) > 10f )
 							destroyed.Add(go);
 				break;
-				case 3: pX = GetGameData(go, "lander") != null ? ((GameObject)GetGameData(go, "lander")).transform.position.x : pX;
-						pY += GetGameData(go, "lander") != null ? (((GameObject)GetGameData(go, "lander")).transform.position.y-0.3f)-pY : pY > -4.5f ? -1f*Time.deltaTime : 0f;
-						SetGameData(go, "dropheight", GetGameData(go, "lander") != null ? pY : GetGameData(go, "dropheight"));
-						if( (pY < -4.4) && (GetGameData(go, "lander") == null) && (GetGameData(go, "dropheight") != null) ) {
+/* Human */		case 3: pX = go.GetComponent<GameData>().lander != null ? go.GetComponent<GameData>().lander.transform.position.x : pX;
+						pY += go.GetComponent<GameData>().lander != null ? (go.GetComponent<GameData>().lander.transform.position.y-0.3f)-pY : pY > -4.5f ? -1f*Time.deltaTime : 0f;
+						if( (pY < -4.3f) && (pY > -4.4f) && (go.GetComponent<GameData>().lander == null) ) {
 							Explode(go);
 							destroyed.Add(go);
 						}
+						else if( (pY <= -4.5f) && (go.GetComponent<GameData>().lander == player) ) {
+							go.GetComponent<GameData>().lander = null;
+							player.GetComponent<GameData>().human = null;
+							pY = -4.5f;
+						}
 				break;
-				case 4: if( GetGameData(go, "human") == null ) {
+/* Lander */	case 4: if( go.GetComponent<GameData>().human == null ) {
 							float nearest = float.MaxValue;
-							foreach(GameObject human in allObjects.Where(x => x.layer == 3 && GetGameData(x, "lander") == null)) {
+							foreach(GameObject human in allObjects.Where(x => x.layer == 3 && x.GetComponent<GameData>().lander == null)) {
 								if(Mathf.Abs(human.transform.position.x-go.transform.position.x) < nearest) {
 									nearest = Mathf.Abs(human.transform.position.x-go.transform.position.x);
-									SetGameData(go, "human", human);
+									go.GetComponent<GameData>().human = human;
 								}
 							}
 						}
-						if(GetGameData(go, "human") != null) {
-							if(GetGameData((GameObject)GetGameData(go, "human"), "lander") == null) {
-								Vector3 diff = ((GameObject)GetGameData(go, "human")).transform.position - go.transform.position;
+						if(go.GetComponent<GameData>().human != null) {
+							if(go.GetComponent<GameData>().human.GetComponent<GameData>().lander == null) {
+								Vector3 diff = go.GetComponent<GameData>().human.transform.position - go.transform.position;
 								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : Random.Range(0f, 2f) - go.transform.position.y;
 								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime;
 								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime;
 							}
-							else if(GetGameData((GameObject)GetGameData(go, "human"), "lander") == (object)go)
+							else if(go.GetComponent<GameData>().human.GetComponent<GameData>().lander == go)
 								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;
 							else
-								SetGameData(go, "human", null);
+								go.GetComponent<GameData>().human = null;
 						}
 						numAliens++;
 				break;
@@ -170,8 +166,11 @@ public class Defender : MonoBehaviour
 					Score(go.layer == 4 ? 10 : 0);
 				}
 				else if(hits[h].gameObject.layer == 3) {					// Human
-					if(GetGameData(go, "human") == (object)hits[h].gameObject)
-						SetGameData(hits[h].gameObject, "lander", go);
+					if( ((go == player) && (go.GetComponent<GameData>().human == null) && (hits[h].gameObject.transform.position.y > -4.4f)) || 
+						(go.GetComponent<GameData>().human == hits[h].gameObject) ) {
+						go.GetComponent<GameData>().human = hits[h].gameObject;
+						hits[h].gameObject.GetComponent<GameData>().lander = go;
+					}
 				}
 			}
 			if(pX > player.transform.position.x+40f)
@@ -182,10 +181,10 @@ public class Defender : MonoBehaviour
 			go.transform.localScale = new Vector3(sX, go.transform.localScale.y, go.transform.localScale.z);
 		}
 		foreach(GameObject go in destroyed) {
-			foreach(GameObject human in allObjects.Where(x => x.layer == 3 && GetGameData(x, "lander") == (object)go))
-				SetGameData(human, "lander", null);
-			foreach(GameObject lander in allObjects.Where(x => x.layer == 4 && GetGameData(x, "human") == (object)go))
-				SetGameData(lander, "human", null);
+			foreach(GameObject human in allObjects.Where(x => x.layer == 3 && x.GetComponent<GameData>().lander == go))
+				human.GetComponent<GameData>().lander = null;
+			foreach(GameObject lander in allObjects.Where(x => x.layer == 4 && x.GetComponent<GameData>().human == go))
+				lander.GetComponent<GameData>().human = null;
 			allObjects.Remove(go);
 			Destroy(go);
 		}
