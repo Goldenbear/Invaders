@@ -164,13 +164,21 @@ public class Defender : MonoBehaviour {
 							if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) {	// If we havent reached our human
 								Vector3 diff = go.GetComponent<GameData>().target.transform.position - go.transform.position;	// Move towards them
 								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : Random.Range(0f, 2f) - go.transform.position.y;		// Stay high until near
-								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime;
-								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime;
+								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<GameData>().target == player ? 2f : 1f);
+								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<GameData>().target == player ? 2f : 1f);
 							}
-							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go)	// If we have a human
+							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go) {	// If we have a human
 								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;										// Go up
-							else
-								go.GetComponent<GameData>().target = null;										// No humans left to go after
+								if(pY >= 4f) {
+									destroyed.Add(go.GetComponent<GameData>().target);							// Kill human
+									go.GetComponent<GameData>().target = player;								// Target player
+									go.GetComponent<Renderer>().material.color = Color.magenta;					// Turn Mutant
+								}
+							}
+							else {																				// No humans left to target
+								go.GetComponent<GameData>().target = player;									// Target player
+								go.GetComponent<Renderer>().material.color = Color.magenta;						// Turn Mutant
+							}
 						}
 				break;
 			}
