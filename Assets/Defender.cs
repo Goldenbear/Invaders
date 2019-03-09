@@ -36,7 +36,7 @@ public class Defender : MonoBehaviour {
 		for(int i=0; i<10; i++)
         	allObjects.Add( CreateMeshObject("Human", sqrVs, sqrTs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, new Color(1f, 0.6f, 0.8f, 1f)) );
 		for(int i=0; i<5+(level*5); i++)
-        	allObjects.Add( CreateMeshObject("Lander", sqrVs, sqrTs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), Random.Range(-2f, 4f), 0f, 0.3f, 0.3f, 0.2f, 4, Color.green) );
+        	allObjects.Add( CreateMeshObject("Lander", sqrVs, sqrTs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), 4f, 0f, 0.3f, 0.3f, 0.2f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<4; i++) {
@@ -54,6 +54,7 @@ public class Defender : MonoBehaviour {
 		go.layer = layer;
 		go.transform.position = new Vector3(pX, pY, pZ);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
+		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
 		go.AddComponent<GameData>();
@@ -62,7 +63,6 @@ public class Defender : MonoBehaviour {
 	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true) {
 		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);	// Adds MeshRenderer, MeshFilter and BoxCollider in one line!
 		go.name = label;
-		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
 		go.GetComponent<MeshFilter>().mesh = new Mesh();
 		go.GetComponent<MeshFilter>().mesh.vertices = verts;
 		go.GetComponent<MeshFilter>().mesh.triangles = tris;
@@ -74,7 +74,6 @@ public class Defender : MonoBehaviour {
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
 		line.widthMultiplier = 0.04f;
-		line.material = new Material(Shader.Find("Sprites/Default"));
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
 		return SetupObject(go, pX, pY, pZ, sX, sY, sZ, layer, color, active, visible);
@@ -163,9 +162,9 @@ public class Defender : MonoBehaviour {
 						if(go.GetComponent<GameData>().target != null) {
 							if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) {	// If we havent reached our human
 								Vector3 diff = go.GetComponent<GameData>().target.transform.position - go.transform.position;	// Move towards them
-								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : Random.Range(0f, 2f) - go.transform.position.y;		// Stay high until near
-								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<GameData>().target == player ? 2f : 1f);
-								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<GameData>().target == player ? 2f : 1f);
+								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : (go.GetComponent<Renderer>().material.color == Color.magenta ? Random.Range(2f, 3f) : Random.Range(0f, 2f)) - go.transform.position.y;		// Stay high until near
+								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 1f);
+								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 1f);
 							}
 							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go) {	// If we have a human
 								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;										// Go up
@@ -177,7 +176,6 @@ public class Defender : MonoBehaviour {
 							}
 							else {																				// No humans left to target
 								go.GetComponent<GameData>().target = player;									// Target player
-								go.GetComponent<Renderer>().material.color = Color.magenta;						// Turn Mutant
 							}
 						}
 				break;
