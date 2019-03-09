@@ -111,22 +111,18 @@ public class Defender : MonoBehaviour {
 			}
 			if( (gameState >= 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))) ) {
 				level++;
-				if(gameState == 3) {
-					score = 0; lives = 2; level = 1;									// New game
-				}
+				if(gameState == 3) { score = 0; lives = 2; level = 1; }					// New game
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");			// Reload scene for new level
 			}
 			return;
 		}
 		List<GameObject> destroyed = new List<GameObject>();
-		if( Input.GetKeyDown(KeyCode.Space) )
+		if( Input.GetKeyDown(KeyCode.LeftShift) )
         	allObjects.Add( CreateVectorObject("Bullet", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.yellow) );
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
 		gameObject.transform.position = new Vector3(player.transform.position.x+camOffset, gameObject.transform.position.y, gameObject.transform.position.z);
 		foreach(GameObject go in allObjects) {
-			float pX = go.transform.position.x;
-			float pY = go.transform.position.y;
-			float sX = go.transform.localScale.x;
+			float pX = go.transform.position.x, pY = go.transform.position.y, sX = go.transform.localScale.x;
 			switch(go.layer) {
 /* Player */	case 1:	sX = Input.GetKey(KeyCode.LeftArrow) ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow) ? Mathf.Abs(sX) : sX;
 						pX += ((Input.GetKey(KeyCode.LeftArrow) ? -10f : Input.GetKey(KeyCode.RightArrow) ? 10f : 0f) * Time.deltaTime);
@@ -145,8 +141,7 @@ public class Defender : MonoBehaviour {
 							destroyed.Add(go);
 						}
 						else if( (pY <= -4.5f) && (go.GetComponent<GameData>().target == player) ) {
-							go.GetComponent<GameData>().target = null;
-							player.GetComponent<GameData>().target = null;
+							go.GetComponent<GameData>().target = player.GetComponent<GameData>().target = null;	// Drop off human
 							pY = -4.5f;
 						}
 				break;
@@ -162,7 +157,7 @@ public class Defender : MonoBehaviour {
 						if(go.GetComponent<GameData>().target != null) {
 							if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) {	// If we havent reached our human
 								Vector3 diff = go.GetComponent<GameData>().target.transform.position - go.transform.position;	// Move towards them
-								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : (go.GetComponent<Renderer>().material.color == Color.magenta ? Random.Range(2f, 3f) : Random.Range(0f, 2f)) - go.transform.position.y;		// Stay high until near
+								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : ((go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 0f) + (Time.time%2f)) - go.transform.position.y;		// Stay high until near
 								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 1f);
 								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 1f);
 							}
@@ -174,9 +169,8 @@ public class Defender : MonoBehaviour {
 									go.GetComponent<Renderer>().material.color = Color.magenta;					// Turn Mutant
 								}
 							}
-							else {																				// No humans left to target
+							else																				// No humans left to target
 								go.GetComponent<GameData>().target = player;									// Target player
-							}
 						}
 				break;
 			}
