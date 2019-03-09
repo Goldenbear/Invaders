@@ -2,14 +2,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
-public class Defender : MonoBehaviour
-{
+public class Defender : MonoBehaviour {
 	public class GameData : MonoBehaviour {
 		public GameObject target;
 	}
-	static int score = 0;
-	static int lives = 2;
-	static int level = 1;
+	static int score = 0, lives = 2, level = 1;
 	GameObject explosion, player;
 	GameObject[] uiObjects = new GameObject[10];
 	List<GameObject> allObjects = new List<GameObject>();
@@ -18,7 +15,7 @@ public class Defender : MonoBehaviour
 	Vector3[] terrainVs = { new Vector3(-20f, 0f, 0f), new Vector3(-18f, 2f, 0f), new Vector3(-15f, 0f, 0f), new Vector3(-12f, 0f, 0f), new Vector3(-9f, 2f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(-3f, 0f, 0f), new Vector3(-2f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(2f, 0f, 0f), new Vector3(3f, 1f, 0f), new Vector3(4f, 0f, 0f), new Vector3(5f, 0f, 0f), new Vector3(8f, 2f, 0f), new Vector3(11f, 0f, 0f), new Vector3(15f, 0f, 0f), new Vector3(16.5f, 0.5f, 0f), new Vector3(17f, 0.3f, 0f), new Vector3(17.5f, 0.8f, 0f), new Vector3(18f, 0.6f, 0f), new Vector3(18.5f, 1.1f, 0f), new Vector3(19.5f, 0f, 0f), new Vector3(20f, 0f, 0f) };
 	Vector3[] sqrVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
 	int[] sqrTs = new int[] {0, 1, 2, 0, 3, 2};
-	float camOffset = 0f;
+	float camOffset = 0f, gameStateTimer = 0f;
 	int gameState = 0;
     void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
@@ -38,8 +35,8 @@ public class Defender : MonoBehaviour
         	allObjects.Add( CreateVectorObject("Star", sqrVs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.02f, 0.02f, 0.02f, 0, new Color(Random.value, Random.value, Random.value, Random.value)) );
 		for(int i=0; i<10; i++)
         	allObjects.Add( CreateMeshObject("Human", sqrVs, sqrTs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, new Color(1f, 0.6f, 0.8f, 1f)) );
-		for(int i=0; i<10; i++)
-        	allObjects.Add( CreateMeshObject("Lander", sqrVs, sqrTs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.3f, 0.3f, 0.2f, 4, Color.green) );
+		for(int i=0; i<5+(level*5); i++)
+        	allObjects.Add( CreateMeshObject("Lander", sqrVs, sqrTs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), Random.Range(-2f, 4f), 0f, 0.3f, 0.3f, 0.2f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<4; i++) {
@@ -49,6 +46,7 @@ public class Defender : MonoBehaviour
 			uiObjects[1+i].GetComponent<Text>().fontSize = 30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-400f, 250f, 0f) : i == 1 ? new Vector3(0f, 250f, 0f) : new Vector3(0f, 0f, 0f);
+			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
     }
 	GameObject SetupObject(GameObject go, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible) {
@@ -84,16 +82,17 @@ public class Defender : MonoBehaviour
 	void KillPlayer() {
 		Explode(player, 50);
 		//playerLives[lives].SetActive(false);
-		//player.transform.position = RandomPosition;
-		player.SetActive(true);
+		gameState = 1;								// Player lost a life
+		gameStateTimer = Time.unscaledTime + 3f;
 		if (--lives < 0) {
-			gameState = 2;                            // Player dead = game over
+			gameState = 3;							// Player dead = game over
 		}
 	}
 	void Score(int add) {
 		//lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
 		//playerLives[lives].SetActive(true);
 		score += add;
+		PlayerPrefs.SetInt("DefenderHighScore", score > PlayerPrefs.GetInt("DefenderHighScore") ? score : PlayerPrefs.GetInt("DefenderHighScore"));
 	}
 	void Explode(GameObject go, int numParticles=20) {
 		go.SetActive(false);
@@ -103,20 +102,24 @@ public class Defender : MonoBehaviour
 	}
     void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
-		uiObjects[2].GetComponent<Text>().text = string.Format("{0:00000}", PlayerPrefs.GetInt("HighScore"));
-		uiObjects[3].GetComponent<Text>().text = gameState == 1 ? "ATTACK WAVE "+(level+1)+" COMPLETED" : gameState == 2 ? "GAME OVER" : "";
-		if(gameState >= 1)
-		{
-			if((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)) ) {
-				if(gameState == 2) {
-					score = 0; lives = 2; level = 1;
+		uiObjects[2].GetComponent<Text>().text = string.Format("{0:00000}", PlayerPrefs.GetInt("DefenderHighScore"));
+		uiObjects[3].GetComponent<Text>().text = gameState == 2 ? "ATTACK WAVE "+level+"\n COMPLETED\n\nBONUS "+allObjects.Where(x => x.layer == 3).Count()+" X 100" : gameState == 3 ? "GAME OVER" : "";
+		if(gameState > 0) {
+			if( (gameState == 1) && (Time.unscaledTime > gameStateTimer) ) {
+				player.transform.position = Vector3.zero;
+				player.SetActive(true);
+				gameState = 0;
+			}
+			if( (gameState >= 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))) ) {
+				level++;
+				if(gameState == 3) {
+					score = 0; lives = 2; level = 1;									// New game
 				}
-				UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");      // Reload scene for new level/game
+				UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");			// Reload scene for new level
 			}
 			return;
 		}
 		List<GameObject> destroyed = new List<GameObject>();
-		int numAliens = 0;
 		if( Input.GetKeyDown(KeyCode.Space) )
         	allObjects.Add( CreateVectorObject("Bullet", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.yellow) );
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
@@ -169,7 +172,6 @@ public class Defender : MonoBehaviour
 							else
 								go.GetComponent<GameData>().target = null;										// No humans left to go after
 						}
-						numAliens++;
 				break;
 			}
 			Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, go.layer == 1 ? (1<<3) : go.layer == 3 ? (1<<2) : go.layer >= 4 ? (1<<1)+(1<<2)+(1<<3) : 0);
@@ -181,7 +183,7 @@ public class Defender : MonoBehaviour
 					Explode(go);
 					destroyed.Add(go);
 					destroyed.Add(hits[h].gameObject);
-					Score(go.layer == 4 ? 10 : 0);
+					Score(go.layer == 4 ? 150 : 0);
 				}
 				else if(hits[h].gameObject.layer == 3) {					// Human
 					if( ((go == player) && (go.GetComponent<GameData>().target == null) && (hits[h].gameObject.transform.position.y > -4.4f)) || 
@@ -201,7 +203,9 @@ public class Defender : MonoBehaviour
 			allObjects.Remove(dead);
 			Destroy(dead);
 		}
-		if(numAliens == 0)
-			gameState = 1;
+		if(allObjects.Where(x => x.layer == 4).Count() == 0) {				// Level complete
+			Score(allObjects.Where(x => x.layer == 3).Count() * 100);
+			gameState = 2;
+		}
     }
 }
