@@ -117,9 +117,9 @@ public class Defender : MonoBehaviour {
 			}
 			return;
 		}
-		List<GameObject> destroyed = new List<GameObject>();
+		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		if( Input.GetKeyDown(KeyCode.LeftShift) )
-        	allObjects.Add( CreateVectorObject("Bullet", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.yellow) );
+        	allObjects.Add( CreateVectorObject("Laser", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.yellow) );
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
 		gameObject.transform.position = new Vector3(player.transform.position.x+camOffset, gameObject.transform.position.y, gameObject.transform.position.z);
 		foreach(GameObject go in allObjects) {
@@ -130,7 +130,7 @@ public class Defender : MonoBehaviour {
 						pY += ((Input.GetKey(KeyCode.DownArrow) ? -5f : Input.GetKey(KeyCode.UpArrow) ? 5f : 0f) * Time.deltaTime);
 						pY = Mathf.Clamp(pY, -4.5f, 4f); 
 				break;
-/* Bullet */	case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
+/* Laser */		case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
 						sX += Mathf.Sign(sX)*30f*Time.deltaTime;
 						if( Mathf.Abs(pX - player.transform.position.x) > 10f )
 							destroyed.Add(go);
@@ -173,12 +173,23 @@ public class Defender : MonoBehaviour {
 							else																				// No humans left to target
 								go.GetComponent<GameData>().target = player;									// Target player
 						}
+						if(Random.value < 0.005f) {																// Shoot at player
+        					GameObject bullet = CreateVectorObject("Bullet", sqrVs, pX, pY, go.transform.position.z, 0.05f, 0.05f, 0.05f, 5, Color.white);
+							bullet.transform.LookAt( (bullet.transform.position + Vector3.forward), Vector3.Normalize(player.transform.position - bullet.transform.position) );
+							added.Add(bullet);
+						}
+				break;
+/* Bullet */	case 5: pX += go.transform.up.x*5f*Time.deltaTime;
+						pY += go.transform.up.y*5f*Time.deltaTime;
+						if( Mathf.Abs(pX - player.transform.position.x) > 5f )
+							destroyed.Add(go);
 				break;
 			}
 			Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, go.layer == 1 ? (1<<3) : go.layer == 3 ? (1<<2) : go.layer >= 4 ? (1<<1)+(1<<2)+(1<<3) : 0);
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
 				if(hits[h].gameObject.layer == 1) {							// Player
 					KillPlayer();
+					destroyed.AddRange( allObjects.Where(x => (x.layer == 2)||(x.layer == 5)) );
 				}
 				else if(hits[h].gameObject.layer == 2) {					// Bullet
 					Explode(go);
@@ -204,6 +215,7 @@ public class Defender : MonoBehaviour {
 			allObjects.Remove(dead);
 			Destroy(dead);
 		}
+		allObjects.AddRange(added);
 		if(allObjects.Where(x => x.layer == 4).Count() == 0) {				// Level complete
 			Score(allObjects.Where(x => x.layer == 3).Count() * 100);
 			gameState = 2;
