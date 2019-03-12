@@ -10,11 +10,11 @@ public class Defender : MonoBehaviour {
 	GameObject explosion, player;
 	GameObject[] uiObjects = new GameObject[10];
 	List<GameObject> allObjects = new List<GameObject>();
-	Vector3[] playerVs = { new Vector3(-0.3f, 0f, 0f), new Vector3(0.3f, 0f, 0f), new Vector3(0f, 0.1f, 0f), new Vector3(-0.3f, 0.1f, 0f), new Vector3(-0.3f, 0f, 0f) };
+	Vector3[] playerVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.3f, -0.3f, 0f), new Vector3(0.5f, -0.3f, 0f), new Vector3(0.5f, -0.2f, 0f), new Vector3(-0.3f, 0.2f, 0f), new Vector3(-0.4f, 0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
 	Vector3[] bulletVs = { new Vector3(-0.5f, 0f, 0f), new Vector3(0.5f, 0f, 0f) };
 	Vector3[] terrainVs = { new Vector3(-20f, 0f, 0f), new Vector3(-18f, 2f, 0f), new Vector3(-15f, 0f, 0f), new Vector3(-12f, 0f, 0f), new Vector3(-9f, 2f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(-3f, 0f, 0f), new Vector3(-2f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(2f, 0f, 0f), new Vector3(3f, 1f, 0f), new Vector3(4f, 0f, 0f), new Vector3(5f, 0f, 0f), new Vector3(8f, 2f, 0f), new Vector3(11f, 0f, 0f), new Vector3(15f, 0f, 0f), new Vector3(16.5f, 0.5f, 0f), new Vector3(17f, 0.3f, 0f), new Vector3(17.5f, 0.8f, 0f), new Vector3(18f, 0.6f, 0f), new Vector3(18.5f, 1.1f, 0f), new Vector3(19.5f, 0f, 0f), new Vector3(20f, 0f, 0f) };
 	Vector3[] landerVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
-	Vector3[] humanVs = { new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0.5f, 0f) };
+	Vector3[] humanVs = { new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] sqrVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
 	float camOffset = 0f, gameStateTimer = 0f;
 	int gameState = 0;
@@ -29,15 +29,16 @@ public class Defender : MonoBehaviour {
 		main.startLifetime = 2f;
 		main.startSpeed = 10f;
 		main.scalingMode = ParticleSystemScalingMode.Shape;
- 		Gradient humanGradient = new Gradient();
-		humanGradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.green, 0.0f), new GradientColorKey(Color.red, 1.0f) };
-		allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 1f, 1f, 1f, 1, Color.white) );
+ 		Gradient gradient = new Gradient();
+		gradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.white, 0.5f), new GradientColorKey(Color.grey, 1f) };
+		allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 0.6f, 0.2f, 1f, 1, Color.white, true, true, 0.1f, gradient) );
         allObjects.Add( CreateVectorObject("Terrain1", terrainVs, -10f,     -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
         allObjects.Add( CreateVectorObject("Terrain2", terrainVs, -10f+40f, -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
 		for(int i=0; i<100; i++)
         	allObjects.Add( CreateVectorObject("Star", sqrVs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.02f, 0.02f, 0.02f, 0, new Color(Random.value, Random.value, Random.value, Random.value)) );
+		gradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.gray, 0.0f), new GradientColorKey(Color.red, 0.5f), new GradientColorKey(Color.yellow, 1.0f) };
 		for(int i=0; i<10; i++)
-        	allObjects.Add( CreateVectorObject("Human", humanVs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, new Color(1f, 0.6f, 0.8f, 1f), true, true, 0.1f, humanGradient) );
+        	allObjects.Add( CreateVectorObject("Human", humanVs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, Color.white, true, true, 0.1f, gradient) );
 		for(int i=0; i<5+(level*5); i++)
         	allObjects.Add( CreateVectorObject("Lander", landerVs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), 4f, 0f, 0.35f, 0.3f, 0.2f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
@@ -114,7 +115,7 @@ public class Defender : MonoBehaviour {
 		}
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		if( Input.GetKeyDown(KeyCode.LeftShift) )
-        	allObjects.Add( CreateVectorObject("Laser", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.3f, player.transform.position.y, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.yellow) );
+        	allObjects.Add( CreateVectorObject("Laser", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.6f, player.transform.position.y-0.05f, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.HSVToRGB(Random.value, 1f, 1f)) );
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
 		gameObject.transform.position = new Vector3(player.transform.position.x+camOffset, gameObject.transform.position.y, gameObject.transform.position.z);
 		foreach(GameObject go in allObjects) {
@@ -168,7 +169,7 @@ public class Defender : MonoBehaviour {
 							else																				// No humans left to target
 								go.GetComponent<GameData>().target = player;									// Target player
 						}
-						if(Random.value < (go.GetComponent<Renderer>().material.color == Color.magenta ? 0.01f : 0.005f)) {																// Shoot at player
+						if(Random.value < (go.GetComponent<Renderer>().material.color == Color.magenta ? 0.03f : 0.005f)) {																// Shoot at player
         					GameObject bullet = CreateVectorObject("Bullet", sqrVs, pX, pY, go.transform.position.z, 0.05f, 0.05f, 0.05f, 5, Color.white);
 							bullet.transform.LookAt( (bullet.transform.position + Vector3.forward), Vector3.Normalize(player.transform.position - bullet.transform.position) );
 							added.Add(bullet);
@@ -176,7 +177,7 @@ public class Defender : MonoBehaviour {
 				break;
 /* Bullet */	case 5: pX += go.transform.up.x*5f*Time.deltaTime;
 						pY += go.transform.up.y*5f*Time.deltaTime;
-						if( Mathf.Abs(pX - player.transform.position.x) > 5f )
+						if( Mathf.Abs(pX - gameObject.transform.position.x) > 10f )		// If off screen
 							destroyed.Add(go);
 				break;
 			}
