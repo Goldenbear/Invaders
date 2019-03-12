@@ -14,8 +14,8 @@ public class Defender : MonoBehaviour {
 	Vector3[] bulletVs = { new Vector3(-0.5f, 0f, 0f), new Vector3(0.5f, 0f, 0f) };
 	Vector3[] terrainVs = { new Vector3(-20f, 0f, 0f), new Vector3(-18f, 2f, 0f), new Vector3(-15f, 0f, 0f), new Vector3(-12f, 0f, 0f), new Vector3(-9f, 2f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(-3f, 0f, 0f), new Vector3(-2f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(2f, 0f, 0f), new Vector3(3f, 1f, 0f), new Vector3(4f, 0f, 0f), new Vector3(5f, 0f, 0f), new Vector3(8f, 2f, 0f), new Vector3(11f, 0f, 0f), new Vector3(15f, 0f, 0f), new Vector3(16.5f, 0.5f, 0f), new Vector3(17f, 0.3f, 0f), new Vector3(17.5f, 0.8f, 0f), new Vector3(18f, 0.6f, 0f), new Vector3(18.5f, 1.1f, 0f), new Vector3(19.5f, 0f, 0f), new Vector3(20f, 0f, 0f) };
 	Vector3[] landerVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
+	Vector3[] humanVs = { new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] sqrVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
-	int[] sqrTs = new int[] {0, 1, 2, 0, 3, 2};
 	float camOffset = 0f, gameStateTimer = 0f;
 	int gameState = 0;
     void Start() {
@@ -29,13 +29,15 @@ public class Defender : MonoBehaviour {
 		main.startLifetime = 2f;
 		main.startSpeed = 10f;
 		main.scalingMode = ParticleSystemScalingMode.Shape;
+ 		Gradient humanGradient = new Gradient();
+		humanGradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.green, 0.0f), new GradientColorKey(Color.red, 1.0f) };
 		allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 1f, 1f, 1f, 1, Color.white) );
         allObjects.Add( CreateVectorObject("Terrain1", terrainVs, -10f,     -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
         allObjects.Add( CreateVectorObject("Terrain2", terrainVs, -10f+40f, -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
 		for(int i=0; i<100; i++)
         	allObjects.Add( CreateVectorObject("Star", sqrVs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.02f, 0.02f, 0.02f, 0, new Color(Random.value, Random.value, Random.value, Random.value)) );
 		for(int i=0; i<10; i++)
-        	allObjects.Add( CreateMeshObject("Human", sqrVs, sqrTs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, new Color(1f, 0.6f, 0.8f, 1f)) );
+        	allObjects.Add( CreateVectorObject("Human", humanVs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, new Color(1f, 0.6f, 0.8f, 1f), true, true, 0.1f, humanGradient) );
 		for(int i=0; i<5+(level*5); i++)
         	allObjects.Add( CreateVectorObject("Lander", landerVs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), 4f, 0f, 0.35f, 0.3f, 0.2f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
@@ -61,22 +63,15 @@ public class Defender : MonoBehaviour {
 		go.AddComponent<GameData>();
 		return go;
 	}
-	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true) {
-		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);	// Adds MeshRenderer, MeshFilter and BoxCollider in one line!
-		go.name = label;
-		go.GetComponent<MeshFilter>().mesh = new Mesh();
-		go.GetComponent<MeshFilter>().mesh.vertices = verts;
-		go.GetComponent<MeshFilter>().mesh.triangles = tris;
-		return SetupObject(go, pX, pY, pZ, sX, sY, sZ, layer, color, active, visible);
-	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true) {
+	GameObject CreateVectorObject(string label, Vector3[] shape, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float thickness=0.04f, Gradient gradient=null) {
 		GameObject go = new GameObject(label);
 		go.AddComponent<BoxCollider>().isTrigger = true;
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
-		line.widthMultiplier = 0.04f;
+		line.widthMultiplier = thickness;
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
+        line.colorGradient = gradient ?? line.colorGradient;
 		return SetupObject(go, pX, pY, pZ, sX, sY, sZ, layer, color, active, visible);
 	}
 	void KillPlayer() {
