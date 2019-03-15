@@ -47,9 +47,9 @@ public class Defender : MonoBehaviour {
 			uiObjects[1+i] = new GameObject("UIText");
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
 			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
-			uiObjects[1+i].GetComponent<Text>().fontSize = 30;
+			uiObjects[1+i].GetComponent<Text>().fontSize = Screen.width/30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-400f, 250f, 0f) : i == 1 ? new Vector3(0f, 250f, 0f) : new Vector3(0f, 0f, 0f);
+			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-Screen.width/2.4f, Screen.height/2.2f, 0f) : i == 1 ? new Vector3(0f, Screen.height/2.2f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
     }
