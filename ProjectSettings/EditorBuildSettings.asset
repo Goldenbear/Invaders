@@ -14,7 +14,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Asteroids.unity
     guid: 3b811a2d8d5c54b6fa4f941b083ec2d7
-  - enabled: 1
+  - enabled: 0
     path: Assets/Pacman.unity
     guid: b1fd89c82f7124c38bced70d662b5a8b
+  - enabled: 1
+    path: Assets/Defender.unity
+    guid: 0ddcd9d2ee39546948fc47878671debd
   m_configObjects: {}
