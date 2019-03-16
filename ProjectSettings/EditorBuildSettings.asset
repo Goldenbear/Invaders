@@ -5,16 +5,19 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
+    path: Assets/Menu.unity
+    guid: 62760b8f3eb5548b2a494a6e6592f46a
+  - enabled: 1
     path: Assets/Invaders.unity
     guid: 5e00be037fdbb4844ab82638325866e5
-  - enabled: 0
+  - enabled: 1
     path: Assets/Breakout.unity
     guid: 9b363dfddc9c944ffb3572f98a7ce6a5
-  - enabled: 0
+  - enabled: 1
     path: Assets/Asteroids.unity
     guid: 3b811a2d8d5c54b6fa4f941b083ec2d7
-  - enabled: 0
+  - enabled: 1
     path: Assets/Pacman.unity
     guid: b1fd89c82f7124c38bced70d662b5a8b
   - enabled: 1
