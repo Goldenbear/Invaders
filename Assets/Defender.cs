@@ -18,6 +18,9 @@ public class Defender : MonoBehaviour {
 	Vector3[] sqrVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
 	float camOffset = 0f, gameStateTimer = 0f;
 	int gameState = 0;
+	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
+	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
+	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
     void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		explosion = new GameObject("Explosion");
@@ -53,17 +56,6 @@ public class Defender : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
     }
-	GameObject SetupObject(GameObject go, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible) {
-		go.SetActive(active);
-		go.layer = layer;
-		go.transform.position = new Vector3(pX, pY, pZ);
-		go.transform.localScale = new Vector3(sX, sY, sZ);
-		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
-		go.GetComponent<Renderer>().material.color = color;
-		go.GetComponent<Renderer>().enabled = visible;
-		go.AddComponent<GameData>();
-		return go;
-	}
 	GameObject CreateVectorObject(string label, Vector3[] shape, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float thickness=0.04f, Gradient gradient=null) {
 		GameObject go = new GameObject(label);
 		go.AddComponent<BoxCollider>().isTrigger = true;
@@ -73,7 +65,15 @@ public class Defender : MonoBehaviour {
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
         line.colorGradient = gradient ?? line.colorGradient;
-		return SetupObject(go, pX, pY, pZ, sX, sY, sZ, layer, color, active, visible);
+		go.SetActive(active);
+		go.layer = layer;
+		go.transform.position = new Vector3(pX, pY, pZ);
+		go.transform.localScale = new Vector3(sX, sY, sZ);
+		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
+		go.GetComponent<Renderer>().material.color = color;
+		go.GetComponent<Renderer>().enabled = visible;
+		go.AddComponent<GameData>();
+		return go;
 	}
 	void KillPlayer() {
 		Explode(player, 50);
@@ -114,16 +114,16 @@ public class Defender : MonoBehaviour {
 			return;
 		}
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
-		if( Input.GetKeyDown(KeyCode.LeftShift) )
+		if( Input.GetKeyDown(KeyCode.LeftShift) || Fire)
         	allObjects.Add( CreateVectorObject("Laser", bulletVs, player.transform.position.x+Mathf.Sign(player.transform.localScale.x)*0.6f, player.transform.position.y-0.05f, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.HSVToRGB(Random.value, 1f, 1f)) );
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
 		gameObject.transform.position = new Vector3(player.transform.position.x+camOffset, gameObject.transform.position.y, gameObject.transform.position.z);
 		foreach(GameObject go in allObjects) {
 			float pX = go.transform.position.x, pY = go.transform.position.y, sX = go.transform.localScale.x;
 			switch(go.layer) {
-/* Player */	case 1:	sX = Input.GetKey(KeyCode.LeftArrow) ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow) ? Mathf.Abs(sX) : sX;
-						pX += ((Input.GetKey(KeyCode.LeftArrow) ? -10f : Input.GetKey(KeyCode.RightArrow) ? 10f : 0f) * Time.deltaTime);
-						pY += ((Input.GetKey(KeyCode.DownArrow) ? -5f : Input.GetKey(KeyCode.UpArrow) ? 5f : 0f) * Time.deltaTime);
+/* Player */	case 1:	sX = Input.GetKey(KeyCode.LeftArrow)||Joystick.x<-0.5f ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow)||Joystick.x>0.5f ? Mathf.Abs(sX) : sX;
+						pX += ((Input.GetKey(KeyCode.LeftArrow)||Joystick.x<-0.5f ? -10f : Input.GetKey(KeyCode.RightArrow)||Joystick.x>0.5f ? 10f : 0f) * Time.deltaTime);
+						pY += ((Input.GetKey(KeyCode.DownArrow)||Joystick.y<-0.5f ? -5f  : Input.GetKey(KeyCode.UpArrow)||Joystick.y>0.5f ? 5f : 0f) * Time.deltaTime);
 						pY = Mathf.Clamp(pY, -4.5f, 4f); 
 				break;
 /* Laser */		case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
