@@ -9,7 +9,7 @@ public class Defender : MonoBehaviour {
 	static int score = 0, lives = 2, level = 1;
 	GameObject explosion, player;
 	GameObject[] uiObjects = new GameObject[10];
-	List<GameObject> allObjects = new List<GameObject>();
+	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
 	Vector3[] playerVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.3f, -0.3f, 0f), new Vector3(0.5f, -0.3f, 0f), new Vector3(0.5f, -0.2f, 0f), new Vector3(-0.3f, 0.2f, 0f), new Vector3(-0.4f, 0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
 	Vector3[] bulletVs = { new Vector3(-0.5f, 0f, 0f), new Vector3(0.5f, 0f, 0f) };
 	Vector3[] terrainVs = { new Vector3(-20f, 0f, 0f), new Vector3(-18f, 2f, 0f), new Vector3(-15f, 0f, 0f), new Vector3(-12f, 0f, 0f), new Vector3(-9f, 2f, 0f), new Vector3(-6f, 0f, 0f), new Vector3(-3f, 0f, 0f), new Vector3(-2f, 1f, 0f), new Vector3(-1f, 0f, 0f), new Vector3(2f, 0f, 0f), new Vector3(3f, 1f, 0f), new Vector3(4f, 0f, 0f), new Vector3(5f, 0f, 0f), new Vector3(8f, 2f, 0f), new Vector3(11f, 0f, 0f), new Vector3(15f, 0f, 0f), new Vector3(16.5f, 0.5f, 0f), new Vector3(17f, 0.3f, 0f), new Vector3(17.5f, 0.8f, 0f), new Vector3(18f, 0.6f, 0f), new Vector3(18.5f, 1.1f, 0f), new Vector3(19.5f, 0f, 0f), new Vector3(20f, 0f, 0f) };
@@ -37,6 +37,10 @@ public class Defender : MonoBehaviour {
 		allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 0.6f, 0.2f, 1f, 1, Color.white, true, true, 0.1f, gradient) );
         allObjects.Add( CreateVectorObject("Terrain1", terrainVs, -10f,     -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
         allObjects.Add( CreateVectorObject("Terrain2", terrainVs, -10f+40f, -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
+		for (int i=0; i<20; i++) {
+			playerLives.Add( CreateVectorObject("Life", playerVs, -7f+i*0.5f, 4f, 0f, 0.3f, 0.1f, 1f, 0, Color.white, i<=lives, true, 0.1f, gradient) );
+			playerLives[i].transform.parent = gameObject.transform;
+		}
 		for(int i=0; i<100; i++)
         	allObjects.Add( CreateVectorObject("Star", sqrVs, Random.Range(-40f, 40f), Random.Range(-2f, 4f), 0f, 0.02f, 0.02f, 0.02f, 0, new Color(Random.value, Random.value, Random.value, Random.value)) );
 		gradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.gray, 0.0f), new GradientColorKey(Color.red, 0.5f), new GradientColorKey(Color.yellow, 1.0f) };
@@ -77,7 +81,7 @@ public class Defender : MonoBehaviour {
 	}
 	void KillPlayer() {
 		Explode(player, 50);
-		//playerLives[lives].SetActive(false);
+		playerLives[lives].SetActive(false);
 		gameState = 1;								// Player lost a life
 		gameStateTimer = Time.unscaledTime + 3f;
 		if (--lives < 0) {
@@ -85,8 +89,8 @@ public class Defender : MonoBehaviour {
 		}
 	}
 	void Score(int add) {
-		//lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
-		//playerLives[lives].SetActive(true);
+		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Count - 1)) ? lives + 1 : lives) : lives;
+		playerLives[lives].SetActive(true);
 		score += add;
 		PlayerPrefs.SetInt("DefenderHighScore", score > PlayerPrefs.GetInt("DefenderHighScore") ? score : PlayerPrefs.GetInt("DefenderHighScore"));
 	}
