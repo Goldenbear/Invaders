@@ -25,33 +25,15 @@ public class Breakout : MonoBehaviour
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;  //dirlight.color = Color.green;
-        ball = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        ball.transform.position = new Vector3(0, 0, 0);
-        ball.transform.localScale = new Vector3(0.2f, 0.1f, 0.5f);
-        ball.layer = 0;
-        bat = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		bat.transform.position = new Vector3(0, -4, 0);
-		bat.transform.localScale = new Vector3(0.6f, 0.2f, 0.5f);
-		bat.layer = 1;
-        borderTop = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        borderTop.transform.position = new Vector3( ((bricks.GetLength(0)/2) * 0.7f)-5.35f, (bricks.GetLength(1) * 0.25f)+2.5f, 0);
-        borderTop.transform.localScale = new Vector3( bricks.GetLength(0) * 0.7f, 0.2f, 0.5f);
-        borderTop.layer = 2;
-        borderLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        borderLeft.transform.position = new Vector3(-((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0, 0);
-        borderLeft.transform.localScale = new Vector3(0.2f, 10f, 0.5f);
-        borderLeft.layer = 3;
-        borderRight = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        borderRight.transform.position = new Vector3(((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0, 0);
-        borderRight.transform.localScale = new Vector3(0.2f, 10f, 0.5f);
-        borderRight.layer = 4;
+		ball = CreateObject("Ball", 0f, 0f, 0.2f, 0.1f, 0);
+ 		bat = CreateObject("Bat", 0f, -4f, 0.6f, 0.2f, 1);
+ 		borderTop = CreateObject("BorderTop", ((bricks.GetLength(0)/2) * 0.7f)-5.35f, (bricks.GetLength(1) * 0.25f)+2.5f, bricks.GetLength(0) * 0.7f, 0.2f, 2);
+ 		borderLeft = CreateObject("BorderLeft", -((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0f, 0.2f, 10f, 3);
+ 		borderRight = CreateObject("BorderRight", ((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0f, 0.2f, 10f, 4);
 		for (int i = 0; i < bricks.GetLength(0); i++)
-			for (int j = 0; j < bricks.GetLength(1); j++)
+			for (int j = 0; j < bricks.GetLength(1); j++) 
 			{
-				bricks[i, j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				bricks[i, j].transform.position = new Vector3((i * 0.7f) - 5, (j * 0.25f) + 1, 0);
-				bricks[i, j].transform.localScale = new Vector3(0.6f, 0.15f, 0.5f);
-				bricks[i, j].layer = 5 + (j/2);
+ 				bricks[i, j] = CreateObject("Brick", (i * 0.7f) - 5, (j * 0.25f) + 1, 0.6f, 0.15f, 5 + (j/2));
 			}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.WorldSpace;
@@ -63,6 +45,17 @@ public class Breakout : MonoBehaviour
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 		uiScore.fontSize = 50;
 		startTime = Time.time + 3f;
+	}
+
+	GameObject CreateObject(string label, float px, float py, float sx, float sy, int layer) 
+	{
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+		go.GetComponent<Renderer>().material.color = Color.white;
+		go.transform.position = new Vector3(px, py, 0f);
+		go.transform.localScale = new Vector3(sx, sy, 0.5f);
+		go.layer = layer;
+		return go;
 	}
 
 	void Update()

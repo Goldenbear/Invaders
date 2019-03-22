@@ -16,51 +16,51 @@ public class Invaders : MonoBehaviour
 	bool invadersMovingDown = false;
 	int numInvadersDead = 0;
 	bool gameOver = false;
+	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
+	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
+	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
 
 	void Start()
 	{
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;	//dirlight.color = Color.green;
-		player = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		player.transform.position = new Vector3(-7, -4, 0);
-		player.transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
-		player.layer = 1;
+		player = CreateObject("Player", -7, -4, 0.75f, 0.5f, 1);
 		for(int i=0; i<invaders.GetLength(0); i++)
 			for(int j=0; j<invaders.GetLength(1); j++)
 			{
-				invaders[i,j] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				invaders[i,j].transform.position = new Vector3(i-5, (j*0.5f)+1, 0);
-				invaders[i,j].transform.localScale = new Vector3((j==(invaders.GetLength(1)-1))?0.4f:0.6f, 0.4f, 0.5f);	// Top row are smaller and harder to hit
-				invaders[i,j].layer = 2;
+				invaders[i,j] = CreateObject("Invader", i-5, (j*0.5f)+1, (j==(invaders.GetLength(1)-1))?0.4f:0.6f, 0.4f, 2);	// Top row are smaller and harder to hit
 			}
 		for(int b=0; b<4; b++)
 			for(int i=0; i<5; i++)
 				for(int j=0; j<4; j++)
 				{
-					GameObject baseBrick = GameObject.CreatePrimitive(PrimitiveType.Cube);
-					baseBrick.transform.position = new Vector3((b*2.2f)+(i*0.2f)-3.6f, (j*0.2f)-3, 0);
-					baseBrick.transform.localScale = new Vector3(0.2f, 0.2f, 0.5f);
-					baseBrick.layer = 3;
+					CreateObject("BaseBrick", (b*2.2f)+(i*0.2f)-3.6f, (j*0.2f)-3, 0.2f, 0.2f, 3);
 				}
 		for(int i=0; i<bullets.Length; i++)
 		{
-			bullets[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			bullets[i].transform.localScale = new Vector3(0.1f, 0.5f, 0.5f);
-			bullets[i].SetActive(false);
-			bullets[i].layer = (i==0)?4:5;	// Bullet 0 is player bullet
+			bullets[i] = CreateObject("Bullet", 0f, 0f, 0.1f, 0.5f, (i==0)?4:5);	// Bullet 0 is player bullet
 		}
 		for(int i=0; (i<playerLives.Length)&&(i<lives); i++)
 		{
-			playerLives[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			playerLives[i].transform.position = new Vector3(-6+(i*1f), -5, 0);
-			playerLives[i].transform.localScale = new Vector3(0.75f, 0.5f, 0.5f);
+			playerLives[i] = CreateObject("Life", -6+(i*1f), -5, 0.75f, 0.5f, 0);
 		}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 		uiScore.fontSize = 50;
+	}
+
+	GameObject CreateObject(string label, float px, float py, float sx, float sy, int layer) 
+	{
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+		go.GetComponent<Renderer>().material.color = Color.white;
+		go.transform.position = new Vector3(px, py, 0f);
+		go.transform.localScale = new Vector3(sx, sy, 0.5f);
+		go.layer = layer;
+		return go;
 	}
 
 	void Update()
@@ -124,9 +124,9 @@ public class Invaders : MonoBehaviour
 					if((bullets[i].transform.position.y < -4) || (bullets[i].transform.position.y > 4))
 						bullets[i].SetActive(false);
 				}
-			float newPlayerX = player.transform.position.x + (Input.GetAxis("Horizontal") * 10f * Time.deltaTime);
+			float newPlayerX = player.transform.position.x + ((Input.GetAxis("Horizontal")+Joystick.x) * 10f * Time.deltaTime);
 			player.transform.position = new Vector3(Mathf.Clamp(newPlayerX, -7f, 7f), -4f, 0f);
-			if(Input.GetKeyDown(KeyCode.LeftShift) && !bullets[0].activeSelf)
+			if( (Input.GetKeyDown(KeyCode.LeftShift)||Fire) && !bullets[0].activeSelf)
 			{
 				bullets[0].transform.position = player.transform.position;
 				bullets[0].SetActive(true);									// Fire a player bullet

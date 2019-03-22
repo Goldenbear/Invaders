@@ -25,6 +25,9 @@ public class Asteroids : MonoBehaviour {
 	Vector3[] RandomAsteroidShape { get { float r = Random.value; return r < 0.33f ? astAshape : r < 0.66f ? astBshape : astCshape; } }
 	int RandomDirection { get { return (int)(Random.value * 3.9999f); } }
 	Vector3 RandomPosition { get { return new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0); } }
+	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
+	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
+	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		player = CreateVectorObject("Player", playershape, Vector3.zero, 0.2f, 1);
@@ -160,12 +163,12 @@ public class Asteroids : MonoBehaviour {
 			saucer.SetActive(true);
 			saucerTime = Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f);	// Delay before firing at player. Small saucer waits longer as more accurate.
 		}
-		playerBody.AddForce( Input.GetKeyDown(KeyCode.UpArrow) ? (player.transform.up * 5000f * Time.deltaTime) : Vector3.zero );
+		playerBody.AddForce( Input.GetKeyDown(KeyCode.UpArrow)||Joystick.y>0.5f ? (player.transform.up * 5000f * Time.deltaTime) : Vector3.zero );
 		float playerX = Mathf.Abs(player.transform.position.x) < 5f ? player.transform.position.x : Mathf.Clamp( -player.transform.position.x, -5f, 5f);
 		float playerY = Mathf.Abs(player.transform.position.y) < 5f ? player.transform.position.y : Mathf.Clamp( -player.transform.position.y, -5f, 5f);
 		player.transform.position = new Vector3(playerX, playerY, player.transform.position.z);
-		player.transform.Rotate( 0f, 0f, -Input.GetAxis("Horizontal") * 500f * Time.deltaTime );
-		if (Input.GetKeyDown(KeyCode.LeftShift) && !bullets[0].activeSelf) {
+		player.transform.Rotate( 0f, 0f, (Input.GetAxis("Horizontal")+Joystick.x) * -500f * Time.deltaTime );
+		if ( (Input.GetKeyDown(KeyCode.LeftShift) || Fire) && !bullets[0].activeSelf) {
 			bullets[0].transform.position = player.transform.position + player.transform.up * 0.6f;
 			bullets[0].transform.rotation = player.transform.rotation;
 			bullets[0].SetActive(true);                                 // Fire a player bullet

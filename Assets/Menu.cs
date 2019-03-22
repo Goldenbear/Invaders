@@ -23,6 +23,10 @@ public class Menu : MonoBehaviour
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Breakout");
 		gameObject.GetComponent<Canvas>().enabled = false;
 	}
+	public void LoadAsteroids() {
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Asteroids");
+		gameObject.GetComponent<Canvas>().enabled = false;
+	}
 	public void LoadPacman() {
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");
 		gameObject.GetComponent<Canvas>().enabled = false;
