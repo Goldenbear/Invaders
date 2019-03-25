@@ -19,6 +19,8 @@ public class Breakout : MonoBehaviour
 	int numBricksDead = 0;
 	float startTime = 0f;
 	bool gameOver = false;
+	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
+	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
 
 	void Start()
 	{
@@ -106,7 +108,7 @@ public class Breakout : MonoBehaviour
 		}
 		else
 		{
-			if(Input.GetKeyDown(KeyCode.Space))
+			if(Input.GetKeyDown(KeyCode.Space) || Fire)
 			{
 				score = 0;
 				lives = 2;

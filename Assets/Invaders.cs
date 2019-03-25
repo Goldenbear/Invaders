@@ -18,6 +18,7 @@ public class Invaders : MonoBehaviour
 	bool gameOver = false;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
+	Vector2 DPad { get { Vector2 dpad = Vector2.zero; if(Mathf.Abs(Joystick.x)>0.1f) dpad.x = Mathf.Sign(Joystick.x); return dpad; } }
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
 
 	void Start()
@@ -124,23 +125,23 @@ public class Invaders : MonoBehaviour
 					if((bullets[i].transform.position.y < -4) || (bullets[i].transform.position.y > 4))
 						bullets[i].SetActive(false);
 				}
-			float newPlayerX = player.transform.position.x + ((Input.GetAxis("Horizontal")+Joystick.x) * 10f * Time.deltaTime);
+			float newPlayerX = player.transform.position.x + ((Input.GetAxis("Horizontal")+DPad.x) * 10f * Time.deltaTime);
 			player.transform.position = new Vector3(Mathf.Clamp(newPlayerX, -7f, 7f), -4f, 0f);
-			if( (Input.GetKeyDown(KeyCode.LeftShift)||Fire) && !bullets[0].activeSelf)
+			if( (Input.GetKeyDown(KeyCode.LeftShift) || Fire) && !bullets[0].activeSelf)
 			{
 				bullets[0].transform.position = player.transform.position;
 				bullets[0].SetActive(true);									// Fire a player bullet
 			}
 			if(numInvadersAlive == 0)
-				UnityEngine.SceneManagement.SceneManager.LoadScene(0);		// Reload scene for a new attack wave
+				UnityEngine.SceneManagement.SceneManager.LoadScene("Invaders");		// Reload scene for a new attack wave
 		}
 		else
 		{
-			if(Input.GetKeyDown(KeyCode.Space))
+			if(Input.GetKeyDown(KeyCode.Space) || Fire)
 			{
 				score = 0;
 				lives = 2;
-				UnityEngine.SceneManagement.SceneManager.LoadScene(0);		// Reload scene and reset score & lives for a new game
+				UnityEngine.SceneManagement.SceneManager.LoadScene("Invaders");		// Reload scene and reset score & lives for a new game
 			}
 		}
 		uiScore.text = string.Format("SCORE: {0:0000}         {1}", score, gameOver?"GAME OVER!\n   PRESS SPACE TO RESTART":"");
