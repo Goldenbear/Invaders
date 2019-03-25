@@ -27,6 +27,7 @@ public class Asteroids : MonoBehaviour {
 	Vector3 RandomPosition { get { return new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0); } }
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
+	Vector2 DPad { get { Vector2 dpad = Vector2.zero; if(Mathf.Abs(Joystick.x)<0.5f&&Mathf.Abs(Joystick.y)>0.5f) dpad.y = Mathf.Sign(Joystick.y); else if(Mathf.Abs(Joystick.y)<0.5f&&Mathf.Abs(Joystick.x)>0.5f) dpad.x = Mathf.Sign(Joystick.x); return dpad; } }
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
@@ -97,32 +98,32 @@ public class Asteroids : MonoBehaviour {
 	}
 	void DetectCollisions(GameObject projectile, int layerMask, bool stayActive) {
 		Collider[] hits = Physics.OverlapBox(projectile.GetComponent<Collider>().bounds.center, projectile.GetComponent<Collider>().bounds.extents, projectile.transform.rotation, layerMask);
-		if ((hits != null) && (hits.Length > 0)) {
+		for(int h=0; (hits != null) && (h < hits.Length); h++) {
 			projectile.SetActive(stayActive);
-			explosion.transform.position = hits[0].gameObject.transform.position;
+			explosion.transform.position = hits[h].gameObject.transform.position;
 			explosion.GetComponent<ParticleSystem>().Emit(10);
-			if (hits[0].gameObject.layer == 1) {
+			if (hits[h].gameObject.layer == 1) {
 				KillPlayer();
 				saucerTime = saucer.activeSelf ? Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f) : saucerTime;  // Delay before firing at player. Small saucer waits longer as more accurate.
 			}
-			else if (hits[0].gameObject.layer == 5) {
+			else if (hits[h].gameObject.layer == 5) {
 				Score( projectile.layer == 6 ? 1000 : 0);
 				KillSaucer();
 			}
-			else if (hits[0].gameObject.layer >= 2) {
-				if (hits[0].gameObject.layer < 4)
+			else if (hits[h].gameObject.layer >= 2) {
+				if (hits[h].gameObject.layer < 4)
 					for (int p = 0; p < 2; p++)
-						asteroids.Add( CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[0].gameObject.transform.position, hits[0].gameObject.layer == 2 ? 0.2f : 0.1f, hits[0].gameObject.layer == 2 ? 3 : 4) );   // 0.2 = medium size, 0.1 = small asteroids
-				Score( projectile.layer == 6 ? (hits[0].gameObject.layer == 2 ? 20 : hits[0].gameObject.layer == 3 ? 50 : 100) : 0 );
-				asteroids.Remove(hits[0].gameObject);
-				Destroy(hits[0].gameObject);
+						asteroids.Add( CreateVectorObject(RandomDirection.ToString(), RandomAsteroidShape, hits[h].gameObject.transform.position, hits[h].gameObject.layer == 2 ? 0.2f : 0.1f, hits[h].gameObject.layer == 2 ? 3 : 4) );   // 0.2 = medium size, 0.1 = small asteroids
+				Score( projectile.layer == 6 ? (hits[h].gameObject.layer == 2 ? 20 : hits[h].gameObject.layer == 3 ? 50 : 100) : 0 );
+				asteroids.Remove(hits[h].gameObject);
+				Destroy(hits[h].gameObject);
 			}
 		}
 	}
 	void Update() {
 		uiScore.text = string.Format("{0:00000}{1}", score, gameOver ? "\n\n\n\n                        GAME OVER" : "");
 		if(gameOver) {
-			if (Input.GetKeyDown(KeyCode.Space)) {
+			if (Input.GetKeyDown(KeyCode.Space) || Fire) {
 				score = 0; lives = 2; level = 1;
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Asteroids");      // Reload scene and reset score, lives & level for a new game
 			}
@@ -163,12 +164,12 @@ public class Asteroids : MonoBehaviour {
 			saucer.SetActive(true);
 			saucerTime = Time.time + (saucer.transform.localScale.x > 0.2f ? 1f : 3f);	// Delay before firing at player. Small saucer waits longer as more accurate.
 		}
-		playerBody.AddForce( Input.GetKeyDown(KeyCode.UpArrow)||Joystick.y>0.5f ? (player.transform.up * 5000f * Time.deltaTime) : Vector3.zero );
+		playerBody.AddForce( Input.GetKey(KeyCode.UpArrow)||DPad.y>0.5f ? (player.transform.up * 100f * Time.deltaTime) : Vector3.zero, ForceMode.Force );
 		float playerX = Mathf.Abs(player.transform.position.x) < 5f ? player.transform.position.x : Mathf.Clamp( -player.transform.position.x, -5f, 5f);
 		float playerY = Mathf.Abs(player.transform.position.y) < 5f ? player.transform.position.y : Mathf.Clamp( -player.transform.position.y, -5f, 5f);
 		player.transform.position = new Vector3(playerX, playerY, player.transform.position.z);
-		player.transform.Rotate( 0f, 0f, (Input.GetAxis("Horizontal")+Joystick.x) * -500f * Time.deltaTime );
-		if ( (Input.GetKeyDown(KeyCode.LeftShift) || Fire) && !bullets[0].activeSelf) {
+		player.transform.Rotate( 0f, 0f, (Input.GetAxis("Horizontal")+DPad.x) * -500f * Time.deltaTime );
+		if ( (Input.GetKey(KeyCode.LeftShift) || Fire) && !bullets[0].activeSelf) {
 			bullets[0].transform.position = player.transform.position + player.transform.up * 0.6f;
 			bullets[0].transform.rotation = player.transform.rotation;
 			bullets[0].SetActive(true);                                 // Fire a player bullet
