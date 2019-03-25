@@ -27,7 +27,7 @@ public class Asteroids : MonoBehaviour {
 	Vector3 RandomPosition { get { return new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0); } }
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
-	Vector2 DPad { get { Vector2 dpad = Vector2.zero; if(Mathf.Abs(Joystick.x)<0.5f&&Mathf.Abs(Joystick.y)>0.5f) dpad.y = Mathf.Sign(Joystick.y); else if(Mathf.Abs(Joystick.y)<0.5f&&Mathf.Abs(Joystick.x)>0.5f) dpad.x = Mathf.Sign(Joystick.x); return dpad; } }
+	Vector2 DPad { get { Vector2 dpad = Vector2.zero; if(Mathf.Abs(Joystick.y)>0.5f) dpad.y = Mathf.Sign(Joystick.y); else if(Mathf.Abs(Joystick.x)>0.1f) dpad.x = Mathf.Sign(Joystick.x); return dpad; } }
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return false; } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
