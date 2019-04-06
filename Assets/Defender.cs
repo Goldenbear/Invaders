@@ -155,14 +155,15 @@ public class Defender : MonoBehaviour {
 								}
 							}
 						}
-						if(go.GetComponent<GameData>().target != null) {
-							if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) {	// If we havent reached our human
+						if(go.GetComponent<GameData>().target != null) {										// If we have a target (human or player)
+							if( (go.GetComponent<GameData>().target == player) ||								// If our target is the player or
+								(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) ){	// our target hasnt been picked up by anyone yet
 								Vector3 diff = go.GetComponent<GameData>().target.transform.position - go.transform.position;	// Move towards them
 								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : ((go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 0f) + (Time.time%2f)) - go.transform.position.y;		// Stay high until near
-								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 1f);
-								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 1f);
+								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : 1f);
+								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : 1f);
 							}
-							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go) {	// If we have a human
+							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go) {	// If we picked up our target
 								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;										// Go up
 								if(pY >= 4f) {
 									destroyed.Add(go.GetComponent<GameData>().target);							// Kill human
@@ -170,9 +171,11 @@ public class Defender : MonoBehaviour {
 									go.GetComponent<Renderer>().material.color = Color.magenta;					// Turn Mutant
 								}
 							}
-							else																				// No humans left to target
-								go.GetComponent<GameData>().target = player;									// Target player
+							else
+								go.GetComponent<GameData>().target = null;										// Someone else picked up our target so get another target
 						}
+						else																					// No humans left to target
+							go.GetComponent<GameData>().target = player;										// Target player
 						if(Random.value < (go.GetComponent<Renderer>().material.color == Color.magenta ? 0.03f : 0.005f)) {																// Shoot at player
         					GameObject bullet = CreateVectorObject("Bullet", sqrVs, pX, pY, go.transform.position.z, 0.05f, 0.05f, 0.05f, 5, Color.white);
 							bullet.transform.LookAt( (bullet.transform.position + Vector3.forward), Vector3.Normalize(player.transform.position - bullet.transform.position) );
@@ -189,7 +192,7 @@ public class Defender : MonoBehaviour {
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
 				if(hits[h].gameObject.layer == 1) {							// Player
 					KillPlayer();
-					destroyed.AddRange( allObjects.Where(x => (x.layer == 2)||(x.layer == 5)) );
+					destroyed.AddRange( allObjects.Where(x => (x.layer == 2)||(x.layer == 5)) );	// Destroy all lasers and bullets
 				}
 				else if(hits[h].gameObject.layer == 2) {					// Bullet
 					Explode(go);
@@ -220,5 +223,8 @@ public class Defender : MonoBehaviour {
 			Score(allObjects.Where(x => x.layer == 3).Count() * 100);
 			gameState = 2;
 		}
+		if(allObjects.Where(x => x.layer == 3).Count() == 0)				// No humans = mutant space
+			foreach(GameObject go in allObjects.Where(x => x.layer == 4))	// Turn all landers mutant - they will already be targeting player as no humans left
+				go.GetComponent<Renderer>().material.color = Color.magenta;
     }
 }
