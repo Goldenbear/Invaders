@@ -8,7 +8,8 @@ public class Menu : MonoBehaviour
 		DontDestroyOnLoad(gameObject);
 	}
 	private void Update() {
-		if( Input.GetMouseButtonDown(0) && (Input.mousePosition.x < 64f) && (Input.mousePosition.y > (Screen.height-64f)) )
+		if( Input.GetKeyDown(KeyCode.Escape) ||
+			(Input.GetMouseButtonDown(0) && (Input.mousePosition.x < 64f) && (Input.mousePosition.y > (Screen.height-64f))) )
 			LoadMenu();
 	}
 	public void LoadMenu() {
