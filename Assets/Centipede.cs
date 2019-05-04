@@ -37,7 +37,7 @@ public class Centipede : MonoBehaviour {
 		for(int i=0; i<100; i++)
 			allObjects.Add( CreateMeshObject("Mushroom", sphereVerts, sphereTris, (int)Random.Range(0, 30), (int)Random.Range(2, 28), 0.3f, 1, Color.green) );
 		for(int i=0; i<10; i++)
-			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, i, 1, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(i+1,1)) );
+			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(15,-9+i+1)) );
 		uiObjects.Add( new GameObject("UICanvas") );
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<2; i++) {
@@ -57,7 +57,8 @@ public class Centipede : MonoBehaviour {
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.GetComponent<Renderer>().material.color = color;
 		go.AddComponent<GameData>().targetCell = targetCell;
-		grid[x,y] = layer==1?layer:0;
+		if( (x>=0) && (x<grid.GetUpperBound(0)) && (y>=0) && (y<grid.GetUpperBound(1)) )
+			grid[x,y] = layer==1?layer:0;
 		return go;
 	}
 	GameObject CreateMeshObject(string label, Vector3[] verts, int[] tris, int x, int y, float size, int layer, Color color, bool active = true, Vector2Int targetCell=new Vector2Int()) {
@@ -96,10 +97,14 @@ public class Centipede : MonoBehaviour {
 		PlayerPrefs.SetInt("CentipedeHighScore", score > PlayerPrefs.GetInt("CentipedeHighScore") ? score : PlayerPrefs.GetInt("CentipedeHighScore"));
 	}
     void Update() {
+		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = string.Format("{0:00000}", PlayerPrefs.GetInt("CentipedeHighScore"));
 		if(gameState > 0) {
 			if( (gameState == 1) && (Time.unscaledTime > gameStateTimer) ) {
+				foreach(GameObject go in centipede)
+					Destroy(go);
+				centipede.Clear();
 				gameState = 0;
 			}
 			if( (gameState >= 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))) ) {
@@ -109,9 +114,8 @@ public class Centipede : MonoBehaviour {
 			}
 			return;
 		}
-		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
-		if(Fire)
-        	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y)-1, 0.3f, 5, Color.red) );
+		if(Fire && (allObjects.Where(x => x.layer == 5).Count() == 0))
+        	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 5, Color.red) );
 		foreach(GameObject go in allObjects) {
 			switch(go.layer) {
 				case 4:																												// Player
@@ -120,6 +124,8 @@ public class Centipede : MonoBehaviour {
 				break;
 				case 5:																												// Bullet
 					go.transform.position += Vector3.up * 5f * Time.deltaTime;
+					if(go.transform.position.y > GridIToY(0))																		// Destroy bullet if reaches top of screen
+						destroyed.Add(go);
 				break;
 			}
 			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer==5?(1<<1)+(1<<2)+(1<<3)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15):0);
@@ -181,5 +187,9 @@ public class Centipede : MonoBehaviour {
 			Destroy(dead);
 		}
 		allObjects.AddRange(added);
+		if(centipede.Count() == 0) {																								// Level complete
+			for(int i=0; i<10; i++)
+				centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(15,-9+i+1)) );
+		}
 	}
 }
