@@ -36,4 +36,8 @@ public class Menu : MonoBehaviour
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");
 		gameObject.GetComponent<Canvas>().enabled = false;
 	}
+	public void LoadCentipede() {
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Centipede");
+		gameObject.GetComponent<Canvas>().enabled = false;
+	}
 }

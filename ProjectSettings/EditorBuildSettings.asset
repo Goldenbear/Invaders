@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Defender.unity
     guid: 0ddcd9d2ee39546948fc47878671debd
+  - enabled: 1
+    path: Assets/Centipede.unity
+    guid: e3afcd496572341b18d10204f077032e
   m_configObjects: {}
