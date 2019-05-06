@@ -29,7 +29,7 @@ public class Centipede : MonoBehaviour {
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKeyDown(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
-		allObjects.Add( CreateMeshObject("Player", sphereVerts, sphereTris, 15, 29, 0.3f, 4, Color.red) );
+		allObjects.Add( CreateMeshObject("Player", sphereVerts, sphereTris, 15, 29, 0.3f, 5, Color.red) );
 		for (int i=0; i<20; i++) {
 			playerLives.Add( CreateMeshObject("Life", sphereVerts, sphereTris, i, 0, 0.3f, 0, Color.red, i<=lives) );
 			playerLives[i].transform.parent = gameObject.transform;
@@ -114,28 +114,29 @@ public class Centipede : MonoBehaviour {
 			}
 			return;
 		}
-		if(Fire && (allObjects.Where(x => x.layer == 5).Count() == 0))
-        	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 5, Color.red) );
+		if(Fire && (allObjects.Where(x => x.layer == 6).Count() == 0))
+        	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 6, Color.red) );
 		foreach(GameObject go in allObjects) {
 			switch(go.layer) {
-				case 4:																												// Player
+				case 5:																												// Player
 					go.transform.position += new Vector3(Joystick.x, Joystick.y, 0f) * Time.deltaTime;
 					go.transform.position = new Vector3(Mathf.Clamp(go.transform.position.x, GridJToX(0), GridJToX(grid.GetUpperBound(0))), Mathf.Clamp(go.transform.position.y, GridIToY(grid.GetUpperBound(1)), GridIToY(grid.GetUpperBound(1)-10)), 0f);
 				break;
-				case 5:																												// Bullet
+				case 6:																												// Bullet
 					go.transform.position += Vector3.up * 5f * Time.deltaTime;
 					if(go.transform.position.y > GridIToY(0))																		// Destroy bullet if reaches top of screen
 						destroyed.Add(go);
 				break;
 			}
-			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer==5?(1<<1)+(1<<2)+(1<<3)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15):0);
+			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer==6?(1<<1)+(1<<2)+(1<<3)+(1<<4)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15):0);
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
-				if(hits[h].gameObject.layer <= 2) {																					// Hit a mushroom
+				if(hits[h].gameObject.layer <= 3) {																					// Hit a mushroom x 3
 					hits[h].gameObject.layer++;
 					destroyed.Add(go);
 				}
-				else if(hits[h].gameObject.layer == 3) {																			// Hit a mushroom
-					destroyed.Add(hits[h].gameObject);
+				else if(hits[h].gameObject.layer == 4) {                                                                            // 4th hit on mushroom
+					grid[XToGridJ(hits[h].gameObject.transform.position.x), YToGridI(hits[h].gameObject.transform.position.y)] = 0;	// Remove mushroom from layer grid
+					destroyed.Add(hits[h].gameObject);																				// Destroy mushroom
 					destroyed.Add(go);
 					Score(1);
 				}
