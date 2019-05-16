@@ -22,7 +22,8 @@ public class Centipede : MonoBehaviour {
 	Vector2Int PosCell(Vector3 pos) { return new Vector2Int(XToGridJ(pos.x), YToGridI(pos.y)); }
 	Vector3 CellPos(Vector2Int cell) { return new Vector3(GridJToX(cell.x), GridIToY(cell.y), 0f); }
 	Vector3 SnapPos(Vector3 pos) { return CellPos(PosCell(pos)); }
-	int CellLayer(Vector2Int cell) { return grid[cell.x, cell.y]; }
+	int CellGetLayer(Vector2Int cell) { return grid[cell.x, cell.y]; }
+	void CellSetLayer(Vector2Int cell, int layer) { grid[cell.x, cell.y] = layer; }
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return KeyJoy; } }
@@ -135,7 +136,7 @@ public class Centipede : MonoBehaviour {
 					destroyed.Add(go);
 				}
 				else if(hits[h].gameObject.layer == 4) {                                                                            // 4th hit on mushroom
-					grid[XToGridJ(hits[h].gameObject.transform.position.x), YToGridI(hits[h].gameObject.transform.position.y)] = 0;	// Remove mushroom from layer grid
+					CellSetLayer(PosCell(hits[h].gameObject.transform.position), 0);												// Remove mushroom from layer grid
 					destroyed.Add(hits[h].gameObject);																				// Destroy mushroom
 					destroyed.Add(go);
 					Score(1);
@@ -164,7 +165,7 @@ public class Centipede : MonoBehaviour {
 				else if(go.layer <= 13)	{																							// Head left/right
 					go.GetComponent<GameData>().targetCell = goCell + (go.layer==12?Vector2Int.left:Vector2Int.right);				// Next cell left/right
 					if( (XToGridJ(go.transform.position.x)==0) || (XToGridJ(go.transform.position.x)>=grid.GetUpperBound(0)) ||		// Reached edge of screen?
-						(CellLayer(go.GetComponent<GameData>().targetCell) == 1) ) {												// Hit mushroom
+						(CellGetLayer(go.GetComponent<GameData>().targetCell) == 1) ) {												// Hit mushroom
 						go.layer = go.layer==12?14:15;																				// Move down one cell
 						go.GetComponent<GameData>().targetCell = goCell - (goCell.y<29?Vector2Int.down:Vector2Int.zero);
 					}
