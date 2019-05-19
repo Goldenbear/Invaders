@@ -13,8 +13,13 @@ public class Centipede : MonoBehaviour {
 	int[] sphereTris = new int[] {0, 12, 1, 0, 1, 2, 0, 2, 3, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0, 11, 12, 0, 3, 4, 0, 4, 5, 0, 5, 6};
 	Vector3[] bulletVerts = { new Vector3(-0.1f, -0.5f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, -0.5f, 0f), new Vector3(0.1f, 0.5f, 0f) };
 	int[] bulletTris = new int[] {0, 1, 2, 1, 3, 2};
+	Vector3[] mushTopVerts = { new Vector3(0f, 0f, 0f), new Vector3(-0.5f, 0f, 0f), new Vector3(-0.5f, 0.1f, 0f), new Vector3(-0.35f, 0.35f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.35f, 0f), new Vector3(0.5f, 0.1f, 0f), new Vector3(0.5f, 0f, 0f) };
+	int[] mushTopTris = new int[] {0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 7, 0, 7, 8};
+	Vector3[] mushBotVerts = { new Vector3(-0.25f, -0.5f, 0f), new Vector3(-0.25f, 0f, 0f), new Vector3(0.25f, -0.5f, 0f), new Vector3(0.25f, 0f, 0f) };
+	int[] mushBotTris = new int[] {0, 1, 2, 1, 3, 2};
 	int gameState = 0;
 	float gameStateTimer = 0f;
+	Color levelColor = new Color(1f, 0.2f, 1f);
 	int XToGridJ(float x) { return Mathf.RoundToInt((x + 4.5f) / 0.3f); }
 	int YToGridI(float y) { return Mathf.RoundToInt((4.5f - y) / 0.3f); }
 	float GridJToX(int j) { return -4.5f + (j * 0.3f); }
@@ -35,8 +40,14 @@ public class Centipede : MonoBehaviour {
 			playerLives.Add( CreateMeshObject("Life", sphereVerts, sphereTris, i, 0, 0.3f, 0, Color.red, i<=lives) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
-		for(int i=0; i<100; i++)
-			allObjects.Add( CreateMeshObject("Mushroom", sphereVerts, sphereTris, (int)Random.Range(0, 30), (int)Random.Range(2, 28), 0.3f, 1, Color.green) );
+		for(int i=0; i<100; i++) {
+			GameObject mush = CreateMeshObject("Mushroom", mushTopVerts, mushTopTris, (int)Random.Range(0, 30), (int)Random.Range(2, 28), 0.3f, 1, levelColor);
+			CreateMeshObject("Mushroom", mushTopVerts, mushTopTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.2f, 0, Color.green).transform.parent = mush.transform;
+			mush.transform.GetChild(0).position += -(Vector3.forward*0.01f) + (Vector3.up*0.02f);
+			CreateMeshObject("Mushroom", mushBotVerts, mushBotTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.3f, 0, levelColor).transform.parent = mush.transform;
+			CreateMeshObject("Mushroom", mushBotVerts, mushBotTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.2f, 0, Color.green).transform.parent = mush.transform;
+			mush.transform.GetChild(2).position += -(Vector3.forward*0.01f) - (Vector3.up*0.02f);
+		}
 		for(int i=0; i<10; i++)
 			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(15,-9+i+1)) );
 		uiObjects.Add( new GameObject("UICanvas") );
@@ -47,6 +58,7 @@ public class Centipede : MonoBehaviour {
 			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = Screen.width/30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
+			uiObjects[1+i].GetComponent<Text>().defaultMaterial.color = levelColor;
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-Screen.width/2.4f, Screen.height/2.2f, 0f) : i == 1 ? new Vector3(0f, Screen.height/2.2f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
@@ -58,7 +70,7 @@ public class Centipede : MonoBehaviour {
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.GetComponent<Renderer>().material.color = color;
 		go.AddComponent<GameData>().targetCell = targetCell;
-		if( (x>=0) && (x<grid.GetUpperBound(0)) && (y>=0) && (y<grid.GetUpperBound(1)) )
+		if( (x>=0) && (x<grid.GetUpperBound(0)) && (y>=0) && (y<grid.GetUpperBound(1)) && (grid[x,y] == 0) )
 			grid[x,y] = layer==1?layer:0;
 		return go;
 	}
@@ -132,6 +144,7 @@ public class Centipede : MonoBehaviour {
 			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer==6?(1<<1)+(1<<2)+(1<<3)+(1<<4)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15):0);
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
 				if(hits[h].gameObject.layer <= 3) {																					// Hit a mushroom x 3
+					destroyed.Add(hits[h].gameObject.transform.GetChild(3-hits[h].gameObject.layer).gameObject);
 					hits[h].gameObject.layer++;
 					destroyed.Add(go);
 				}
@@ -177,9 +190,9 @@ public class Centipede : MonoBehaviour {
 			}
 			else
 				go.transform.position += diff.normalized * 1.0f * Time.deltaTime;													// Move towards target
-			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer>=10&&go.layer<=15 ? (1<<4) : 0);
+			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer>=10&&go.layer<=15 ? (1<<5) : 0);
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
-				if(hits[h].gameObject.layer == 4) {																					// Hit the Player
+				if(hits[h].gameObject.layer == 5) {																					// Hit the Player
 					KillPlayer();
 				}
 			}
