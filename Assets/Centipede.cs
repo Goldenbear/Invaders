@@ -40,14 +40,8 @@ public class Centipede : MonoBehaviour {
 			playerLives.Add( CreateMeshObject("Life", sphereVerts, sphereTris, i, 0, 0.3f, 0, Color.red, i<=lives) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
-		for(int i=0; i<100; i++) {
-			GameObject mush = CreateMeshObject("Mushroom", mushTopVerts, mushTopTris, (int)Random.Range(0, 30), (int)Random.Range(2, 28), 0.3f, 1, levelColor);
-			CreateMeshObject("Mushroom", mushTopVerts, mushTopTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.2f, 0, Color.green).transform.parent = mush.transform;
-			mush.transform.GetChild(0).position += -(Vector3.forward*0.01f) + (Vector3.up*0.02f);
-			CreateMeshObject("Mushroom", mushBotVerts, mushBotTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.3f, 0, levelColor).transform.parent = mush.transform;
-			CreateMeshObject("Mushroom", mushBotVerts, mushBotTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.2f, 0, Color.green).transform.parent = mush.transform;
-			mush.transform.GetChild(2).position += -(Vector3.forward*0.01f) - (Vector3.up*0.02f);
-		}
+		for(int i=0; i<100; i++)
+			CreateMushroom((int)Random.Range(0, 30), (int)Random.Range(2, 28), levelColor, Color.green);
 		for(int i=0; i<10; i++)
 			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(15,-9+i+1)) );
 		uiObjects.Add( new GameObject("UICanvas") );
@@ -83,25 +77,20 @@ public class Centipede : MonoBehaviour {
 		go.GetComponent<MeshFilter>().mesh.triangles = tris;
 		return SetupObject(go, x, y, size, size, size, layer, color, active, targetCell);
 	}
-	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, Vector2Int targetCell=new Vector2Int()) {
-		GameObject go = new GameObject(label);
-		go.AddComponent<SphereCollider>();
-		LineRenderer line = go.AddComponent<LineRenderer>();
-		line.useWorldSpace = false;
-		line.widthMultiplier = 0.06f;
-		line.material = new Material(Shader.Find("Sprites/Default"));
-		line.positionCount = shape.Length;
-		line.SetPositions(shape);
-		return SetupObject(go, x, y, sX, sY, sZ, layer, color, active, targetCell);
+	void CreateMushroom(int x, int y, Color outline, Color inside) {
+		GameObject mush = CreateMeshObject("Mushroom", mushTopVerts, mushTopTris, x, y, 0.3f, 1, outline);
+		CreateMeshObject("MushroomTop", mushTopVerts, mushTopTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.2f, 0, inside).transform.parent = mush.transform;
+		mush.transform.GetChild(0).position += -(Vector3.forward*0.01f) + (Vector3.up*0.02f);
+		CreateMeshObject("MushroomBot1", mushBotVerts, mushBotTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.3f, 0, outline).transform.parent = mush.transform;
+		CreateMeshObject("MushroomBot2", mushBotVerts, mushBotTris, XToGridJ(mush.transform.position.x), YToGridI(mush.transform.position.y), 0.2f, 0, inside).transform.parent = mush.transform;
+		mush.transform.GetChild(2).position += -(Vector3.forward*0.01f) - (Vector3.up*0.02f);
 	}
 	void KillPlayer() {
-		//Explode(player, 50);
 		playerLives[lives].SetActive(false);
 		gameState = 1;								// Player lost a life
 		gameStateTimer = Time.unscaledTime + 3f;
-		if (--lives < 0) {
+		if (--lives < 0)
 			gameState = 3;							// Player dead = game over
-		}
 	}
 	void Score(int add) {
 		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Count - 1)) ? lives + 1 : lives) : lives;
@@ -155,6 +144,7 @@ public class Centipede : MonoBehaviour {
 					Score(1);
 				}
 				else if(hits[h].gameObject.layer >= 10) {																			// Hit centipede
+					CreateMushroom(XToGridJ(hits[h].gameObject.transform.position.x), YToGridI(hits[h].gameObject.transform.position.y), levelColor, Color.green);
 					int index = centipede.IndexOf(hits[h].gameObject);
 					if(index > 0) {																									// Make prev segment a head
 						centipede[index-1].layer = 14;																				// Move down one cell
