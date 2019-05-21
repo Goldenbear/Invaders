@@ -35,15 +35,15 @@ public class Centipede : MonoBehaviour {
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKeyDown(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
-		allObjects.Add( CreateMeshObject("Player", sphereVerts, sphereTris, 15, 29, 0.3f, 5, Color.red) );
+		allObjects.Add( CreateMeshObject("Player", sphereVerts, sphereTris, 15, 29, 0.3f, 5, new Color(0f, 0.5f, 0f)) );
 		for (int i=0; i<20; i++) {
-			playerLives.Add( CreateMeshObject("Life", sphereVerts, sphereTris, i, 0, 0.3f, 0, Color.red, i<=lives) );
+			playerLives.Add( CreateMeshObject("Life", sphereVerts, sphereTris, i, 0, 0.3f, 0, new Color(0f, 0.5f, 0f), i<=lives) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
 		for(int i=0; i<100; i++)
-			CreateMushroom((int)Random.Range(0, 30), (int)Random.Range(2, 28), levelColor, Color.green);
+			CreateMushroom((int)Random.Range(0, 30), (int)Random.Range(2, 28), levelColor, new Color(1f, 0.8f, 0f));
 		for(int i=0; i<10; i++)
-			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(15,-9+i+1)) );
+			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, new Color(0.8f, 0.8f, 0f), true, new Vector2Int(15,-9+i+1)) );
 		uiObjects.Add( new GameObject("UICanvas") );
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<2; i++) {
@@ -117,7 +117,7 @@ public class Centipede : MonoBehaviour {
 			return;
 		}
 		if(Fire && (allObjects.Where(x => x.layer == 6).Count() == 0))
-        	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 6, Color.red) );
+        	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 6, new Color(0.8f, 0f, 0f)) );
 		foreach(GameObject go in allObjects) {
 			switch(go.layer) {
 				case 5:																												// Player
@@ -144,7 +144,7 @@ public class Centipede : MonoBehaviour {
 					Score(1);
 				}
 				else if(hits[h].gameObject.layer >= 10) {																			// Hit centipede
-					CreateMushroom(XToGridJ(hits[h].gameObject.transform.position.x), YToGridI(hits[h].gameObject.transform.position.y), levelColor, Color.green);
+					CreateMushroom(XToGridJ(hits[h].gameObject.transform.position.x), YToGridI(hits[h].gameObject.transform.position.y), levelColor, new Color(1f, 0.8f, 0f));
 					int index = centipede.IndexOf(hits[h].gameObject);
 					if(index > 0) {																									// Make prev segment a head
 						centipede[index-1].layer = 14;																				// Move down one cell
@@ -194,7 +194,7 @@ public class Centipede : MonoBehaviour {
 		allObjects.AddRange(added);
 		if(centipede.Count() == 0) {																								// Level complete
 			for(int i=0; i<10; i++)
-				centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, Color.yellow, true, new Vector2Int(15,-9+i+1)) );
+				centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, new Color(0.8f, 0.8f, 0f), true, new Vector2Int(15,-9+i+1)) );
 		}
 	}
 }
