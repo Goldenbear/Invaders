@@ -26,7 +26,7 @@ public class Centipede : MonoBehaviour {
 	float GridIToY(int i) { return 4.5f - (i * 0.3f); }
 	Vector2Int PosCell(Vector3 pos) { return new Vector2Int(XToGridJ(pos.x), YToGridI(pos.y)); }
 	Vector3 CellPos(Vector2Int cell) { return new Vector3(GridJToX(cell.x), GridIToY(cell.y), 0f); }
-	Vector3 SnapPos(Vector3 pos) { return CellPos(PosCell(pos)); }
+	//Vector3 SnapPos(Vector3 pos) { return CellPos(PosCell(pos)); }
 	int CellGetLayer(Vector2Int cell) { return grid[cell.x, cell.y]; }
 	void CellSetLayer(Vector2Int cell, int layer) { grid[cell.x, cell.y] = layer; }
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
@@ -52,7 +52,7 @@ public class Centipede : MonoBehaviour {
 			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = Screen.width/30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
-			uiObjects[1+i].GetComponent<Text>().defaultMaterial.color = levelColor;
+			uiObjects[1+i].GetComponent<Text>().color = levelColor;
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-Screen.width/2.4f, Screen.height/2.2f, 0f) : i == 1 ? new Vector3(0f, Screen.height/2.2f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
