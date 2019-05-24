@@ -130,20 +130,20 @@ public class Centipede : MonoBehaviour {
 						destroyed.Add(go);
 				break;
 			}
-			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer==6?(1<<1)+(1<<2)+(1<<3)+(1<<4)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15):0);
+			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, (1<<1)+(1<<2)+(1<<3)+(1<<4)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15));
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
-				if(hits[h].gameObject.layer <= 3) {																					// Hit a mushroom x 3
+				if((go.layer == 6) && (hits[h].gameObject.layer <= 3)) {															// Bullet hit a mushroom x 3
 					destroyed.Add(hits[h].gameObject.transform.GetChild(3-hits[h].gameObject.layer).gameObject);
 					hits[h].gameObject.layer++;
 					destroyed.Add(go);
 				}
-				else if(hits[h].gameObject.layer == 4) {                                                                            // 4th hit on mushroom
+				else if((go.layer == 6) && (hits[h].gameObject.layer == 4)) {														// Bullet 4th hit on mushroom
 					CellSetLayer(PosCell(hits[h].gameObject.transform.position), 0);												// Remove mushroom from layer grid
 					destroyed.Add(hits[h].gameObject);																				// Destroy mushroom
 					destroyed.Add(go);
 					Score(1);
 				}
-				else if(hits[h].gameObject.layer >= 10) {																			// Hit centipede
+				else if((go.layer == 6) && (hits[h].gameObject.layer >= 10)) {														// Bullet hit centipede
 					CreateMushroom(XToGridJ(hits[h].gameObject.transform.position.x), YToGridI(hits[h].gameObject.transform.position.y), levelColor, new Color(1f, 0.8f, 0f));
 					int index = centipede.IndexOf(hits[h].gameObject);
 					if(index > 0) {																									// Make prev segment a head
@@ -155,6 +155,10 @@ public class Centipede : MonoBehaviour {
 					destroyed.Add(go);
 					Score(10);
 				}
+				else if((go.layer == 5) && (hits[h].gameObject.layer < 10))															// Player hit mushroom
+					go.transform.position -= new Vector3(Joystick.x, Joystick.y, 0f) * Time.deltaTime;								// Move player back
+				else if((go.layer == 5) && (hits[h].gameObject.layer >= 10))														// Player hit centipede
+					KillPlayer();																									// Lose a life
 			}
 		}
 		for(int i=0; i<centipede.Count; i++) {
@@ -180,12 +184,6 @@ public class Centipede : MonoBehaviour {
 			}
 			else
 				go.transform.position += diff.normalized * 1.0f * Time.deltaTime;													// Move towards target
-			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, go.layer>=10&&go.layer<=15 ? (1<<5) : 0);
-			for(int h=0; (hits != null) && (h < hits.Length); h++) {
-				if(hits[h].gameObject.layer == 5) {																					// Hit the Player
-					KillPlayer();
-				}
-			}
 		}
 		foreach(GameObject dead in destroyed) {
 			allObjects.Remove(dead);
