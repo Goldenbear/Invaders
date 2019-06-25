@@ -36,6 +36,7 @@ public class Centipede : MonoBehaviour {
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		allObjects.Add( CreateMeshObject("Player", sphereVerts, sphereTris, 15, 29, 0.3f, 5, new Color(0f, 0.5f, 0f)) );
+		allObjects[0].transform.localScale = new Vector3(0.25f, 0.3f, 0.3f);
 		for (int i=0; i<20; i++) {
 			playerLives.Add( CreateMeshObject("Life", sphereVerts, sphereTris, i, 0, 0.3f, 0, new Color(0f, 0.5f, 0f), i<=lives) );
 			playerLives[i].transform.parent = gameObject.transform;
@@ -125,7 +126,7 @@ public class Centipede : MonoBehaviour {
 					go.transform.position = new Vector3(Mathf.Clamp(go.transform.position.x, GridJToX(0), GridJToX(grid.GetUpperBound(0))), Mathf.Clamp(go.transform.position.y, GridIToY(grid.GetUpperBound(1)), GridIToY(grid.GetUpperBound(1)-10)), 0f);
 				break;
 				case 6:																												// Bullet
-					go.transform.position += Vector3.up * 5f * Time.deltaTime;
+					go.transform.position += Vector3.up * 10f * Time.deltaTime;
 					if(go.transform.position.y > GridIToY(0))																		// Destroy bullet if reaches top of screen
 						destroyed.Add(go);
 				break;
@@ -148,7 +149,7 @@ public class Centipede : MonoBehaviour {
 					int index = centipede.IndexOf(hits[h].gameObject);
 					if(index > 0) {																									// Make prev segment a head
 						centipede[index-1].layer = 14;																				// Move down one cell
-						centipede[index-1].GetComponent<GameData>().targetCell = PosCell(go.transform.position) - Vector2Int.down;
+						centipede[index-1].GetComponent<GameData>().targetCell = PosCell(go.transform.position) - (PosCell(go.transform.position).y<27?Vector2Int.down:Vector2Int.up);
 					}
 					centipede.Remove(hits[h].gameObject);
 					destroyed.Add(hits[h].gameObject);
@@ -174,7 +175,7 @@ public class Centipede : MonoBehaviour {
 					if( (XToGridJ(go.transform.position.x)==0) || (XToGridJ(go.transform.position.x)>=grid.GetUpperBound(0)) ||		// Reached edge of screen?
 						(CellGetLayer(go.GetComponent<GameData>().targetCell) == 1) ) {												// Hit mushroom
 						go.layer = go.layer==12?14:15;																				// Move down one cell
-						go.GetComponent<GameData>().targetCell = goCell - (goCell.y<29?Vector2Int.down:Vector2Int.zero);
+						go.GetComponent<GameData>().targetCell = goCell - (goCell.y<27?Vector2Int.down:Vector2Int.up);
 					}
 				}
 				else if(go.layer <= 15) {																							// Head up/down
@@ -183,7 +184,7 @@ public class Centipede : MonoBehaviour {
 				}
 			}
 			else
-				go.transform.position += diff.normalized * 1.0f * Time.deltaTime;													// Move towards target
+				go.transform.position += diff.normalized * 2.0f * Time.deltaTime;													// Move towards target
 		}
 		foreach(GameObject dead in destroyed) {
 			allObjects.Remove(dead);
@@ -191,6 +192,7 @@ public class Centipede : MonoBehaviour {
 		}
 		allObjects.AddRange(added);
 		if(centipede.Count() == 0) {																								// Level complete
+			levelColor = Color.HSVToRGB(Random.value, 1f, 1f);
 			for(int i=0; i<10; i++)
 				centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, new Color(0.8f, 0.8f, 0f), true, new Vector2Int(15,-9+i+1)) );
 		}
