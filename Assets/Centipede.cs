@@ -122,7 +122,7 @@ public class Centipede : MonoBehaviour {
 		foreach(GameObject go in allObjects) {
 			switch(go.layer) {
 				case 5:																												// Player
-					go.transform.position += new Vector3(Joystick.x, Joystick.y, 0f) * Time.deltaTime;
+					go.transform.position += new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;
 					go.transform.position = new Vector3(Mathf.Clamp(go.transform.position.x, GridJToX(0), GridJToX(grid.GetUpperBound(0))), Mathf.Clamp(go.transform.position.y, GridIToY(grid.GetUpperBound(1)), GridIToY(grid.GetUpperBound(1)-10)), 0f);
 				break;
 				case 6:																												// Bullet
@@ -157,7 +157,7 @@ public class Centipede : MonoBehaviour {
 					Score(10);
 				}
 				else if((go.layer == 5) && (hits[h].gameObject.layer < 10))															// Player hit mushroom
-					go.transform.position -= new Vector3(Joystick.x, Joystick.y, 0f) * Time.deltaTime;								// Move player back
+					go.transform.position -= new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;						// Move player back
 				else if((go.layer == 5) && (hits[h].gameObject.layer >= 10))														// Player hit centipede
 					KillPlayer();																									// Lose a life
 			}
@@ -184,7 +184,7 @@ public class Centipede : MonoBehaviour {
 				}
 			}
 			else
-				go.transform.position += diff.normalized * 2.0f * Time.deltaTime;													// Move towards target
+				go.transform.position += diff.normalized * Mathf.Min(2.0f * Time.deltaTime, diff.magnitude);						// Move towards target
 		}
 		foreach(GameObject dead in destroyed) {
 			allObjects.Remove(dead);
