@@ -27,15 +27,16 @@ public class Breakout : MonoBehaviour
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;  //dirlight.color = Color.green;
-		ball = CreateObject("Ball", 0f, 0f, 0.2f, 0.1f, 0);
- 		bat = CreateObject("Bat", 0f, -4f, 0.6f, 0.2f, 1);
- 		borderTop = CreateObject("BorderTop", ((bricks.GetLength(0)/2) * 0.7f)-5.35f, (bricks.GetLength(1) * 0.25f)+2.5f, bricks.GetLength(0) * 0.7f, 0.2f, 2);
- 		borderLeft = CreateObject("BorderLeft", -((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0f, 0.2f, 10f, 3);
- 		borderRight = CreateObject("BorderRight", ((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0f, 0.2f, 10f, 4);
+		ball = CreateObject("Ball", 0f, 0f, 0.2f, 0.1f, 0, Color.white);
+ 		bat = CreateObject("Bat", 0f, -4f, 0.6f, 0.2f, 1, Color.cyan);
+ 		borderTop = CreateObject("BorderTop", ((bricks.GetLength(0)/2) * 0.7f)-5.35f, (bricks.GetLength(1) * 0.25f)+2.5f, bricks.GetLength(0) * 0.7f, 0.2f, 2, Color.white);
+ 		borderLeft = CreateObject("BorderLeft", -((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0f, 0.2f, 10f, 3, Color.white);
+ 		borderRight = CreateObject("BorderRight", ((bricks.GetLength(0)/2) * 0.7f)-0.35f-0.1f, 0f, 0.2f, 10f, 4, Color.white);
 		for (int i = 0; i < bricks.GetLength(0); i++)
 			for (int j = 0; j < bricks.GetLength(1); j++) 
 			{
- 				bricks[i, j] = CreateObject("Brick", (i * 0.7f) - 5, (j * 0.25f) + 1, 0.6f, 0.15f, 5 + (j/2));
+ 				bricks[i, j] = CreateObject("Brick", (i * 0.7f) - 5, (j * 0.25f) + 1, 0.6f, 0.15f, 5 + (j/2),
+				j <= 1 ? Color.yellow : j <= 3 ? Color.green : j <= 5 ? new Color(1f, 0.6f, 0f, 1f) : Color.red);
 			}
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.WorldSpace;
@@ -49,11 +50,11 @@ public class Breakout : MonoBehaviour
 		startTime = Time.time + 3f;
 	}
 
-	GameObject CreateObject(string label, float px, float py, float sx, float sy, int layer) 
+	GameObject CreateObject(string label, float px, float py, float sx, float sy, int layer, Color color) 
 	{
         GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
 		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
-		go.GetComponent<Renderer>().material.color = Color.white;
+		go.GetComponent<Renderer>().material.color = color;
 		go.transform.position = new Vector3(px, py, 0f);
 		go.transform.localScale = new Vector3(sx, sy, 0.5f);
 		go.layer = layer;
