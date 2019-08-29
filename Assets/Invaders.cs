@@ -5,7 +5,7 @@ public class Invaders : MonoBehaviour {
 	static int lives = 2;
 	Light dirlight;
 	GameObject player;
-	GameObject[,] invaders = new GameObject[10, 5];
+	GameObject[,] invaders = new GameObject[11, 5];
 	GameObject[] bullets = new GameObject[4];		// Bullet 0 is player's, rest are invader's
 	GameObject[] playerLives = new GameObject[2];
 	Vector3[] lander1Vs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
