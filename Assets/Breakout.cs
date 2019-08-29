@@ -71,7 +71,8 @@ public class Breakout : MonoBehaviour
             {
                 if (hits[0].gameObject.layer == 1)			// Bat
                 {
-                    ballVelocity = new Vector3(ballVelocity.x, Mathf.Abs(ballVelocity.y), ballVelocity.z);		// Give upward velocity
+					float bathitX = (hits[0].ClosestPoint(ball.transform.position) - hits[0].gameObject.transform.position).x / hits[0].bounds.extents.x;
+                    ballVelocity = new Vector3(bathitX, Mathf.Abs(ballVelocity.y), ballVelocity.z);				// Give upward velocity, left-right velocity based on hit position on bat
                 }
 				else if(hits[0].gameObject.layer == 2)      // Top border
 				{
