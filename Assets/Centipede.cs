@@ -165,17 +165,17 @@ public class Centipede : MonoBehaviour {
 			Vector3 diff = CellPos(go.GetComponent<GameData>().targetCell) - go.transform.position;									// Vector to target cell
 			if(diff.magnitude < 0.01f) {																							// Reached target cell?
 				go.transform.position = CellPos(goCell);																			// Snap to centre of cell
-				if(go.layer <= 11)																									// Tail/body
+				if(go.layer <= 11)																									// Tail(10)/body(11)
 					go.GetComponent<GameData>().targetCell = PosCell(centipede[i+1].transform.position);							// Follow next segment
-				else if(go.layer <= 13)	{																							// Head left/right
+				else if(go.layer <= 13)	{																							// Head moving left(12)/right(13)
 					go.GetComponent<GameData>().targetCell = goCell + (go.layer==12?Vector2Int.left:Vector2Int.right);				// Next cell left/right
 					if( (XToGridJ(go.transform.position.x)==0) || (XToGridJ(go.transform.position.x)>=grid.GetUpperBound(0)) ||		// Reached edge of screen?
 						(CellGetLayer(go.GetComponent<GameData>().targetCell) == 1) ) {												// Hit mushroom
-						go.layer = go.layer==12?14:15;																				// Move down one cell
-						go.GetComponent<GameData>().targetCell = goCell - (goCell.y<27?Vector2Int.down:Vector2Int.up);
+						go.layer = go.layer==12?14:15;																				// Move up/down one cell
+						go.GetComponent<GameData>().targetCell = goCell - (goCell.y<29?Vector2Int.down:Vector2Int.up);
 					}
 				}
-				else if(go.layer <= 15) {																							// Head up/down
+				else if(go.layer <= 15) {																							// Head moving up/down(14=go left,15=go right)
 					go.layer = go.layer==14?13:12;																					// Move Left/right in reverse direction from before moving down
 					go.GetComponent<GameData>().targetCell = goCell + (go.layer==12?Vector2Int.left:Vector2Int.right);
 				}
