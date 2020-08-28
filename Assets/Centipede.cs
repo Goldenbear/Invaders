@@ -6,7 +6,7 @@ public class Centipede : MonoBehaviour {
 	public class GameData : MonoBehaviour {
 		public Vector2Int targetCell;
 	}
-	static int score = 0, lives = 2, level = 1;
+	static int score = 0, lives = 2, level = 0;
 	int[,] grid = new int[30,30];
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>(), centipede = new List<GameObject>(), uiObjects = new List<GameObject>();
 	Vector3[] sphereVerts = { new Vector3(0f, 0f, 0f), new Vector3(-0.5f, -0.1f, 0f), new Vector3(-0.5f, 0.1f, 0f), new Vector3(-0.35f, 0.35f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.35f, 0f), new Vector3(0.5f, 0.1f, 0f), new Vector3(0.5f, -0.1f, 0f), new Vector3(0.35f, -0.35f, 0f), new Vector3(0.1f, -0.5f, 0f), new Vector3(-0.1f, -0.5f, 0f), new Vector3(-0.35f, -0.35f, 0f) };
@@ -32,7 +32,7 @@ public class Centipede : MonoBehaviour {
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return KeyJoy; } }
-	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKeyDown(KeyCode.LeftShift); } }
+	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKey(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		allObjects.Add( CreateMeshObject("Player", sphereVerts, sphereTris, 15, 29, 0.3f, 5, new Color(0f, 0.5f, 0f)) );
@@ -43,8 +43,6 @@ public class Centipede : MonoBehaviour {
 		}
 		for(int i=0; i<100; i++)
 			CreateMushroom((int)Random.Range(0, 30), (int)Random.Range(2, 28), levelColor, new Color(1f, 0.8f, 0f));
-		for(int i=0; i<10; i++)
-			centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, new Color(0.8f, 0.8f, 0f), true, new Vector2Int(15,-9+i+1)) );
 		uiObjects.Add( new GameObject("UICanvas") );
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<2; i++) {
@@ -111,8 +109,7 @@ public class Centipede : MonoBehaviour {
 				gameState = 0;
 			}
 			if( (gameState >= 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))) ) {
-				level++;
-				if(gameState == 3) { score = 0; lives = 2; level = 1; }					// New game
+				if(gameState == 3) { score = 0; lives = 2; level = 0; }					// New game
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Centipede");		// Reload scene for new level
 			}
 			return;
@@ -126,7 +123,7 @@ public class Centipede : MonoBehaviour {
 					go.transform.position = new Vector3(Mathf.Clamp(go.transform.position.x, GridJToX(0), GridJToX(grid.GetUpperBound(0))), Mathf.Clamp(go.transform.position.y, GridIToY(grid.GetUpperBound(1)), GridIToY(grid.GetUpperBound(1)-10)), 0f);
 				break;
 				case 6:																												// Bullet
-					go.transform.position += Vector3.up * 10f * Time.deltaTime;
+					go.transform.position += Vector3.up * 30f * Time.deltaTime;
 					if(go.transform.position.y > GridIToY(0))																		// Destroy bullet if reaches top of screen
 						destroyed.Add(go);
 				break;
@@ -157,7 +154,7 @@ public class Centipede : MonoBehaviour {
 					Score(10);
 				}
 				else if((go.layer == 5) && (hits[h].gameObject.layer < 10))															// Player hit mushroom
-					go.transform.position -= new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;						// Move player back
+					go.transform.position -= new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;							// Move player back
 				else if((go.layer == 5) && (hits[h].gameObject.layer >= 10))														// Player hit centipede
 					KillPlayer();																									// Lose a life
 			}
@@ -184,7 +181,7 @@ public class Centipede : MonoBehaviour {
 				}
 			}
 			else
-				go.transform.position += diff.normalized * Mathf.Min(2.0f * Time.deltaTime, diff.magnitude);						// Move towards target
+				go.transform.position += diff.normalized * Mathf.Min(5.0f * Time.deltaTime, diff.magnitude);						// Move towards target
 		}
 		foreach(GameObject dead in destroyed) {
 			allObjects.Remove(dead);
@@ -192,9 +189,12 @@ public class Centipede : MonoBehaviour {
 		}
 		allObjects.AddRange(added);
 		if(centipede.Count() == 0) {																								// Level complete
+			level++;
 			levelColor = Color.HSVToRGB(Random.value, 1f, 1f);
+			for(int i=0; i<(10+Mathf.Min(level-1, 10)); i++)
+				centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, i<10?15:i%2==1?0:30, -9+i, 0.3f, i==0?10:i<9?11:13, new Color(0.8f, 0.8f, 0f), true, new Vector2Int(15,-9+i+1)) );
 			for(int i=0; i<10; i++)
-				centipede.Add( CreateMeshObject("Centipede", sphereVerts, sphereTris, 15, -9+i, 0.3f, i==0?10:i<9?11:13, new Color(0.8f, 0.8f, 0f), true, new Vector2Int(15,-9+i+1)) );
+				CreateMushroom((int)Random.Range(0, 30), (int)Random.Range(2, 28), levelColor, new Color(1f, 0.8f, 0f));
 		}
 	}
 }
