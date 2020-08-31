@@ -45,7 +45,7 @@ public class Centipede : MonoBehaviour {
 			CreateMushroom((int)Random.Range(0, 30), (int)Random.Range(2, 28), levelColor, new Color(1f, 0.8f, 0f));
 		uiObjects.Add( new GameObject("UICanvas") );
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-		for(int i=0; i<2; i++) {
+		for(int i=0; i<3; i++) {
 			uiObjects.Add( new GameObject("UIText") );
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
 			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
@@ -101,6 +101,7 @@ public class Centipede : MonoBehaviour {
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = string.Format("{0:00000}", PlayerPrefs.GetInt("CentipedeHighScore"));
+		uiObjects[3].GetComponent<Text>().text = gameState == 3 ? "GAME OVER" : "";
 		if(gameState > 0) {
 			if( (gameState == 1) && (Time.unscaledTime > gameStateTimer) ) {
 				foreach(GameObject go in centipede)
@@ -117,16 +118,14 @@ public class Centipede : MonoBehaviour {
 		if(Fire && (allObjects.Where(x => x.layer == 6).Count() == 0))
         	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 6, new Color(0.8f, 0f, 0f)) );
 		foreach(GameObject go in allObjects) {
-			switch(go.layer) {
-				case 5:																												// Player
-					go.transform.position += new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;
-					go.transform.position = new Vector3(Mathf.Clamp(go.transform.position.x, GridJToX(0), GridJToX(grid.GetUpperBound(0))), Mathf.Clamp(go.transform.position.y, GridIToY(grid.GetUpperBound(1)), GridIToY(grid.GetUpperBound(1)-10)), 0f);
-				break;
-				case 6:																												// Bullet
-					go.transform.position += Vector3.up * 30f * Time.deltaTime;
-					if(go.transform.position.y > GridIToY(0))																		// Destroy bullet if reaches top of screen
-						destroyed.Add(go);
-				break;
+			if(go.layer == 5) {																										// Player
+				go.transform.position += new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;
+				go.transform.position = new Vector3(Mathf.Clamp(go.transform.position.x, GridJToX(0), GridJToX(grid.GetUpperBound(0))), Mathf.Clamp(go.transform.position.y, GridIToY(grid.GetUpperBound(1)), GridIToY(grid.GetUpperBound(1)-10)), 0f);
+			}
+			if(go.layer == 6) {																										// Bullet
+				go.transform.position += Vector3.up * 10f * Time.deltaTime;
+				if(go.transform.position.y > GridIToY(0))																			// Destroy bullet if reaches top of screen
+					destroyed.Add(go);
 			}
 			Collider[] hits = Physics.OverlapSphere(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents.y, (1<<1)+(1<<2)+(1<<3)+(1<<4)+(1<<10)+(1<<11)+(1<<12)+(1<<13)+(1<<14)+(1<<15));
 			for(int h=0; (hits != null) && (h < hits.Length); h++) {
