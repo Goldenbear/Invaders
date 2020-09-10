@@ -8,8 +8,9 @@ public class Invaders : MonoBehaviour {
 	GameObject[,] invaders = new GameObject[11, 5];
 	GameObject[] bullets = new GameObject[4];		// Bullet 0 is player's, rest are invader's
 	GameObject[] playerLives = new GameObject[2];
-	Vector3[] lander1Vs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
-	Vector3[] lander2Vs = { new Vector3(-0.2f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.2f, -0.5f, 0f), new Vector3(0.2f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
+	GameObject explosion;
+	Vector3[] lander1Vs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.4f, -0.3f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.51f, -0.45f, 0f), new Vector3(0.49f, -0.47f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
+	Vector3[] lander2Vs = { new Vector3(-0.2f, -0.5f, 0f), new Vector3(-0.4f, -0.3f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.21f, -0.47f, 0f), new Vector3(0.19f, -0.45f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Canvas uiCanvas;
 	Text uiScore;
 	bool invadersMovingLeft = true;
@@ -40,6 +41,15 @@ public class Invaders : MonoBehaviour {
 		for(int i=0; (i<playerLives.Length)&&(i<lives); i++) {
 			playerLives[i] = CreateCubeObject("Life", -6+(i*1f), -5, 0.75f, 0.5f, 0, Color.green);
 		}
+		explosion = new GameObject("Explosion");
+		explosion.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+		explosion.AddComponent<ParticleSystem>().Pause();
+		explosion.GetComponent<ParticleSystemRenderer>().material = new Material(Shader.Find("Sprites/Default"));
+		ParticleSystem.MainModule main = explosion.GetComponent<ParticleSystem>().main;
+		main.startSize = 0.025f;
+		main.startLifetime = 1f;
+		main.startSpeed = 5f;
+		main.scalingMode = ParticleSystemScalingMode.Shape;
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
@@ -75,7 +85,7 @@ public class Invaders : MonoBehaviour {
 		go.AddComponent<BoxCollider>();
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
-		line.widthMultiplier = 0.06f;
+		line.widthMultiplier = 0.1f;
 		line.material = new Material(Shader.Find("Sprites/Default"));
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
@@ -117,10 +127,16 @@ public class Invaders : MonoBehaviour {
 						bullets[i].SetActive(false);
 						hits[0].gameObject.SetActive(false);
 						if(hits[0].gameObject.layer == 2) {
+							explosion.transform.position = hits[0].gameObject.transform.position;
+							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
+							explosion.GetComponent<ParticleSystem>().Emit(10);
 							score+=10;
 							numInvadersDead++;
 						}
 						else if(hits[0].gameObject.layer == 1) {
+							explosion.transform.position = hits[0].gameObject.transform.position;
+							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
+							explosion.GetComponent<ParticleSystem>().Emit(10);
 							if(--lives >= 0) {
 								playerLives[lives].SetActive(false);
 								player.SetActive(true);
