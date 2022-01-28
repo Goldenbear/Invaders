@@ -6,7 +6,6 @@
 *.csproj
 /.vs/
 /Logs/
-/Packages/
 *.DS_Store
 /Builds/
 *.vsconfig
