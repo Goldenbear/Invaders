@@ -12,13 +12,14 @@ public class BattleZone : MonoBehaviour {
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
 	float[,] playerGeom = new float[,] { {-0.5f, -0.5f, 0f}, { -0.3f, -0.3f, 0f}, { 0.5f, -0.3f, 0f}, { 0.5f, -0.2f, 0f}, { -0.3f, 0.2f, 0f}, { -0.4f, 0.5f, 0f}, { -0.5f, 0.5f, 0f}, { -0.5f, -0.5f, 0f} };
 	float[,] bulletGeom = new float[,] { {-0.5f, 0f, 0f}, { 0.5f, 0f, 0f} };
-	float[,] terrainGeom = new float[,] { { -20f, 0f, 0f }, { -18f, 2f, 0f }, { -15f, 0f, 0f }, { -12f, 0f, 0f }, { -9f, 2f, 0f }, { -6f, 0f, 0f }, { -3f, 0f, 0f }, { -2f, 1f, 0f }, { -1f, 0f, 0f }, { 2f, 0f, 0f }, { 3f, 1f, 0f }, { 4f, 0f, 0f }, { 5f, 0f, 0f }, { 8f, 2f, 0f }, { 11f, 0f, 0f }, { 15f, 0f, 0f }, { 16.5f, 0.5f, 0f }, { 17f, 0.3f, 0f }, { 17.5f, 0.8f, 0f }, { 18f, 0.6f, 0f }, { 18.5f, 1.1f, 0f }, { 19.5f, 0f, 0f }, { 20f, 0f, 0f } };
+	float[,] terrainGeom = new float[,] { { -20f, 0f, 0f }, { -18f, 2f, 0f }, { -15f, 0f, 0f }, { -12f, 0f, 0f }, { -9f, 2f, 0f }, { -6f, 0f, 0f }, { -3f, 0f, 0f }, { -2f, 1f, 0f }, { -1f, 0f, 0f }, { 2f, 0f, 0f }, { 3f, 1f, 0f }, { 4f, 0f, 0f }, { 5f, 0f, 0f }, { 8f, 2f, 0f }, { 11f, 0f, 0f }, { 15f, 0f, 0f }, { 16.5f, 0.5f, 0f }, { 17f, 0.3f, 0f }, { 17.5f, 0.8f, 0f }, { 18f, 0.6f, 0f }, { 18.5f, 1.1f, 0f }, { 19.5f, 0f, 0f }, { 20f, 0f, 0f }, { -20f, 0f, 0f } };
 	float[,] cubeGeom = new float[,] { {-1f, -1f, -1f}, {-1f, -1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {-1f, -1f, -1f}, {-1f, 1f, -1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, 1f, -1f}, {-1f, 1f, -1f}, {-1f, -1f, -1f}, {-1f, -1f, 1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {1f, 1f, -1f} };
 	float camOffset = 0f, gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
-	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
-	bool Fire { get { for (int t=0; t<Input.touchCount; t++) { if(TouchJoy(t).x < -2f) return true; } return Input.GetKey(KeyCode.LeftShift); } }
+	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
+	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return KeyJoy; } }
+	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKey(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		gameObject.GetComponent<Camera>().orthographic = false;
@@ -34,14 +35,15 @@ public class BattleZone : MonoBehaviour {
  		Gradient gradient = new Gradient();
 		gradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.white, 0.5f), new GradientColorKey(Color.grey, 1f) };
 		allObjects.Add( player = CreateVectorObject("Player", playerGeom, 0f, 0f, 0f, 0.6f, 0.2f, 1f, 1, Color.white, true, true, 0.1f, gradient) );
-        allObjects.Add( CreateVectorObject("Terrain1", terrainGeom, -10f,     0f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
-        allObjects.Add( CreateVectorObject("Terrain2", terrainGeom, -10f+40f, 0f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
+        //allObjects.Add( CreateVectorObject("Terrain1", terrainGeom, -10f,     0f, 0f, 1f, 1f, 1f, 0, Color.green) );
+        //allObjects.Add( CreateVectorObject("Terrain2", terrainGeom, -10f+40f, 0f, 0f, 1f, 1f, 1f, 0, Color.green) );
+        CreateVectorObject("Terrain1", terrainGeom, -10f,     0f, 0f, 1f, 1f, 1f, 0, Color.green).transform.parent = transform;
 		for (int i=0; i<20; i++) {
 			playerLives.Add( CreateVectorObject("Life", playerGeom, -7f+i*0.5f, 4f, 0f, 0.3f, 0.1f, 1f, 0, Color.white, i<=lives, true, 0.1f, gradient) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
 		for (int i=0; i<100; i++)
-        	allObjects.Add( CreateVectorObject("Obstacle", cubeGeom, Random.Range(-40f, 40f), 0f, Random.Range(-40f, 40f), 0.5f, 0.5f, 0.5f, 0, new Color(Random.value, Random.value, Random.value, Random.value)) );
+        	allObjects.Add( CreateVectorObject("Obstacle", cubeGeom, Random.Range(-40f, 40f), 0f, Random.Range(-40f, 40f), 0.5f, 0.5f, 0.5f, 0, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<4; i++) {
@@ -113,111 +115,11 @@ public class BattleZone : MonoBehaviour {
 		}
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		if (Fire && (Time.unscaledTime > gameStateTimer)) {
-			allObjects.Add(CreateVectorObject("Laser", bulletGeom, player.transform.position.x + Mathf.Sign(player.transform.localScale.x) * 0.6f, player.transform.position.y - 0.05f, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.HSVToRGB(Random.value, 1f, 1f)));
+			//allObjects.Add(CreateVectorObject("Laser", bulletGeom, player.transform.position.x + Mathf.Sign(player.transform.localScale.x) * 0.6f, player.transform.position.y - 0.05f, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.HSVToRGB(Random.value, 1f, 1f)));
 			gameStateTimer = Time.unscaledTime + 0.2f;
 		}
-		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
-		gameObject.transform.position = new Vector3(player.transform.position.x+camOffset, gameObject.transform.position.y, gameObject.transform.position.z);
-		foreach(GameObject go in allObjects) {
-			float pX = go.transform.position.x, pY = go.transform.position.y, sX = go.transform.localScale.x;
-			switch(go.layer) {
-/* Player */	case 1:	sX = Input.GetKey(KeyCode.LeftArrow)||Joystick.x<-0.5f ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow)||Joystick.x>0.5f ? Mathf.Abs(sX) : sX;
-						pX += ((Input.GetKey(KeyCode.LeftArrow)||Joystick.x<-0.5f ? -10f : Input.GetKey(KeyCode.RightArrow)||Joystick.x>0.5f ? 10f : 0f) * Time.deltaTime);
-						pY += ((Input.GetKey(KeyCode.DownArrow)||Joystick.y<-0.5f ? -5f  : Input.GetKey(KeyCode.UpArrow)||Joystick.y>0.5f ? 5f : 0f) * Time.deltaTime);
-						pY = Mathf.Clamp(pY, -4.5f, 4f); 
-				break;
-/* Laser */		case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
-						sX += Mathf.Sign(sX)*30f*Time.deltaTime;
-						if( Mathf.Abs(pX - player.transform.position.x) > 10f )
-							destroyed.Add(go);
-				break;
-/* Human */		case 3: pX = go.GetComponent<GameData>().target != null ? go.GetComponent<GameData>().target.transform.position.x : pX;
-						pY += go.GetComponent<GameData>().target != null ? (go.GetComponent<GameData>().target.transform.position.y-0.3f)-pY : pY > -4.5f ? -1f*Time.deltaTime : 0f;
-						if( (pY < -4.3f) && (pY > -4.4f) && (go.GetComponent<GameData>().target == null) ) {
-							Explode(go);
-							destroyed.Add(go);
-						}
-						else if( (pY <= -4.5f) && (go.GetComponent<GameData>().target == player) ) {
-							go.GetComponent<GameData>().target = player.GetComponent<GameData>().target = null;	// Drop off human
-							pY = -4.5f;
-						}
-				break;
-/* Lander */	case 4: if( go.GetComponent<GameData>().target == null ) {										// If we dont have a human target
-							float nearest = float.MaxValue;														// Target the nearest free human
-							foreach(GameObject human in allObjects.Where(x => x.layer == 3 && x.GetComponent<GameData>().target == null)) {
-								if(Mathf.Abs(human.transform.position.x-go.transform.position.x) < nearest) {
-									nearest = Mathf.Abs(human.transform.position.x-go.transform.position.x);
-									go.GetComponent<GameData>().target = human;
-								}
-							}
-						}
-						if(go.GetComponent<GameData>().target != null) {										// If we have a target (human or player)
-							if( (go.GetComponent<GameData>().target == player) ||								// If our target is the player or
-								(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) ){	// our target hasnt been picked up by anyone yet
-								Vector3 diff = go.GetComponent<GameData>().target.transform.position - go.transform.position;	// Move towards them
-								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : ((go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 0f) + (Time.time%2f)) - go.transform.position.y;		// Stay high until near
-								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : 1f);
-								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : 1f);
-							}
-							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go) {	// If we picked up our target
-								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;										// Go up
-								if(pY >= 4f) {
-									destroyed.Add(go.GetComponent<GameData>().target);							// Kill human
-									go.GetComponent<GameData>().target = player;								// Target player
-									go.GetComponent<Renderer>().material.color = Color.magenta;					// Turn Mutant
-								}
-							}
-							else
-								go.GetComponent<GameData>().target = null;										// Someone else picked up our target so get another target
-						}
-						else																					// No humans left to target
-							go.GetComponent<GameData>().target = player;										// Target player
-						if(Random.value < (go.GetComponent<Renderer>().material.color == Color.magenta ? 0.03f : 0.005f)) {																// Shoot at player
-        					GameObject bullet = CreateVectorObject("Bullet", cubeGeom, pX, pY, go.transform.position.z, 0.05f, 0.05f, 0.05f, 5, Color.white);
-							bullet.transform.LookAt( (bullet.transform.position + Vector3.forward), Vector3.Normalize(player.transform.position - bullet.transform.position) );
-							added.Add(bullet);
-						}
-				break;
-/* Bullet */	case 5: pX += go.transform.up.x*5f*Time.deltaTime;
-						pY += go.transform.up.y*5f*Time.deltaTime;
-						if( Mathf.Abs(pX - gameObject.transform.position.x) > 10f )		// If off screen
-							destroyed.Add(go);
-				break;
-			}
-			Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, go.layer == 1 ? (1<<3) : go.layer == 3 ? (1<<2) : go.layer >= 4 ? (1<<1)+(1<<2)+(1<<3) : 0);
-			for(int h=0; (hits != null) && (h < hits.Length); h++) {
-				if(hits[h].gameObject.layer == 1) {							// Player
-					KillPlayer();
-					destroyed.AddRange( allObjects.Where(x => (x.layer == 2)||(x.layer == 5)) );	// Destroy all lasers and bullets
-				}
-				else if(hits[h].gameObject.layer == 2) {					// Bullet
-					Explode(go);
-					destroyed.Add(go);
-					destroyed.Add(hits[h].gameObject);
-					Score(go.layer == 4 ? 150 : 0);
-				}
-				else if(hits[h].gameObject.layer == 3) {					// Human
-					if( ((go == player) && (go.GetComponent<GameData>().target == null) && (hits[h].gameObject.transform.position.y > -4.4f)) || 
-											(go.GetComponent<GameData>().target == hits[h].gameObject) ) {
-						go.GetComponent<GameData>().target = hits[h].gameObject;
-						hits[h].gameObject.GetComponent<GameData>().target = go;
-					}
-				}
-			}
-			pX += (pX < player.transform.position.x-40f) ? 80f : (pX > player.transform.position.x+40f) ? -80f : 0f;	// Wrap
-			go.transform.position = new Vector3(pX, pY, go.transform.position.z);
-			go.transform.localScale = new Vector3(sX, go.transform.localScale.y, go.transform.localScale.z);
-		}
-		foreach(GameObject dead in destroyed) {
-			foreach(GameObject go in allObjects.Where(x => x.GetComponent<GameData>().target == dead))
-				go.GetComponent<GameData>().target = null;
-			allObjects.Remove(dead);
-			Destroy(dead);
-		}
-		allObjects.AddRange(added);
-		if(allObjects.Where(x => x.layer == 4).Count() == 0) {				// Level complete
-			//Score(allObjects.Where(x => x.layer == 3).Count() * 100);
-			//gameState = 2;
-		}
+		transform.Rotate(new Vector3(0f, Joystick.x*10f*Time.deltaTime, 0f));
+		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
+		transform.GetChild(0).Translate(new Vector3(Joystick.x*-1f*Time.deltaTime, 0f, 0f));
     }
 }
