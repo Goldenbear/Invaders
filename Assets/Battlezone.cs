@@ -15,7 +15,7 @@ public class Battlezone : MonoBehaviour {
 	float[,] cubeGeom = new float[,] { {-1f, -1f, -1f}, {-1f, -1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {-1f, -1f, -1f}, {-1f, 1f, -1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, 1f, -1f}, {-1f, 1f, -1f}, {-1f, -1f, -1f}, {-1f, -1f, 1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {1f, 1f, -1f} };
 	float[,] tankGeom = new float[,] { {-0.4f, -0.1f, -0.8f}, {-0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, -0.8f}, {-0.5f, 0.1f, -1f}, {-0.5f, 0.1f, 1f}, {0.5f, 0.1f, 1f}, {0.5f, 0.1f, -1f}, {-0.4f, 0.3f, -0.8f}, {-0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, -0.8f}, {-0.3f, 0.6f, -0.7f}, {0.3f, 0.6f, -0.7f}, {-0.1f, 0.5f, -0.35f}, {-0.1f, 0.5f, 1f}, {0.1f, 0.5f, 1f}, {0.1f, 0.5f, -0.35f}, {-0.1f, 0.55f, -0.55f}, {-0.1f, 0.55f, 1f}, {0.1f, 0.55f, 1f}, {0.1f, 0.55f, -0.55f} };
 	int[] tankGInd = new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11, 8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17, 14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18};
-	float camOffset = 0f, gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
+	float gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
@@ -27,9 +27,10 @@ public class Battlezone : MonoBehaviour {
 		gameObject.AddComponent<BoxCollider>().isTrigger = true;			// Player collider
 		gameObject.layer = 1;
 		transform.Translate(new Vector3(0f, 0.3f, 0f));
- 		CreateVectorObject("Terrain1", VertexArray(terrainGeom), -10f, 0f, 40f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green).transform.parent = transform;
+ 		CreateVectorObject("Terrain1", VertexArray(terrainGeom),    0f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.1f).transform.parent = transform;
+ 		CreateVectorObject("Terrain2", VertexArray(terrainGeom), -200f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.1f).transform.parent = transform;
 		for (int i=0; i<20; i++) {
-			playerLives.Add( CreateVectorObject("Life", VertexArray(playerGeom), 0.2f+i*0.5f, 5.2f, 0f, 0.3f, 0.1f, 1f, 0f, 0f, 0f, 0, Color.green, i<=lives, true, 0.1f) );
+			playerLives.Add( CreateVectorObject("Life", VertexArray(playerGeom), 0.2f+i*0.5f, 5.5f, 0f, 0.3f, 0.1f, 1f, 0f, 0f, 0f, 0, Color.green, i<=lives, true, 0.1f) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
 		for (int i=0; i<100; i++)
@@ -117,7 +118,7 @@ public class Battlezone : MonoBehaviour {
 						for(int h=0; (hits != null) && (h < hits.Length); h++) {
 							if(hits[h].gameObject.layer == 1) {					// Bullet hit player
 								KillPlayer();
-								destroyed.Add(go);
+								destroyed.AddRange(allObjects.Where(x => x.layer == 2 || x.layer == 3));	// Remove all bullets and tanks from the field
 							}
 							else if (hits[h].gameObject.layer == 3) {			// Bullet hit a tank
 								Score(100);
@@ -153,7 +154,8 @@ public class Battlezone : MonoBehaviour {
 		allObjects.AddRange(added);
 		transform.Rotate(new Vector3(0f, Joystick.x*10f*Time.deltaTime, 0f));
 		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
-		transform.GetChild(0).Translate(new Vector3(Joystick.x*-1f*Time.deltaTime, 0f, 0f));
+		transform.Find("Terrain1").transform.localPosition = new Vector3(((transform.eulerAngles.y / 180f)-1f) * -(2f*Mathf.PI*40f*0.5f), 0f, 40f);
+		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete
 			level++;
 			for (int i=0; i<1; i++)
