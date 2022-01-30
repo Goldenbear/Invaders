@@ -112,6 +112,13 @@ public class Battlezone : MonoBehaviour {
 		foreach(GameObject go in allObjects) {
 			go.GetComponent<LineRenderer>().widthMultiplier = 0.005f + (Mathf.Clamp((go.transform.position-transform.position).magnitude, 1f, 10f)/10f) * 0.03f;	// Wider line width as get farther away
 			switch(go.layer) {
+/* Tank */		case 1: Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
+						float angle = Quaternion.Angle(go.transform.rotation, Quaternion.LookRotation(desiredDir, Vector3.up));
+						float whichWay = Vector3.Cross(go.transform.forward, desiredDir).y; // Left or right?
+						angle = (whichWay < 0.0f) ? -angle : angle;
+						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -10f*Time.deltaTime, 10f*Time.deltaTime), 0f));
+						go.transform.Translate(new Vector3(0f, 0f, 1f*Time.deltaTime));
+				break;
 /* Bullet */	case 2:	Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, 1<<1);
 						for(int h=0; (hits != null) && (h < hits.Length); h++) {
 							if (hits[h].gameObject.layer == 1) {
