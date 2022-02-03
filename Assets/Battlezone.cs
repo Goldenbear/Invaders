@@ -4,9 +4,11 @@ using UnityEngine.UI;
 using System.Linq;
 public class Battlezone : MonoBehaviour {
 	public class GameData : MonoBehaviour {
-		public float fireTime = 0f;
+		public int state = 0;
+		public float stateTimeout = 0f;
+		public Vector3 targetPos;
 	}
-	static int score = 0, lives = 2, level = 1;
+	static int score = 0, lives = 2, level = 0;
 	GameObject[] uiObjects = new GameObject[10];
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
 	float[,] playerGeom = new float[,] { {-0.5f, -0.5f, 0f}, { -0.3f, -0.3f, 0f}, { 0.5f, -0.3f, 0f}, { 0.5f, -0.2f, 0f}, { -0.3f, 0.2f, 0f}, { -0.4f, 0.5f, 0f}, { -0.5f, 0.5f, 0f}, { -0.5f, -0.5f, 0f} };
@@ -35,8 +37,6 @@ public class Battlezone : MonoBehaviour {
 		}
 		for (int i=0; i<100; i++)
         	allObjects.Add( CreateVectorObject("Obstacle", VertexArray(cubeGeom), Random.Range(-40f, 40f), 0.25f, Random.Range(-40f, 40f), 0.5f, 0.25f, 0.5f, 0f, 0f, 0f, 4, Color.green) );
-		for (int i=0; i<1; i++)
-        	allObjects.Add( CreateVectorObject("Tank", VertexArray(tankGeom, tankGInd), Random.Range(-20f, 20f), 0.05f, Random.Range(-20f, 20f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<4; i++) {
@@ -76,7 +76,9 @@ public class Battlezone : MonoBehaviour {
 		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
-		go.AddComponent<GameData>().fireTime = Time.unscaledTime;	// Default fireTime to object creation time, eg for bullets
+		go.AddComponent<GameData>().state = 0;
+		go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 3f;
+		go.GetComponent<GameData>().targetPos = go.transform.position;
 		return go;
 	}
 	void KillPlayer() {
@@ -130,19 +132,45 @@ public class Battlezone : MonoBehaviour {
 							}
 						}
 						go.transform.Translate(go.transform.forward*10f*Time.deltaTime, Space.World);
-						if((Time.unscaledTime-go.GetComponent<GameData>().fireTime) > 3f)				// Bullets die after x seconds
+						if((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout))				// Bullets die after x seconds
 							destroyed.Add(go);
 				break;
 /* Tank */		case 3: Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
+						float driveSpeed = 1f;
+						if(go.GetComponent<GameData>().state == 0) {			// Drive to the target position
+							desiredDir = new Vector3(go.GetComponent<GameData>().targetPos.x-go.transform.position.x, 0f, go.GetComponent<GameData>().targetPos.z-go.transform.position.z);
+							if(desiredDir.magnitude < 0.1f) {
+								go.GetComponent<GameData>().state = Random.value > 0.5f ? 2 : 0;
+								go.GetComponent<GameData>().targetPos = go.transform.position + new Vector3(Random.Range(-10f,10f),0f,Random.Range(-10f,10f));
+								break;
+							}
+						}
+						else if(go.GetComponent<GameData>().state == 1) {		// Back up
+							desiredDir = go.transform.forward;
+							driveSpeed = -1f;
+							if(Time.unscaledTime > go.GetComponent<GameData>().stateTimeout) {
+								go.GetComponent<GameData>().state = Random.value > 0.5f ? 2 : 0;
+								go.GetComponent<GameData>().targetPos = go.transform.position + (go.transform.right * Random.Range(-10f,10f)) + (go.transform.forward * Random.Range(-10f,0));
+								break;
+							}
+						}
 						float angle = Quaternion.Angle(go.transform.rotation, Quaternion.LookRotation(desiredDir, Vector3.up));
 						float whichWay = Vector3.Cross(go.transform.forward, desiredDir).y; // Left or right?
 						angle = (whichWay < 0.0f) ? -angle : angle;
-						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -10f*Time.deltaTime, 10f*Time.deltaTime), 0f));
-						go.transform.Translate(go.transform.forward*1f*Time.deltaTime, Space.World);
-						if ( (desiredDir.magnitude < 10f) && (Mathf.Abs(angle) < 3f) && ((Time.unscaledTime-go.GetComponent<GameData>().fireTime) > 5f) ) {		// Tanks fire every x seconds
-							Vector3 pos = go.transform.position + go.transform.forward*1f + go.transform.up*0.3f;
-							added.Add(CreateVectorObject("Bullet", VertexArray(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, go.transform.eulerAngles.y, 0f, 2, Color.green));
-							go.GetComponent<GameData>().fireTime = Time.unscaledTime;	// Tank fireTime paces it's own firing rate
+						if(Mathf.Abs(angle) < 3f)
+							go.transform.Translate(go.transform.forward*driveSpeed*Time.deltaTime, Space.World);
+						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -30f*Time.deltaTime, 30f*Time.deltaTime), 0f));
+						Collider[] ohits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<4));
+						if((ohits != null) && (ohits.Length > 0)) {				// If hit an obstacle then back up and retarget
+							go.GetComponent<GameData>().state = 1;
+							go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 1f;
+						}
+						if(go.GetComponent<GameData>().state == 2) {			// Shoot player
+							if ( (desiredDir.magnitude < 10f) && (Mathf.Abs(angle) < 3f) && ((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout)) ) {
+								Vector3 pos = go.transform.position + go.transform.forward*1f + go.transform.up*0.3f;
+								added.Add(CreateVectorObject("Bullet", VertexArray(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, go.transform.eulerAngles.y, 0f, 2, Color.green));
+								go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 5f;	// Firing rate
+							}
 						}
 				break;
 			}
@@ -152,14 +180,16 @@ public class Battlezone : MonoBehaviour {
 			Destroy(dead);
 		}
 		allObjects.AddRange(added);
-		transform.Rotate(new Vector3(0f, Joystick.x*10f*Time.deltaTime, 0f));
+		transform.Rotate(new Vector3(0f, Joystick.x*30f*Time.deltaTime, 0f));
 		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
 		transform.Find("Terrain1").transform.localPosition = new Vector3(((transform.eulerAngles.y / 180f)-1f) * -(2f*Mathf.PI*40f*0.5f), 0f, 40f);
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete
 			level++;
-			for (int i=0; i<1; i++)
-    	    	allObjects.Add( CreateVectorObject("Tank", VertexArray(tankGeom, tankGInd), Random.Range(-20f, 20f), 0.05f, Random.Range(-20f, 20f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
+			for (int i=0; i<1; i++) {
+				Vector3 spawnCentre = transform.position+(transform.forward*10f);
+    	    	allObjects.Add( CreateVectorObject("Tank", VertexArray(tankGeom, tankGInd), Random.Range(spawnCentre.x-10f, spawnCentre.x+10f), 0.05f, Random.Range(spawnCentre.z-10f, spawnCentre.z+10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
+			}
 		}
     }
 }
