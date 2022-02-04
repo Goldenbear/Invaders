@@ -17,6 +17,7 @@ public class Battlezone : MonoBehaviour {
 	float[,] cubeGeom = new float[,] { {-1f, -1f, -1f}, {-1f, -1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {-1f, -1f, -1f}, {-1f, 1f, -1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, 1f, -1f}, {-1f, 1f, -1f}, {-1f, -1f, -1f}, {-1f, -1f, 1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {1f, 1f, -1f} };
 	float[,] tankGeom = new float[,] { {-0.4f, -0.1f, -0.8f}, {-0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, -0.8f}, {-0.5f, 0.1f, -1f}, {-0.5f, 0.1f, 1f}, {0.5f, 0.1f, 1f}, {0.5f, 0.1f, -1f}, {-0.4f, 0.3f, -0.8f}, {-0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, -0.8f}, {-0.3f, 0.6f, -0.7f}, {0.3f, 0.6f, -0.7f}, {-0.1f, 0.5f, -0.35f}, {-0.1f, 0.5f, 1f}, {0.1f, 0.5f, 1f}, {0.1f, 0.5f, -0.35f}, {-0.1f, 0.55f, -0.55f}, {-0.1f, 0.55f, 1f}, {0.1f, 0.55f, 1f}, {0.1f, 0.55f, -0.55f} };
 	int[] tankGInd = new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11, 8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17, 14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18};
+	float[,] radarGeom = new float[,] { {-2f, -0.5f, 1f}, { -1f, -1f, 0f}, { -1f, 1f, 0f}, { -2f, 0.5f, 1f}, { -2f, -0.5f, 1f}, {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, {1f, -1f, 0f}, { 2f, -0.5f, 1f}, { 2f, 0.5f, 1f}, { 1f, 1f, 0f}, { 1f, -1f, 0f}, {0f, -1f, 0f}, {0f, -1.5f, 0f} };
 	float gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
@@ -35,7 +36,7 @@ public class Battlezone : MonoBehaviour {
 			playerLives.Add( CreateVectorObject("Life", VertexArray(playerGeom), 0.2f+i*0.5f, 5.5f, 0f, 0.3f, 0.1f, 1f, 0f, 0f, 0f, 0, Color.green, i<=lives, true, 0.1f) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
-		for (int i=0; i<100; i++)
+		for (int i=0; i<50; i++)
         	allObjects.Add( CreateVectorObject("Obstacle", VertexArray(cubeGeom), Random.Range(-40f, 40f), 0.25f, Random.Range(-40f, 40f), 0.5f, 0.25f, 0.5f, 0f, 0f, 0f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
@@ -76,14 +77,14 @@ public class Battlezone : MonoBehaviour {
 		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
 		go.GetComponent<Renderer>().material.color = color;
 		go.GetComponent<Renderer>().enabled = visible;
-		go.AddComponent<GameData>().state = 0;
-		go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 3f;
-		go.GetComponent<GameData>().targetPos = go.transform.position;
+		//go.AddComponent<GameData>().state = 0;
+		go.AddComponent<GameData>().stateTimeout = Time.unscaledTime + 3f;			// Required by bullets
+		go.GetComponent<GameData>().targetPos = go.transform.position;				// Required by tank AI so immediately retargets
 		return go;
 	}
 	void KillPlayer() {
 		playerLives[lives].SetActive(false);
-		gameState = (--lives >= 0) ? 1 : 3;         // Player lost a life or player dead = game over?
+		gameState = (--lives >= 0) ? 1 : 2;         // Player lost a life or player dead = game over?
 		gameStateTimer = Time.unscaledTime + 3f;
 	}
 	void Score(int add) {
@@ -95,23 +96,22 @@ public class Battlezone : MonoBehaviour {
 	void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("SCORE     {0:00000}", score);
 		uiObjects[2].GetComponent<Text>().text = string.Format("HIGH SCORE       {0:00000}", PlayerPrefs.GetInt("BattlezoneHighScore"));
-		uiObjects[3].GetComponent<Text>().text = gameState == 2 ? "ATTACK WAVE " + level + "\n COMPLETED\n\nBONUS " + allObjects.Where(x => x.layer == 3).Count() + " X 100" : gameState == 3 ? "GAME OVER" : "";
+		uiObjects[3].GetComponent<Text>().text = gameState == 2 ? "GAME OVER" : "";
 		if (gameState > 0) {
 			if ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) {
-				gameState = 0;
+				gameState = 0;																// Back to playing
 			}
-			if ((gameState >= 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))) {
-				level++;
-				if (gameState == 3) { score = 0; lives = 2; level = 1; }                    // New game
+			if ((gameState == 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))) {
+				score = 0; lives = 2; level = 1;                    						// New game
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Battlezone");			// Reload scene for new level
 			}
-			return;
+			return;																			// Pause game = no update
 		}
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		if (Fire && (Time.unscaledTime > gameStateTimer)) {
 			Vector3 pos = transform.position + transform.forward*1f;
 			allObjects.Add(CreateVectorObject("Bullet", VertexArray(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, transform.eulerAngles.y, 0f, 2, Color.green));
-			gameStateTimer = Time.unscaledTime + 0.2f;
+			gameStateTimer = Time.unscaledTime + 3f;
 		}
 		foreach(GameObject go in allObjects) {
 			go.GetComponent<LineRenderer>().widthMultiplier = 0.005f + (Mathf.Clamp((go.transform.position-transform.position).magnitude, 1f, 10f)/10f) * 0.03f;	// Wider line width as get farther away
@@ -135,7 +135,8 @@ public class Battlezone : MonoBehaviour {
 						if((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout))				// Bullets die after x seconds
 							destroyed.Add(go);
 				break;
-/* Tank */		case 3: Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
+/* Tank */		case 3: go.transform.GetChild(0).Rotate(new Vector3(0f, 60f*Time.deltaTime, 0f));		// Rotate radar
+						Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
 						float driveSpeed = 1f;
 						if(go.GetComponent<GameData>().state == 0) {			// Drive to the target position
 							desiredDir = new Vector3(go.GetComponent<GameData>().targetPos.x-go.transform.position.x, 0f, go.GetComponent<GameData>().targetPos.z-go.transform.position.z);
@@ -160,8 +161,8 @@ public class Battlezone : MonoBehaviour {
 						if(Mathf.Abs(angle) < 3f)
 							go.transform.Translate(go.transform.forward*driveSpeed*Time.deltaTime, Space.World);
 						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -30f*Time.deltaTime, 30f*Time.deltaTime), 0f));
-						Collider[] ohits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<4));
-						if((ohits != null) && (ohits.Length > 0)) {				// If hit an obstacle then back up and retarget
+						Collider[] ohits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<3)+(1<<4));
+						if((ohits != null) && (ohits.Length > 1)) {				// If hit an obstacle then back up and retarget (note always overlaps itself hence > 1)
 							go.GetComponent<GameData>().state = 1;
 							go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 1f;
 						}
@@ -186,9 +187,10 @@ public class Battlezone : MonoBehaviour {
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete
 			level++;
-			for (int i=0; i<1; i++) {
+			for (int i=0; i<((level <= 3)?1:2); i++) {
 				Vector3 spawnCentre = transform.position+(transform.forward*10f);
     	    	allObjects.Add( CreateVectorObject("Tank", VertexArray(tankGeom, tankGInd), Random.Range(spawnCentre.x-10f, spawnCentre.x+10f), 0.05f, Random.Range(spawnCentre.z-10f, spawnCentre.z+10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
+				CreateVectorObject("Radar", VertexArray(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
 		}
     }
