@@ -17,6 +17,7 @@ public class Battlezone : MonoBehaviour {
 	float[,] cubeGeom = new float[,] { {-1f, -1f, -1f}, {-1f, -1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {-1f, -1f, -1f}, {-1f, 1f, -1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, 1f, -1f}, {-1f, 1f, -1f}, {-1f, -1f, -1f}, {-1f, -1f, 1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {1f, 1f, -1f} };
 	float[,] tankGeom = new float[,] { {-0.4f, -0.1f, -0.8f}, {-0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, -0.8f}, {-0.5f, 0.1f, -1f}, {-0.5f, 0.1f, 1f}, {0.5f, 0.1f, 1f}, {0.5f, 0.1f, -1f}, {-0.4f, 0.3f, -0.8f}, {-0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, -0.8f}, {-0.3f, 0.6f, -0.7f}, {0.3f, 0.6f, -0.7f}, {-0.1f, 0.5f, -0.35f}, {-0.1f, 0.5f, 1f}, {0.1f, 0.5f, 1f}, {0.1f, 0.5f, -0.35f}, {-0.1f, 0.55f, -0.55f}, {-0.1f, 0.55f, 1f}, {0.1f, 0.55f, 1f}, {0.1f, 0.55f, -0.55f} };
 	int[] tankGInd = new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11, 8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17, 14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18};
+	int[][] tankExpGInd = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6}, new int[] {4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11}, new int[] {8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17}, new int[] {14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
 	float[,] radarGeom = new float[,] { {-2f, -0.5f, 1f}, { -1f, -1f, 0f}, { -1f, 1f, 0f}, { -2f, 0.5f, 1f}, { -2f, -0.5f, 1f}, {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, {1f, -1f, 0f}, { 2f, -0.5f, 1f}, { 2f, 0.5f, 1f}, { 1f, 1f, 0f}, { 1f, -1f, 0f}, {0f, -1f, 0f}, {0f, -1.5f, 0f} };
 	float gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0, enemyRadar = 0;
@@ -127,6 +128,11 @@ public class Battlezone : MonoBehaviour {
 							}
 							else if (hits[h].gameObject.layer == 3) {			// Bullet hit a tank
 								Score(100);
+								for (int i=0; i<tankExpGInd.Length; i++) {
+        							GameObject ex = CreateVectorObject("Explosion", VertexArray(tankGeom, tankExpGInd[i]), hits[h].gameObject.transform.position.x, hits[h].gameObject.transform.position.y, hits[h].gameObject.transform.position.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green);
+									ex.GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
+									added.Add(ex);
+								}
 								destroyed.Add(go);
 								destroyed.Add(hits[h].gameObject);
 							}
@@ -178,6 +184,14 @@ public class Battlezone : MonoBehaviour {
 								go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 5f;	// Firing rate
 							}
 						}
+				break;
+/* Explosion */	case 5: go.transform.Translate(go.GetComponent<GameData>().targetPos*5f*Time.deltaTime, Space.World);
+						go.GetComponent<GameData>().targetPos -= new Vector3(0f, 1f*Time.deltaTime, 0f);
+						go.transform.Translate(-go.GetComponent<BoxCollider>().center, Space.Self);
+						go.transform.Rotate(new Vector3(90f*Time.deltaTime, 720f*Time.deltaTime, 360f*Time.deltaTime), Space.Self);
+						go.transform.Translate(go.GetComponent<BoxCollider>().center, Space.Self);
+						if(go.transform.position.y < 0f)											// Explosions die when they hit the ground
+							destroyed.Add(go);
 				break;
 			}
 		}
