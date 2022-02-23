@@ -186,8 +186,12 @@ public class Battlezone : MonoBehaviour {
 			Destroy(dead);
 		}
 		allObjects.AddRange(added);
-		transform.Rotate(new Vector3(0f, Joystick.x*30f*Time.deltaTime, 0f));
+		transform.Rotate(new Vector3(0f, Joystick.x*30f*Time.deltaTime, 0f));	// Player control - aka the camera
 		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
+		Collider[] phits = Physics.OverlapBox(gameObject.GetComponent<Collider>().bounds.center, gameObject.GetComponent<Collider>().bounds.extents, transform.rotation, (1<<3)+(1<<4));	// Hit tank or obstacle
+		if((phits != null) && (phits.Length > 0)) {
+			transform.Translate(new Vector3(0f, 0f, -Joystick.y*1f*Time.deltaTime));
+		}
 		transform.Find("Terrain1").transform.localPosition = new Vector3(((transform.eulerAngles.y / 180f)-1f) * -(2f*Mathf.PI*40f*0.5f), 0f, 40f);
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete
