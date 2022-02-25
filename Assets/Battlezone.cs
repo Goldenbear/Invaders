@@ -128,8 +128,9 @@ public class Battlezone : MonoBehaviour {
 							}
 							else if (hits[h].gameObject.layer == 3) {			// Bullet hit a tank
 								Score(100);
-								for (int i=0; i<tankExpGInd.Length; i++) {
-        							GameObject ex = CreateVectorObject("Explosion", VertexArray(tankGeom, tankExpGInd[i]), hits[h].gameObject.transform.position.x, hits[h].gameObject.transform.position.y, hits[h].gameObject.transform.position.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green);
+								for (int i=0; i<tankExpGInd.Length+1; i++) {	// Last explosion debris is the separate radar dish
+									Vector3 p = hits[h].gameObject.transform.position;
+        							GameObject ex = i<tankExpGInd.Length?CreateVectorObject("Explosion", VertexArray(tankGeom, tankExpGInd[i]), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", VertexArray(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green);
 									ex.GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
 									added.Add(ex);
 								}
@@ -186,10 +187,10 @@ public class Battlezone : MonoBehaviour {
 						}
 				break;
 /* Explosion */	case 5: go.transform.Translate(go.GetComponent<GameData>().targetPos*5f*Time.deltaTime, Space.World);
-						go.GetComponent<GameData>().targetPos -= new Vector3(0f, 1f*Time.deltaTime, 0f);
-						go.transform.Translate(-go.GetComponent<BoxCollider>().center, Space.Self);
+						go.GetComponent<GameData>().targetPos -= new Vector3(0f, 1f*Time.deltaTime, 0f);		// Apply fake gravity to the debris's vector
+						go.transform.Translate(-Vector3.Cross(go.GetComponent<BoxCollider>().center, go.transform.localScale), Space.Self);	// Rotate around debris centre (use BoxCollider*scale)
 						go.transform.Rotate(new Vector3(90f*Time.deltaTime, 720f*Time.deltaTime, 360f*Time.deltaTime), Space.Self);
-						go.transform.Translate(go.GetComponent<BoxCollider>().center, Space.Self);
+						go.transform.Translate(Vector3.Cross(go.GetComponent<BoxCollider>().center, go.transform.localScale), Space.Self);
 						if(go.transform.position.y < 0f)											// Explosions die when they hit the ground
 							destroyed.Add(go);
 				break;
