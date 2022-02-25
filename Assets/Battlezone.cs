@@ -11,6 +11,8 @@ public class Battlezone : MonoBehaviour {
 	static int score = 0, lives = 2, level = 0;
 	GameObject[] uiObjects = new GameObject[10];
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
+	float[,] xhairAGeom = new float[,] { {-1f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {1f, 0f, 0f}, {1f, -0.5f, 0f} };
+	float[,] xhairBGeom = new float[,] { {-0.5f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {1f, 0f, 0f}, {0.5f, -0.5f, 0f} };
 	float[,] playerGeom = new float[,] { {-0.5f, -0.5f, 0f}, { -0.3f, -0.3f, 0f}, { 0.5f, -0.3f, 0f}, { 0.5f, -0.2f, 0f}, { -0.3f, 0.2f, 0f}, { -0.4f, 0.5f, 0f}, { -0.5f, 0.5f, 0f}, { -0.5f, -0.5f, 0f} };
 	float[,] bulletGeom = new float[,] { {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, { 0f, 0f, 1f}, { 1f, -1f, 0f}, { 0f, 0f, 1f}, { 1f, 1f, 0f}, { 0f, 0f, 1f}, { -1f, 1f, 0f} };
 	float[,] terrainGeom = new float[,] { { -20f, 0f, 0f }, { -18f, 2f, 0f }, { -15f, 0f, 0f }, { -12f, 0f, 0f }, { -9f, 2f, 0f }, { -6f, 0f, 0f }, { -3f, 0f, 0f }, { -2f, 1f, 0f }, { -1f, 0f, 0f }, { 2f, 0f, 0f }, { 3f, 1f, 0f }, { 4f, 0f, 0f }, { 5f, 0f, 0f }, { 8f, 2f, 0f }, { 11f, 0f, 0f }, { 15f, 0f, 0f }, { 16.5f, 0.5f, 0f }, { 17f, 0.3f, 0f }, { 17.5f, 0.8f, 0f }, { 18f, 0.6f, 0f }, { 18.5f, 1.1f, 0f }, { 19.5f, 0f, 0f }, { 20f, 0f, 0f }, { -20f, 0f, 0f } };
@@ -38,6 +40,10 @@ public class Battlezone : MonoBehaviour {
 			playerLives.Add( CreateVectorObject("Life", VertexArray(playerGeom), 0.2f+i*0.5f, 5.5f, 0f, 0.3f, 0.1f, 1f, 0f, 0f, 0f, 0, Color.green, i<=lives, true, 0.1f) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
+ 		CreateVectorObject("XHairATop", VertexArray(xhairAGeom), 0f, 1.3f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("XHairABot", VertexArray(xhairAGeom), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("XHairBTop", VertexArray(xhairBGeom), 0f, 1.3f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("XHairBBot", VertexArray(xhairBGeom), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
 		for (int i=0; i<50; i++)
         	allObjects.Add( CreateVectorObject("Obstacle", VertexArray(cubeGeom), Random.Range(-40f, 40f), 0.25f, Random.Range(-40f, 40f), 0.5f, 0.25f, 0.5f, 0f, 0f, 0f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
@@ -100,6 +106,10 @@ public class Battlezone : MonoBehaviour {
 		uiObjects[3].GetComponent<Text>().text = ((enemyRadar&1)!=0) ? "ENEMY IN RANGE" : "";
 		uiObjects[4].GetComponent<Text>().text = ((enemyRadar&2)!=0) ? "ENEMY TO LEFT" : ((enemyRadar&4)!=0) ? "ENEMY TO RIGHT" : "";
 		uiObjects[5].GetComponent<Text>().text = gameState == 2 ? "GAME OVER" : "";
+		transform.Find("XHairATop").gameObject.SetActive((enemyRadar & 8)==0);
+		transform.Find("XHairABot").gameObject.SetActive((enemyRadar & 8)==0);
+		transform.Find("XHairBTop").gameObject.SetActive((enemyRadar & 8)!=0);
+		transform.Find("XHairBBot").gameObject.SetActive((enemyRadar & 8)!=0);
 		if (gameState > 0) {
 			if ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) {
 				gameState = 0;																// Back to playing
@@ -150,6 +160,7 @@ public class Battlezone : MonoBehaviour {
 						float driveSpeed = 1f;
 						enemyRadar |= (desiredDir.magnitude < 10f) ? 1 : 0;
 						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x<0)||(Camera.main.WorldToViewportPoint(go.transform.position).x>1)) ? ((Vector3.Dot(desiredDir, transform.right) > 0f) ? 2 : 4) : 0;
+						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x>0.4f)&&(Camera.main.WorldToViewportPoint(go.transform.position).x<0.6f)) ? 8 : 0;
 						if(go.GetComponent<GameData>().state == 0) {			// Drive to the target position
 							desiredDir = new Vector3(go.GetComponent<GameData>().targetPos.x-go.transform.position.x, 0f, go.GetComponent<GameData>().targetPos.z-go.transform.position.z);
 							if(desiredDir.magnitude < 0.1f) {
