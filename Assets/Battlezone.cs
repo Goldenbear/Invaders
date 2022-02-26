@@ -13,6 +13,8 @@ public class Battlezone : MonoBehaviour {
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
 	float[,] xhairAGeom = new float[,] { {-1f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {1f, 0f, 0f}, {1f, -0.5f, 0f} };
 	float[,] xhairBGeom = new float[,] { {-0.5f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {1f, 0f, 0f}, {0.5f, -0.5f, 0f} };
+	float[,] crackGeom = new float[,] { {0f,0f,0f}, {-0.2f,0.2f,0f}, {-0.4f,0.3f,0f}, {-0.45f,0.32f,0f}, {-0.6f,0.05f,0f}, {0f,0.35f,0f}, {-0.2f,0.5f,0f}, {-0.4f,0.65f,0f}, {-0.1f,0.65f,0f}, {0.2f, 0.2f,0f}, {0.25f,0.3f,0f}, {0.4f,0.3f,0f}, {0.6f,0.4f,0f}, {0.4f,0.5f,0f}, {-0.1f,-0.2f,0f}, {0.1f,-0.3f,0f}, {0.3f,-0.6f,0f} };
+	int[] crackGInd = new int[] {0, 1, 2, 3, 2, 4, 2, 1, 5, 6, 7, 6, 8, 6, 5, 1, 0, 9, 10, 9, 11, 12, 11, 13, 11, 9, 0, 14, 15, 16};
 	float[,] playerGeom = new float[,] { {-0.5f, -0.5f, 0f}, { -0.3f, -0.3f, 0f}, { 0.5f, -0.3f, 0f}, { 0.5f, -0.2f, 0f}, { -0.3f, 0.2f, 0f}, { -0.4f, 0.5f, 0f}, { -0.5f, 0.5f, 0f}, { -0.5f, -0.5f, 0f} };
 	float[,] bulletGeom = new float[,] { {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, { 0f, 0f, 1f}, { 1f, -1f, 0f}, { 0f, 0f, 1f}, { 1f, 1f, 0f}, { 0f, 0f, 1f}, { -1f, 1f, 0f} };
 	float[,] terrainGeom = new float[,] { { -20f, 0f, 0f }, { -18f, 2f, 0f }, { -15f, 0f, 0f }, { -12f, 0f, 0f }, { -9f, 2f, 0f }, { -6f, 0f, 0f }, { -3f, 0f, 0f }, { -2f, 1f, 0f }, { -1f, 0f, 0f }, { 2f, 0f, 0f }, { 3f, 1f, 0f }, { 4f, 0f, 0f }, { 5f, 0f, 0f }, { 8f, 2f, 0f }, { 11f, 0f, 0f }, { 15f, 0f, 0f }, { 16.5f, 0.5f, 0f }, { 17f, 0.3f, 0f }, { 17.5f, 0.8f, 0f }, { 18f, 0.6f, 0f }, { 18.5f, 1.1f, 0f }, { 19.5f, 0f, 0f }, { 20f, 0f, 0f }, { -20f, 0f, 0f } };
@@ -44,6 +46,7 @@ public class Battlezone : MonoBehaviour {
  		CreateVectorObject("XHairABot", VertexArray(xhairAGeom), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.05f).transform.parent = transform;
  		CreateVectorObject("XHairBTop", VertexArray(xhairBGeom), 0f, 1.3f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
  		CreateVectorObject("XHairBBot", VertexArray(xhairBGeom), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("Crack", VertexArray(crackGeom, crackGInd), 0f, 0f, 0f, 10f, 10f, 10f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
 		for (int i=0; i<50; i++)
         	allObjects.Add( CreateVectorObject("Obstacle", VertexArray(cubeGeom), Random.Range(-40f, 40f), 0.25f, Random.Range(-40f, 40f), 0.5f, 0.25f, 0.5f, 0f, 0f, 0f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
@@ -106,12 +109,14 @@ public class Battlezone : MonoBehaviour {
 		uiObjects[3].GetComponent<Text>().text = ((enemyRadar&1)!=0) ? "ENEMY IN RANGE" : "";
 		uiObjects[4].GetComponent<Text>().text = ((enemyRadar&2)!=0) ? "ENEMY TO LEFT" : ((enemyRadar&4)!=0) ? "ENEMY TO RIGHT" : "";
 		uiObjects[5].GetComponent<Text>().text = gameState == 2 ? "GAME OVER" : "";
-		transform.Find("XHairATop").gameObject.SetActive((enemyRadar & 8)==0);
+		transform.Find("XHairATop").gameObject.SetActive((enemyRadar & 8)==0);			// Show x-hair A if no enemy centred on screen else show x-hair B
 		transform.Find("XHairABot").gameObject.SetActive((enemyRadar & 8)==0);
 		transform.Find("XHairBTop").gameObject.SetActive((enemyRadar & 8)!=0);
 		transform.Find("XHairBBot").gameObject.SetActive((enemyRadar & 8)!=0);
 		if (gameState > 0) {
+			transform.Find("Crack").gameObject.SetActive(true);
 			if ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) {
+				transform.Find("Crack").gameObject.SetActive(false);
 				gameState = 0;																// Back to playing
 			}
 			if ((gameState == 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))) {
