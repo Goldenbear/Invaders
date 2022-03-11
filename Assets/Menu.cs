@@ -40,4 +40,8 @@ public class Menu : MonoBehaviour
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Centipede");
 		gameObject.GetComponent<Canvas>().enabled = false;
 	}
+	public void LoadBattlezone() {
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Battlezone");
+		gameObject.GetComponent<Canvas>().enabled = false;
+	}
 }
