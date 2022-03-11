@@ -16,32 +16,8 @@ public class Menu : MonoBehaviour
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
 		Destroy(this.gameObject);
 	}
-	public void LoadInvaders() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Invaders");
-		gameObject.GetComponent<Canvas>().enabled = false;
-	}
-	public void LoadBreakout() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Breakout");
-		gameObject.GetComponent<Canvas>().enabled = false;
-	}
-	public void LoadAsteroids() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Asteroids");
-		gameObject.GetComponent<Canvas>().enabled = false;
-	}
-	public void LoadPacman() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Pacman");
-		gameObject.GetComponent<Canvas>().enabled = false;
-	}
-	public void LoadDefender() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");
-		gameObject.GetComponent<Canvas>().enabled = false;
-	}
-	public void LoadCentipede() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Centipede");
-		gameObject.GetComponent<Canvas>().enabled = false;
-	}
-	public void LoadBattlezone() {
-		UnityEngine.SceneManagement.SceneManager.LoadScene("Battlezone");
+	public void LoadGame(string sceneName) {
+		UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
 		gameObject.GetComponent<Canvas>().enabled = false;
 	}
 }
