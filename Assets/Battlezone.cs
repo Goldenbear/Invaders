@@ -11,17 +11,19 @@ public class Battlezone : MonoBehaviour {
 	static int score = 0, lives = 2, level = 0;
 	GameObject[] uiObjects = new GameObject[10];
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
-	float[,] xhairAGeom = new float[,] { {-1f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {1f, 0f, 0f}, {1f, -0.5f, 0f} };
-	float[,] xhairBGeom = new float[,] { {-0.5f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {1f, 0f, 0f}, {0.5f, -0.5f, 0f} };
+	float[,] radarHudGeom = new float[,] { {-1f, 0f, 0f}, {-0.8f, 0f, 0f}, {0.8f, 0f, 0f}, {1f, 0f, 0f}, {0f, -1f, 0f}, {0f, -0.8f, 0f}, {0f, 0.8f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {-0.7f, 0.7f, 0f}, {0.7f, 0.7f, 0f}, {0f, 1f, 0f} };
+	int[][] radarHudLines = new int[][] {new int[]{0, 1}, new int[]{2, 3}, new int[]{4, 5}, new int[]{6, 7}, new int[]{8, 9}, new int[]{8, 10}, new int[]{8, 11} };
+	float[,] xhairGeom = new float[,] { {-1f, -0.5f, 0f}, {-0.5f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {1f, 0f, 0f}, {1f, -0.5f, 0f}, {0.5f, -0.5f, 0f} };
+	int[][] xhairLines = new int[][] {new int[]{3, 4}, new int[]{0, 2, 5, 6}, new int[]{1, 2, 5, 7} };
 	float[,] crackGeom = new float[,] { {0f,0f,0f}, {-0.2f,0.2f,0f}, {-0.4f,0.3f,0f}, {-0.45f,0.32f,0f}, {-0.6f,0.05f,0f}, {0f,0.35f,0f}, {-0.2f,0.5f,0f}, {-0.4f,0.65f,0f}, {-0.1f,0.65f,0f}, {0.2f, 0.2f,0f}, {0.25f,0.3f,0f}, {0.4f,0.3f,0f}, {0.6f,0.4f,0f}, {0.4f,0.5f,0f}, {-0.1f,-0.2f,0f}, {0.1f,-0.3f,0f}, {0.3f,-0.6f,0f} };
-	int[] crackGInd = new int[] {0, 1, 2, 3, 2, 4, 2, 1, 5, 6, 7, 6, 8, 6, 5, 1, 0, 9, 10, 9, 11, 12, 11, 13, 11, 9, 0, 14, 15, 16};
+	int[][] crackLines = new int[][] {new int[]{0, 1, 2, 3}, new int[]{2, 4}, new int[]{1, 5, 6, 7}, new int[]{6, 8}, new int[]{0, 9, 10}, new int[]{9, 11, 12}, new int[]{11, 13}, new int[]{0, 14, 15, 16} };
 	float[,] playerGeom = new float[,] { {-0.5f, -0.5f, 0f}, { -0.3f, -0.3f, 0f}, { 0.5f, -0.3f, 0f}, { 0.5f, -0.2f, 0f}, { -0.3f, 0.2f, 0f}, { -0.4f, 0.5f, 0f}, { -0.5f, 0.5f, 0f}, { -0.5f, -0.5f, 0f} };
 	float[,] bulletGeom = new float[,] { {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, { 0f, 0f, 1f}, { 1f, -1f, 0f}, { 0f, 0f, 1f}, { 1f, 1f, 0f}, { 0f, 0f, 1f}, { -1f, 1f, 0f} };
 	float[,] terrainGeom = new float[,] { { -20f, 0f, 0f }, { -18f, 2f, 0f }, { -15f, 0f, 0f }, { -12f, 0f, 0f }, { -9f, 2f, 0f }, { -6f, 0f, 0f }, { -3f, 0f, 0f }, { -2f, 1f, 0f }, { -1f, 0f, 0f }, { 2f, 0f, 0f }, { 3f, 1f, 0f }, { 4f, 0f, 0f }, { 5f, 0f, 0f }, { 8f, 2f, 0f }, { 11f, 0f, 0f }, { 15f, 0f, 0f }, { 16.5f, 0.5f, 0f }, { 17f, 0.3f, 0f }, { 17.5f, 0.8f, 0f }, { 18f, 0.6f, 0f }, { 18.5f, 1.1f, 0f }, { 19.5f, 0f, 0f }, { 20f, 0f, 0f }, { -20f, 0f, 0f } };
 	float[,] cubeGeom = new float[,] { {-1f, -1f, -1f}, {-1f, -1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {-1f, -1f, -1f}, {-1f, 1f, -1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, 1f, -1f}, {-1f, 1f, -1f}, {-1f, -1f, -1f}, {-1f, -1f, 1f}, {-1f, 1f, 1f}, {1f, 1f, 1f}, {1f, -1f, 1f}, {1f, -1f, -1f}, {1f, 1f, -1f} };
 	float[,] tankGeom = new float[,] { {-0.4f, -0.1f, -0.8f}, {-0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, -0.8f}, {-0.5f, 0.1f, -1f}, {-0.5f, 0.1f, 1f}, {0.5f, 0.1f, 1f}, {0.5f, 0.1f, -1f}, {-0.4f, 0.3f, -0.8f}, {-0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, -0.8f}, {-0.3f, 0.6f, -0.7f}, {0.3f, 0.6f, -0.7f}, {-0.1f, 0.5f, -0.35f}, {-0.1f, 0.5f, 1f}, {0.1f, 0.5f, 1f}, {0.1f, 0.5f, -0.35f}, {-0.1f, 0.55f, -0.55f}, {-0.1f, 0.55f, 1f}, {0.1f, 0.55f, 1f}, {0.1f, 0.55f, -0.55f} };
-	int[] tankGInd = new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11, 8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17, 14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18};
-	int[][] tankExpGInd = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6}, new int[] {4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11}, new int[] {8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17}, new int[] {14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
+	int[][] tankLines = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11, 8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17, 14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
+	int[][] tankExpLines = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6}, new int[] {4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11}, new int[] {8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17}, new int[] {14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
 	float[,] radarGeom = new float[,] { {-2f, -0.5f, 1f}, { -1f, -1f, 0f}, { -1f, 1f, 0f}, { -2f, 0.5f, 1f}, { -2f, -0.5f, 1f}, {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, {1f, -1f, 0f}, { 2f, -0.5f, 1f}, { 2f, 0.5f, 1f}, { 1f, 1f, 0f}, { 1f, -1f, 0f}, {0f, -1f, 0f}, {0f, -1.5f, 0f} };
 	float gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0, enemyRadar = 0;
@@ -36,19 +38,18 @@ public class Battlezone : MonoBehaviour {
 		gameObject.GetComponent<BoxCollider>().size = new Vector3(0.5f, 0.5f, 0.5f);
 		gameObject.layer = 1;
 		transform.Translate(new Vector3(0f, 0.3f, 0f));
- 		CreateVectorObject("Terrain1", VertexArray(terrainGeom),    0f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.1f).transform.parent = transform;
- 		CreateVectorObject("Terrain2", VertexArray(terrainGeom), -200f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.1f).transform.parent = transform;
+ 		CreateVectorObject("Terrain1", MakeLines(terrainGeom),    0f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.1f).transform.parent = transform;
+ 		CreateVectorObject("Terrain2", MakeLines(terrainGeom), -200f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.1f).transform.parent = transform;
 		for (int i=0; i<20; i++) {
-			playerLives.Add( CreateVectorObject("Life", VertexArray(playerGeom), 0.2f+i*0.5f, 5.5f, 0f, 0.3f, 0.1f, 1f, 0f, 0f, 0f, 0, Color.green, i<=lives, true, 0.1f) );
+			playerLives.Add( CreateVectorObject("Life", MakeLines(playerGeom), 2.8f+i*0.5f, 5.5f, 0f, 0.3f, 0.1f, 1f, 0f, 0f, 0f, 0, Color.green, i<=lives, 0.1f) );
 			playerLives[i].transform.parent = gameObject.transform;
 		}
- 		CreateVectorObject("XHairATop", VertexArray(xhairAGeom), 0f, 1.3f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.05f).transform.parent = transform;
- 		CreateVectorObject("XHairABot", VertexArray(xhairAGeom), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, true, true, 0.05f).transform.parent = transform;
- 		CreateVectorObject("XHairBTop", VertexArray(xhairBGeom), 0f, 1.3f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
- 		CreateVectorObject("XHairBBot", VertexArray(xhairBGeom), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
- 		CreateVectorObject("Crack", VertexArray(crackGeom, crackGInd), 0f, 0f, 0f, 10f, 10f, 10f, 0f, 0f, 0f, 0, Color.green, false, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("RadarHud", MakeLines(radarHudGeom, radarHudLines), 0f, 5.0f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("XHairTop", MakeLines(xhairGeom, xhairLines), 0f, 1.3f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("XHairBot", MakeLines(xhairGeom, xhairLines), 0f, -0.8f, 0f, 1f, -1f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.05f).transform.parent = transform;
+ 		CreateVectorObject("Crack", MakeLines(crackGeom, crackLines), 0f, 0f, 0f, 10f, 10f, 10f, 0f, 0f, 0f, 0, Color.green, false, 0.05f).transform.parent = transform;
 		for (int i=0; i<50; i++)
-        	allObjects.Add( CreateVectorObject("Obstacle", VertexArray(cubeGeom), Random.Range(-40f, 40f), 0.25f, Random.Range(-40f, 40f), 0.5f, 0.25f, 0.5f, 0f, 0f, 0f, 4, Color.green) );
+        	allObjects.Add( CreateVectorObject("Obstacle", MakeLines(cubeGeom), Random.Range(-40f, 40f), 0.25f, Random.Range(-40f, 40f), 0.5f, 0.25f, 0.5f, 0f, 0f, 0f, 4, Color.green) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<5; i++) {
@@ -58,36 +59,43 @@ public class Battlezone : MonoBehaviour {
 			uiObjects[1+i].GetComponent<Text>().fontSize = i == 1 ? Screen.width/50 : Screen.width/30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleLeft;		// Left align text within RectTransform
 			uiObjects[1+i].GetComponent<RectTransform>().pivot = new Vector2(0f, 0.5f);	// Position left of RectTransform
-			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(0f, Screen.height/2.5f, 0f) : i == 1 ? new Vector3(0f, Screen.height/2.8f, 0f) : i == 2 ? new Vector3(-Screen.width/2.2f, Screen.height/2.5f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.8f, 0f) : new Vector3(0f, 0f, 0f);
+			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(Screen.width/8f, Screen.height/2.5f, 0f) : i == 1 ? new Vector3(Screen.width/8f, Screen.height/2.8f, 0f) : i == 2 ? new Vector3(-Screen.width/2.2f, Screen.height/2.5f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.8f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 			uiObjects[1+i].GetComponent<Text>().color = Color.green;
 		}
     }
-	Vector3[] VertexArray(float[,] geom, int[] geomIndices=null) {
-		Vector3[] geomVs = new Vector3[(geomIndices!=null) ? geomIndices.GetLength(0) : geom.GetLength(0)] ;
-		for (int i = 0; i < geomVs.Length; i++)
-			geomVs[i] = (geomIndices!=null) ? new Vector3(geom[geomIndices[i], 0], geom[geomIndices[i], 1], geom[geomIndices[i], 2]) : new Vector3(geom[i, 0], geom[i, 1], geom[i, 2]);
-		return geomVs;
+	Vector3[][] MakeLines(float[,] geom, int[][] geomIndexLines=null) {
+		Vector3[][] vLines = new Vector3[(geomIndexLines!=null) ? geomIndexLines.GetLength(0) : 1][];		// No line indices then default to 1 line
+		for(int i = 0; i < vLines.GetLength(0); i++) {
+			vLines[i] = new Vector3[(geomIndexLines!=null) ? geomIndexLines[i].Length : geom.GetLength(0)];	// No line indices then default to all geometry
+			for (int v = 0; v < vLines[i].Length; v++)
+				vLines[i][v] = (geomIndexLines!=null) ? new Vector3(geom[geomIndexLines[i][v], 0], geom[geomIndexLines[i][v], 1], geom[geomIndexLines[i][v], 2]) : new Vector3(geom[v, 0], geom[v, 1], geom[v, 2]);
+		}
+		return vLines;
 	}
-	GameObject CreateVectorObject(string label, Vector3[] geomVs, float pX, float pY, float pZ, float sX, float sY, float sZ, float rX, float rY, float rZ, int layer, Color color, bool active = true, bool visible = true, float thickness=0.01f) {
+	GameObject CreateVectorObject(string label, Vector3[][] vLines, float pX, float pY, float pZ, float sX, float sY, float sZ, float rX, float rY, float rZ, int layer, Color color, bool active = true, float thickness=0.01f) {
 		GameObject go = new GameObject(label);
+		Bounds bounds = GeometryUtility.CalculateBounds(vLines[0], Matrix4x4.identity);
+		for(int i=0; i<vLines.GetLength(0); i++) {
+			GameObject linego = (i==0) ? go : new GameObject(label+"Child"+i);					// Create a child object for every additional line
+			linego.transform.parent = (i==0) ? go.transform.parent : go.transform;
+			LineRenderer linerend = linego.AddComponent<LineRenderer>();
+			linerend.useWorldSpace = false;
+			linerend.widthMultiplier = thickness;
+			linerend.positionCount = vLines[i].Length;
+			linerend.SetPositions(vLines[i]);
+			linerend.material = new Material(Shader.Find("Sprites/Default"));
+			linerend.material.color = color;
+			bounds.Encapsulate(GeometryUtility.CalculateBounds(vLines[i], Matrix4x4.identity));	// Expand parent's bounding box collider to include child lines
+		}
 		go.AddComponent<BoxCollider>().isTrigger = true;
-		Bounds bounds = GeometryUtility.CalculateBounds(geomVs, Matrix4x4.identity);
 		go.GetComponent<BoxCollider>().center = bounds.center;
 		go.GetComponent<BoxCollider>().size = bounds.size;
-		LineRenderer line = go.AddComponent<LineRenderer>();
-		line.useWorldSpace = false;
-		line.widthMultiplier = thickness;
-		line.positionCount = geomVs.Length;
-		line.SetPositions(geomVs);
 		go.SetActive(active);
 		go.layer = layer;
 		go.transform.position = new Vector3(pX, pY, pZ);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
 		go.transform.Rotate(new Vector3(rX, rY, rZ), Space.Self);
-		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
-		go.GetComponent<Renderer>().material.color = color;
-		go.GetComponent<Renderer>().enabled = visible;
 		go.AddComponent<GameData>().stateTimeout = Time.unscaledTime + 3f;			// Required by bullets
 		go.GetComponent<GameData>().targetPos = go.transform.position;				// Required by tank AI so immediately retargets
 		return go;
@@ -109,10 +117,11 @@ public class Battlezone : MonoBehaviour {
 		uiObjects[3].GetComponent<Text>().text = ((enemyRadar&1)!=0) ? "ENEMY IN RANGE" : "";
 		uiObjects[4].GetComponent<Text>().text = ((enemyRadar&2)!=0) ? "ENEMY TO LEFT" : ((enemyRadar&4)!=0) ? "ENEMY TO RIGHT" : "";
 		uiObjects[5].GetComponent<Text>().text = gameState == 2 ? "GAME OVER" : "";
-		transform.Find("XHairATop").gameObject.SetActive((enemyRadar & 8)==0);			// Show x-hair A if no enemy centred on screen else show x-hair B
-		transform.Find("XHairABot").gameObject.SetActive((enemyRadar & 8)==0);
-		transform.Find("XHairBTop").gameObject.SetActive((enemyRadar & 8)!=0);
-		transform.Find("XHairBBot").gameObject.SetActive((enemyRadar & 8)!=0);
+		transform.Find("RadarHud/RadarHudChild6").Rotate(new Vector3(0f, 0f, -90f*Time.deltaTime));
+		transform.Find("XHairTop/XHairTopChild1").gameObject.SetActive((enemyRadar & 8)==0);	// Show XHair 1 if no enemy centred on screen
+		transform.Find("XHairBot/XHairBotChild1").gameObject.SetActive((enemyRadar & 8)==0);
+		transform.Find("XHairTop/XHairTopChild2").gameObject.SetActive((enemyRadar & 8)!=0);	// Show XHair 2 if enemy centred on screen
+		transform.Find("XHairBot/XHairBotChild2").gameObject.SetActive((enemyRadar & 8)!=0);
 		if (gameState > 0) {
 			transform.Find("Crack").gameObject.SetActive(true);
 			if ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) {
@@ -128,7 +137,7 @@ public class Battlezone : MonoBehaviour {
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		if (Fire && (Time.unscaledTime > gameStateTimer)) {
 			Vector3 pos = transform.position + transform.forward*1f;
-			allObjects.Add(CreateVectorObject("Bullet", VertexArray(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, transform.eulerAngles.y, 0f, 2, Color.green));
+			allObjects.Add(CreateVectorObject("Bullet", MakeLines(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, transform.eulerAngles.y, 0f, 2, Color.green));
 			gameStateTimer = Time.unscaledTime + 1f;
 		}
 		enemyRadar = 0;
@@ -143,9 +152,9 @@ public class Battlezone : MonoBehaviour {
 							}
 							else if (hits[h].gameObject.layer == 3) {			// Bullet hit a tank
 								Score(100);
-								for (int i=0; i<tankExpGInd.Length+1; i++) {	// Last explosion debris is the separate radar dish
+								for (int i=0; i<tankExpLines.Length+1; i++) {	// Last explosion debris is the separate radar dish
 									Vector3 p = hits[h].gameObject.transform.position;
-        							GameObject ex = i<tankExpGInd.Length?CreateVectorObject("Explosion", VertexArray(tankGeom, tankExpGInd[i]), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", VertexArray(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green);
+        							GameObject ex = i<tankExpLines.Length?CreateVectorObject("Explosion", MakeLines(tankGeom, new int[1][]{tankExpLines[i]}), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", MakeLines(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green);
 									ex.GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
 									added.Add(ex);
 								}
@@ -160,7 +169,7 @@ public class Battlezone : MonoBehaviour {
 						if((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout))				// Bullets die after x seconds
 							destroyed.Add(go);
 				break;
-/* Tank */		case 3: go.transform.GetChild(0).Rotate(new Vector3(0f, 60f*Time.deltaTime, 0f));		// Rotate radar
+/* Tank */		case 3: go.transform.Find("Radar").Rotate(new Vector3(0f, 60f*Time.deltaTime, 0f));		// Rotate radar
 						Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
 						float driveSpeed = 1f;
 						enemyRadar |= (desiredDir.magnitude < 10f) ? 1 : 0;
@@ -197,7 +206,7 @@ public class Battlezone : MonoBehaviour {
 						if(go.GetComponent<GameData>().state == 2) {			// Shoot player
 							if ( (desiredDir.magnitude < 10f) && (Mathf.Abs(angle) < 3f) && ((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout)) ) {
 								Vector3 pos = go.transform.position + go.transform.forward*1f + go.transform.up*0.3f;
-								added.Add(CreateVectorObject("Bullet", VertexArray(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, go.transform.eulerAngles.y, 0f, 2, Color.green));
+								added.Add(CreateVectorObject("Bullet", MakeLines(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, go.transform.eulerAngles.y, 0f, 2, Color.green));
 								go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 5f;	// Firing rate
 							}
 						}
@@ -229,8 +238,8 @@ public class Battlezone : MonoBehaviour {
 			level++;
 			for (int i=0; i<((level <= 3)?1:2); i++) {
 				Vector3 spawnCentre = transform.position+(transform.forward*10f);
-    	    	allObjects.Add( CreateVectorObject("Tank", VertexArray(tankGeom, tankGInd), Random.Range(spawnCentre.x-10f, spawnCentre.x+10f), 0.05f, Random.Range(spawnCentre.z-10f, spawnCentre.z+10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
-				CreateVectorObject("Radar", VertexArray(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
+    	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), Random.Range(spawnCentre.x-10f, spawnCentre.x+10f), 0.05f, Random.Range(spawnCentre.z-10f, spawnCentre.z+10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
+				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
 		}
     }
