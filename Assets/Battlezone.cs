@@ -11,8 +11,8 @@ public class Battlezone : MonoBehaviour {
 	static int score = 0, lives = 2, level = 0;
 	GameObject[] uiObjects = new GameObject[10];
 	List<GameObject> allObjects = new List<GameObject>(), playerLives = new List<GameObject>();
-	float[,] radarHudGeom = new float[,] { {-1f, 0f, 0f}, {-0.8f, 0f, 0f}, {0.8f, 0f, 0f}, {1f, 0f, 0f}, {0f, -1f, 0f}, {0f, -0.8f, 0f}, {0f, 0.8f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {-0.7f, 0.7f, 0f}, {0.7f, 0.7f, 0f}, {0f, 1f, 0f} };
-	int[][] radarHudLines = new int[][] {new int[]{0, 1}, new int[]{2, 3}, new int[]{4, 5}, new int[]{6, 7}, new int[]{8, 9}, new int[]{8, 10}, new int[]{8, 11} };
+	float[,] radarHudGeom = new float[,] { {-1f, 0f, 0f}, {-0.8f, 0f, 0f}, {0.8f, 0f, 0f}, {1f, 0f, 0f}, {0f, -1f, 0f}, {0f, -0.8f, 0f}, {0f, 0.8f, 0f}, {0f, 1f, 0f}, {0f, 0f, 0f}, {-0.7f, 0.7f, 0f}, {0.7f, 0.7f, 0f}, {0f, 1f, 0f}, {-0.05f, -0.05f, 0f}, {0.05f, -0.05f, 0f}, {0.05f, 0.05f, 0f}, {-0.05f, 0.05f, 0f} };
+	int[][] radarHudLines = new int[][] {new int[]{0, 1}, new int[]{2, 3}, new int[]{4, 5}, new int[]{6, 7}, new int[]{8, 9}, new int[]{8, 10}, new int[]{8, 11}, new int[]{12, 13, 14, 15, 12} };
 	float[,] xhairGeom = new float[,] { {-1f, -0.5f, 0f}, {-0.5f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {1f, 0f, 0f}, {1f, -0.5f, 0f}, {0.5f, -0.5f, 0f} };
 	int[][] xhairLines = new int[][] {new int[]{3, 4}, new int[]{0, 2, 5, 6}, new int[]{1, 2, 5, 7} };
 	float[,] crackGeom = new float[,] { {0f,0f,0f}, {-0.2f,0.2f,0f}, {-0.4f,0.3f,0f}, {-0.45f,0.32f,0f}, {-0.6f,0.05f,0f}, {0f,0.35f,0f}, {-0.2f,0.5f,0f}, {-0.4f,0.65f,0f}, {-0.1f,0.65f,0f}, {0.2f, 0.2f,0f}, {0.25f,0.3f,0f}, {0.4f,0.3f,0f}, {0.6f,0.4f,0f}, {0.4f,0.5f,0f}, {-0.1f,-0.2f,0f}, {0.1f,-0.3f,0f}, {0.3f,-0.6f,0f} };
@@ -117,10 +117,11 @@ public class Battlezone : MonoBehaviour {
 		uiObjects[3].GetComponent<Text>().text = ((enemyRadar&1)!=0) ? "ENEMY IN RANGE" : "";
 		uiObjects[4].GetComponent<Text>().text = ((enemyRadar&2)!=0) ? "ENEMY TO LEFT" : ((enemyRadar&4)!=0) ? "ENEMY TO RIGHT" : "";
 		uiObjects[5].GetComponent<Text>().text = gameState == 2 ? "GAME OVER" : "";
-		transform.Find("RadarHud/RadarHudChild6").Rotate(new Vector3(0f, 0f, -90f*Time.deltaTime));
-		transform.Find("XHairTop/XHairTopChild1").gameObject.SetActive((enemyRadar & 8)==0);	// Show XHair 1 if no enemy centred on screen
+		transform.Find("RadarHud/RadarHudChild6").Rotate(new Vector3(0f, 0f, -90f*Time.deltaTime));	// Rotate radar second hand
+		transform.Find("RadarHud/RadarHudChild7").gameObject.SetActive((enemyRadar & 1)!=0);		// Only show enemy dot on radar if within range
+		transform.Find("XHairTop/XHairTopChild1").gameObject.SetActive((enemyRadar & 8)==0);		// Show XHair 1 if no enemy centred on screen
 		transform.Find("XHairBot/XHairBotChild1").gameObject.SetActive((enemyRadar & 8)==0);
-		transform.Find("XHairTop/XHairTopChild2").gameObject.SetActive((enemyRadar & 8)!=0);	// Show XHair 2 if enemy centred on screen
+		transform.Find("XHairTop/XHairTopChild2").gameObject.SetActive((enemyRadar & 8)!=0);		// Show XHair 2 if enemy centred on screen
 		transform.Find("XHairBot/XHairBotChild2").gameObject.SetActive((enemyRadar & 8)!=0);
 		if (gameState > 0) {
 			transform.Find("Crack").gameObject.SetActive(true);
@@ -172,7 +173,10 @@ public class Battlezone : MonoBehaviour {
 /* Tank */		case 3: go.transform.Find("Radar").Rotate(new Vector3(0f, 60f*Time.deltaTime, 0f));		// Rotate radar
 						Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
 						float driveSpeed = 1f;
-						enemyRadar |= (desiredDir.magnitude < 10f) ? 1 : 0;
+						Vector3 radarDir = transform.InverseTransformPoint(go.transform.position) * 0.05f;
+						if((desiredDir.magnitude < 20f) && ( ((enemyRadar&1)==0) || (radarDir.magnitude < transform.Find("RadarHud/RadarHudChild7").localPosition.magnitude)))
+							transform.Find("RadarHud/RadarHudChild7").localPosition = new Vector3(radarDir.x, radarDir.z, 0f);
+						enemyRadar |= (desiredDir.magnitude < 20f) ? 1 : 0;
 						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x<0)||(Camera.main.WorldToViewportPoint(go.transform.position).x>1)) ? ((Vector3.Dot(desiredDir, transform.right) > 0f) ? 2 : 4) : 0;
 						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x>0.4f)&&(Camera.main.WorldToViewportPoint(go.transform.position).x<0.6f)) ? 8 : 0;
 						if(go.GetComponent<GameData>().state == 0) {			// Drive to the target position
