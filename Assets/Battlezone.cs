@@ -153,24 +153,19 @@ public class Battlezone : MonoBehaviour {
 								KillPlayer();
 								destroyed.AddRange(allObjects.Where(x => x.layer == 2 || x.layer == 3 || x.layer == 6));	// Remove all bullets, tanks and UFOs from the field
 							}
-							else if(hits[h].gameObject.layer == 4) {			// Bullet hit obstacle
-								destroyed.Add(go);
-							}
 							else {												// Bullet hit a tank(3) or UFO(6)
 								Score( hits[h].gameObject.layer == 3 ? 1000 : 5000);
-								if(hits[h].gameObject.layer == 3)
+								if(hits[h].gameObject.layer == 3)				// Tanks explode into debris pieces
 									for (int i=0; i<tankExpLines.Length+1; i++) {	// Last explosion debris is the separate radar dish
 										Vector3 p = hits[h].gameObject.transform.position;
-	        							GameObject ex = i<tankExpLines.Length?CreateVectorObject("Explosion", MakeLines(tankGeom, new int[1][]{tankExpLines[i]}), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", MakeLines(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green);
-										ex.GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
-										added.Add(ex);
+	        							added.Add(i<tankExpLines.Length?CreateVectorObject("Explosion", MakeLines(tankGeom, new int[1][]{tankExpLines[i]}), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", MakeLines(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green));
+										added[added.Count-1].GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
 									}
-								destroyed.Add(go);
-								destroyed.Add(hits[h].gameObject);
+								destroyed.Add(hits[h].gameObject);				// Destroy tank/UFO
 							}
 						}
 						go.transform.Translate(go.transform.forward*10f*Time.deltaTime, Space.World);
-						if((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout))				// Bullets die after x seconds
+						if(((hits!=null)&&(hits.Length>0)) || (Time.unscaledTime > go.GetComponent<GameData>().stateTimeout))	// Bullets die if hit something or after x seconds
 							destroyed.Add(go);
 				break;
 /* Tank */		case 3: go.transform.Find("Radar").Rotate(new Vector3(0f, 60f*Time.deltaTime, 0f));		// Rotate radar
@@ -216,12 +211,10 @@ public class Battlezone : MonoBehaviour {
 							}
 						}
 				break;
-/* Explosion */	case 5: go.transform.Translate(go.GetComponent<GameData>().targetPos*5f*Time.deltaTime, Space.World);
-						go.GetComponent<GameData>().targetPos -= new Vector3(0f, 1f*Time.deltaTime, 0f);		// Apply fake gravity to the debris's vector
-						go.transform.Translate(-Vector3.Cross(go.GetComponent<BoxCollider>().center, go.transform.localScale), Space.Self);	// Rotate around debris centre (use BoxCollider*scale)
-						go.transform.Rotate(new Vector3(90f*Time.deltaTime, 720f*Time.deltaTime, 360f*Time.deltaTime), Space.Self);
-						go.transform.Translate(Vector3.Cross(go.GetComponent<BoxCollider>().center, go.transform.localScale), Space.Self);
-						if(go.transform.position.y < 0f)												// Explosions die when they hit the ground
+/* Explosion */	case 5: go.transform.Translate(go.GetComponent<GameData>().targetPos*5f*Time.deltaTime, Space.World);	// Move debris
+						go.GetComponent<GameData>().targetPos -= new Vector3(0f, 1f*Time.deltaTime, 0f);	// Apply fake gravity to the debris's vector
+						go.transform.RotateAround(go.transform.TransformPoint(go.GetComponent<BoxCollider>().center), new Vector3(1f,2f,3f), 720f*Time.deltaTime);// Rotate around debris centre
+						if(go.transform.position.y < 0f)													// Explosions die when they hit the ground
 							destroyed.Add(go);
 				break;
 /* UFO */		case 6: go.transform.Rotate(new Vector3(0f, 90f*Time.deltaTime, 0f));
@@ -242,13 +235,13 @@ public class Battlezone : MonoBehaviour {
 		}
 		transform.Find("Terrain1").transform.localPosition = new Vector3(((transform.eulerAngles.y / 180f)-1f) * -(2f*Mathf.PI*40f*0.5f), 0f, 40f);
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
-		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete
+		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete when all tanks dead
 			level++;
 			for (int i=0; i<((level <= 10)?1:2); i++) {
     	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), Random.Range(-10f, 10f), 0.05f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
-			if(allObjects.Where(x => x.layer == 6).Count() == 0)
+			if(allObjects.Where(x => x.layer == 6).Count() == 0)			// Generate a new UFO if one doesnt exist
    	    		allObjects.Add( CreateVectorObject("UFO", MakeLines(ufoGeom, ufoLines), Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 6, Color.green) );
 		}
     }
