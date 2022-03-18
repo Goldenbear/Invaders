@@ -153,14 +153,14 @@ public class Battlezone : MonoBehaviour {
 								KillPlayer();
 								destroyed.AddRange(allObjects.Where(x => x.layer == 2 || x.layer == 3 || x.layer == 6));	// Remove all bullets, tanks and UFOs from the field
 							}
-							else {												// Bullet hit a tank(3) or UFO(6)
-								Score( hits[h].gameObject.layer == 3 ? 1000 : 5000);
+							else if(hits[h].gameObject.layer == 3 || hits[h].gameObject.layer == 6) {	// Bullet hit a tank or UFO
 								if(hits[h].gameObject.layer == 3)				// Tanks explode into debris pieces
 									for (int i=0; i<tankExpLines.Length+1; i++) {	// Last explosion debris is the separate radar dish
 										Vector3 p = hits[h].gameObject.transform.position;
 	        							added.Add(i<tankExpLines.Length?CreateVectorObject("Explosion", MakeLines(tankGeom, new int[1][]{tankExpLines[i]}), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", MakeLines(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green));
 										added[added.Count-1].GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
 									}
+								Score( hits[h].gameObject.layer == 3 ? 1000 : 5000);
 								destroyed.Add(hits[h].gameObject);				// Destroy tank/UFO
 							}
 						}
