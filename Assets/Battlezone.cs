@@ -26,7 +26,9 @@ public class Battlezone : MonoBehaviour {
 	int[][] tankExpLines = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6}, new int[] {4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11}, new int[] {8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17}, new int[] {14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
 	float[,] radarGeom = new float[,] { {-2f, -0.5f, 1f}, { -1f, -1f, 0f}, { -1f, 1f, 0f}, { -2f, 0.5f, 1f}, { -2f, -0.5f, 1f}, {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, {1f, -1f, 0f}, { 2f, -0.5f, 1f}, { 2f, 0.5f, 1f}, { 1f, 1f, 0f}, { 1f, -1f, 0f}, {0f, -1f, 0f}, {0f, -1.5f, 0f} };
 	float[,] ufoGeom = new float[,] { {0f,0.5f,0f}, {0f,0f,1f}, {0.7f,0f,0.7f}, {1f,0f,0f}, {0.7f,0f,-0.7f}, {0f,0f,-1f}, {-0.7f,0f,-0.7f}, {-1f,0f,0f}, {-0.7f,0f,0.7f}, {0f,-0.3f,0.2f}, {0.14f,-0.3f,0.14f}, {0.2f,-0.3f,0f}, {0.14f,-0.3f,-0.14f}, {0f,-0.3f,-0.2f}, {-0.14f,-0.3f,-0.14f}, {-0.2f,-0.3f,0f}, {-0.14f,-0.3f,0.14f} };
-	int [][] ufoLines = new int[][] {new int[]{0,1,9},new int[]{0,2,10},new int[]{0,3,11},new int[]{0,4,12},new int[]{0,5,13},new int[]{0,6,14},new int[]{0,7,15},new int[]{0,8,16},new int[]{1,2,3,4,5,6,7,8,1},new int[]{9,10,11,12,13,14,15,16,9} };
+	int[][] ufoLines = new int[][] {new int[]{0,1,9},new int[]{0,2,10},new int[]{0,3,11},new int[]{0,4,12},new int[]{0,5,13},new int[]{0,6,14},new int[]{0,7,15},new int[]{0,8,16},new int[]{1,2,3,4,5,6,7,8,1},new int[]{9,10,11,12,13,14,15,16,9} };
+	float[,] missileGeom = new float[,] { {-1f,0f,-1f},{-1f,0f,1f},{1f,0f,1f},{1f,0f,-1f},{-0.3f,1f,-0.3f},{-0.3f,1f,0.3f},{0.3f,1f,0.3f},{0.3f,1f,-0.3f},{-0.4f,1.4f,-1.5f},{0.4f,1.4f,-1.5f},{0.8f,2f,-1.5f},{0.4f,2.6f,-1.5f},{-0.4f,2.6f,-1.5f},{-0.8f,2f,-1.5f},{-1f,1f,0f},{1f,1f,0f},{1.5f,2f,0f},{1f,3f,0f},{-1f,3f,0f},{-1.5f,2f,0f},{0f,2f,8f},{0f,3f,0f},{0f,4f,0.2f},{-0.5f,2.5f,4f},{0.5f,2.5f,4f} };
+	int[][] missileLines = new int[][] {new int[]{0,1,2,3,0,4,5,1,5,6,2,6,7,3,7,4},new int[]{8,9,10,11,12,13,8},new int[]{14,15,16,17,18,19,14},new int[]{8,14,20},new int[]{9,15,20},new int[]{10,16,20},new int[]{11,17,20},new int[]{12,18,20},new int[]{13,19,20},new int[]{21,22,23,21,22,24,21}};
 	float gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0, enemyRadar = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
@@ -102,10 +104,11 @@ public class Battlezone : MonoBehaviour {
 		go.GetComponent<GameData>().targetPos = go.transform.position;				// Required by tank AI so immediately retargets
 		return go;
 	}
-	void KillPlayer() {
+	void KillPlayer(List<GameObject> destroyed) {
 		playerLives[lives].SetActive(false);
 		gameState = (--lives >= 0) ? 1 : 2;         // Player lost a life or player dead = game over?
 		gameStateTimer = Time.unscaledTime + 3f;
+		destroyed.AddRange(allObjects.Where(x => x.layer==2 || x.layer==3 || x.layer==6 || x.layer==7));	// Remove all bullets, tanks, UFOs, missiles from the field
 	}
 	void Score(int add) {
 		lives = (score / 50000) < ((score + add) / 50000) ? ((lives < (playerLives.Count - 1)) ? lives + 1 : lives) : lives;
@@ -147,21 +150,20 @@ public class Battlezone : MonoBehaviour {
 		foreach(GameObject go in allObjects) {
 			go.GetComponent<LineRenderer>().widthMultiplier = 0.005f + (Mathf.Clamp((go.transform.position-transform.position).magnitude, 1f, 10f)/10f) * 0.03f;	// Wider line width as get farther away
 			switch(go.layer) {
-/* Bullet */	case 2:	Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<6));
+/* Bullet */	case 2:	Collider[] hits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<3)+(1<<4)+(1<<6)+(1<<7));
 						for(int h=0; (hits != null) && (h < hits.Length); h++) {
 							if(hits[h].gameObject.layer == 1) {					// Bullet hit player
-								KillPlayer();
-								destroyed.AddRange(allObjects.Where(x => x.layer == 2 || x.layer == 3 || x.layer == 6));	// Remove all bullets, tanks and UFOs from the field
+								KillPlayer(destroyed);
 							}
-							else if(hits[h].gameObject.layer == 3 || hits[h].gameObject.layer == 6) {	// Bullet hit a tank or UFO
-								if(hits[h].gameObject.layer == 3)				// Tanks explode into debris pieces
+							else if(hits[h].gameObject.layer == 3 || hits[h].gameObject.layer == 6 || hits[h].gameObject.layer == 7) {	// Bullet hit a tank or UFO or missile
+								if(hits[h].gameObject.layer == 3 || hits[h].gameObject.layer == 7)				// Tanks explode into debris pieces
 									for (int i=0; i<tankExpLines.Length+1; i++) {	// Last explosion debris is the separate radar dish
 										Vector3 p = hits[h].gameObject.transform.position;
 	        							added.Add(i<tankExpLines.Length?CreateVectorObject("Explosion", MakeLines(tankGeom, new int[1][]{tankExpLines[i]}), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", MakeLines(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green));
 										added[added.Count-1].GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
 									}
-								Score( hits[h].gameObject.layer == 3 ? 1000 : 5000);
-								destroyed.Add(hits[h].gameObject);				// Destroy tank/UFO
+								Score( hits[h].gameObject.layer == 3 ? 1000 : hits[h].gameObject.layer == 7 ? 2000 : 5000);
+								destroyed.Add(hits[h].gameObject);				// Destroy tank/UFO/missile
 							}
 						}
 						go.transform.Translate(go.transform.forward*10f*Time.deltaTime, Space.World);
@@ -220,6 +222,11 @@ public class Battlezone : MonoBehaviour {
 /* UFO */		case 6: go.transform.Rotate(new Vector3(0f, 90f*Time.deltaTime, 0f));
 						go.transform.Translate(new Vector3(Mathf.Sin(Time.time*0.1f), 0f, Mathf.Cos(Time.time*0.1f))*1f*Time.deltaTime, Space.World);
 				break;
+/* Missile */	case 7: go.transform.rotation = Quaternion.RotateTowards(go.transform.rotation, Quaternion.LookRotation(transform.position-go.transform.position, Vector3.up), 90f*Time.deltaTime);
+						go.transform.Translate(new Vector3(go.transform.forward.x,0f,go.transform.forward.z)*10f*Time.deltaTime, Space.World);
+						if((transform.position-go.transform.position).magnitude < 1f)
+							KillPlayer(destroyed);
+				break;
 			}
 		}
 		foreach(GameObject dead in destroyed) {
@@ -242,7 +249,8 @@ public class Battlezone : MonoBehaviour {
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
 			if(allObjects.Where(x => x.layer == 6).Count() == 0)			// Generate a new UFO if one doesnt exist
-   	    		allObjects.Add( CreateVectorObject("UFO", MakeLines(ufoGeom, ufoLines), Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 6, Color.green) );
+				allObjects.Add( CreateVectorObject("UFO", MakeLines(ufoGeom, ufoLines), Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 6, Color.green) );
+			allObjects.Add( CreateVectorObject("Missile", MakeLines(missileGeom, missileLines), transform.position.x+transform.forward.x*20f, 0f, transform.position.z+transform.forward.z*20f, 0.2f, 0.2f, 0.2f, -10f, 0f, 0f, 7, Color.green) );
 		}
     }
 }
