@@ -237,20 +237,20 @@ public class Battlezone : MonoBehaviour {
 		transform.Rotate(new Vector3(0f, Joystick.x*30f*Time.deltaTime, 0f));	// Player control - aka the camera
 		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
 		Collider[] phits = Physics.OverlapBox(gameObject.GetComponent<Collider>().bounds.center, gameObject.GetComponent<Collider>().bounds.extents, transform.rotation, (1<<3)+(1<<4));	// Hit tank or obstacle
-		if((phits != null) && (phits.Length > 0)) {
+		if((phits != null) && (phits.Length > 0))
 			transform.Translate(new Vector3(0f, 0f, -Joystick.y*1f*Time.deltaTime));
-		}
 		transform.Find("Terrain1").transform.localPosition = new Vector3(((transform.eulerAngles.y / 180f)-1f) * -(2f*Mathf.PI*40f*0.5f), 0f, 40f);
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
-		if(allObjects.Where(x => x.layer == 3).Count() == 0) {				// Wave complete when all tanks dead
+		if(allObjects.Where(x => x.layer == 3 || x.layer == 7).Count() == 0) {				// Wave complete when all tanks and missiles are dead
 			level++;
-			for (int i=0; i<((level <= 10)?1:2); i++) {
+			for (int i=0; i<(level%6<3?((level <= 10)?1:2):0); i++) {
     	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), Random.Range(-10f, 10f), 0.05f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
+			if(level%6>=3)
+				allObjects.Add( CreateVectorObject("Missile", MakeLines(missileGeom, missileLines), transform.position.x+transform.forward.x*20f, 0f, transform.position.z+transform.forward.z*20f, 0.2f, 0.2f, 0.2f, -10f, 0f, 0f, 7, Color.green) );
 			if(allObjects.Where(x => x.layer == 6).Count() == 0)			// Generate a new UFO if one doesnt exist
 				allObjects.Add( CreateVectorObject("UFO", MakeLines(ufoGeom, ufoLines), Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 6, Color.green) );
-			allObjects.Add( CreateVectorObject("Missile", MakeLines(missileGeom, missileLines), transform.position.x+transform.forward.x*20f, 0f, transform.position.z+transform.forward.z*20f, 0.2f, 0.2f, 0.2f, -10f, 0f, 0f, 7, Color.green) );
 		}
     }
 }
