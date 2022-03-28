@@ -28,7 +28,7 @@ public class Battlezone : MonoBehaviour {
 	int[][] ufoLines = new int[][] {new int[]{0,1,9},new int[]{0,2,10},new int[]{0,3,11},new int[]{0,4,12},new int[]{0,5,13},new int[]{0,6,14},new int[]{0,7,15},new int[]{0,8,16},new int[]{1,2,3,4,5,6,7,8,1},new int[]{9,10,11,12,13,14,15,16,9} };
 	float[,] missileGeom = new float[,] { {-1f,0f,-1f},{-1f,0f,1f},{1f,0f,1f},{1f,0f,-1f},{-0.3f,1f,-0.3f},{-0.3f,1f,0.3f},{0.3f,1f,0.3f},{0.3f,1f,-0.3f},{-0.4f,1.4f,-1.5f},{0.4f,1.4f,-1.5f},{0.8f,2f,-1.5f},{0.4f,2.6f,-1.5f},{-0.4f,2.6f,-1.5f},{-0.8f,2f,-1.5f},{-1f,1f,0f},{1f,1f,0f},{1.5f,2f,0f},{1f,3f,0f},{-1f,3f,0f},{-1.5f,2f,0f},{0f,2f,8f},{0f,3f,0f},{0f,4f,0.2f},{-0.5f,2.5f,4f},{0.5f,2.5f,4f} };
 	int[][] missileLines = new int[][] {new int[]{0,1,2,3,0,4,5,1,5,6,2,6,7,3,7,4},new int[]{8,9,10,11,12,13,8},new int[]{14,15,16,17,18,19,14},new int[]{8,14,20},new int[]{9,15,20},new int[]{10,16,20},new int[]{11,17,20},new int[]{12,18,20},new int[]{13,19,20},new int[]{21,22,23,21,22,24,21}};
-	float gameStateTimer = 5f, fireTimer = 0f;
+	float gameStateTimer = 0f, fireTimer = 0f, waveTimer = 5f;
 	int gameState = 0, enemyRadar = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
@@ -130,7 +130,6 @@ public class Battlezone : MonoBehaviour {
 			if ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) {
 				transform.Find("Crack").gameObject.SetActive(false);
 				gameState = 0;																// Back to playing
-				gameStateTimer = 5f;														// Time to next attack wave
 			}
 			if ((gameState == 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))) {
 				score = 0; lives = 2; level = 1;                    						// New game
@@ -221,8 +220,8 @@ public class Battlezone : MonoBehaviour {
 /* UFO */		case 6: go.transform.Rotate(new Vector3(0f, 90f*Time.deltaTime, 0f));
 						go.transform.Translate(new Vector3(Mathf.Sin(Time.time*0.1f), 0f, Mathf.Cos(Time.time*0.1f))*1f*Time.deltaTime, Space.World);
 				break;
-/* Missile */	case 7: go.transform.rotation = Quaternion.RotateTowards(go.transform.rotation, Quaternion.AngleAxis(Mathf.Sin(Time.time)*(level<15?0f:30f)*Mathf.Clamp01((transform.position-go.transform.position).magnitude*0.1f), Vector3.up)*Quaternion.LookRotation(transform.position-go.transform.position, Vector3.up), 90f*Time.deltaTime);
-						go.transform.Translate(new Vector3(go.transform.forward.x,0f,go.transform.forward.z)*10f*Time.deltaTime, Space.World);
+/* Missile */	case 7: go.transform.rotation = Quaternion.RotateTowards(go.transform.rotation, Quaternion.AngleAxis(Mathf.Sin(5f*Time.time)*(level<15?0f:30f)*Mathf.Clamp01((transform.position-go.transform.position).magnitude*0.1f), Vector3.up)*Quaternion.LookRotation(transform.position-go.transform.position), 90f*Time.deltaTime);
+						go.transform.Translate(go.transform.position.y>0f?-Vector3.up*0.1f:new Vector3(go.transform.forward.x,0f,go.transform.forward.z)*10f*Time.deltaTime, Space.World);
 						if((transform.position-go.transform.position).magnitude < 1f)
 							KillPlayer(destroyed);
 				break;
@@ -240,17 +239,17 @@ public class Battlezone : MonoBehaviour {
 			transform.Translate(new Vector3(0f, 0f, -Joystick.y*1f*Time.deltaTime));
 		transform.Find("Terrain1").transform.localPosition = new Vector3(((transform.eulerAngles.y / 180f)-1f) * -(2f*Mathf.PI*40f*0.5f), 0f, 40f);
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
-		if( (allObjects.Where(x => x.layer == 3 || x.layer == 7).Count() == 0) && ((gameStateTimer-=Time.deltaTime)<0f) ) {	// Wave complete when all tanks and missiles are dead
+		if( (allObjects.Where(x => x.layer == 3 || x.layer == 7).Count() == 0) && ((waveTimer-=Time.deltaTime)<0f) ) {	// Wave complete when all tanks and missiles are dead
 			level++;
 			for (int i=0; i<(level%15<12?((level <= 30)?1:2):0); i++) {
     	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), Random.Range(-10f, 10f), 0.05f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
 			if(level%15>=12)
-				allObjects.Add( CreateVectorObject("Missile", MakeLines(missileGeom, missileLines), transform.position.x+transform.forward.x*20f, 0f, transform.position.z+transform.forward.z*20f, 0.2f, 0.2f, 0.2f, -10f, 0f, 0f, 7, Color.green) );
+				allObjects.Add( CreateVectorObject("Missile", MakeLines(missileGeom, missileLines), transform.position.x+transform.forward.x*20f, 10f, transform.position.z+transform.forward.z*20f, 0.2f, 0.2f, 0.2f, -10f, Quaternion.LookRotation(-transform.forward).eulerAngles.y, 0f, 7, Color.green) );
 			if(allObjects.Where(x => x.layer == 6).Count() == 0)			// Generate a new UFO if one doesnt exist
 				allObjects.Add( CreateVectorObject("UFO", MakeLines(ufoGeom, ufoLines), Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 6, Color.green) );
-			gameStateTimer = 5f;	// Time between attack waves
+			waveTimer = 5f;	// Time between attack waves
 		}
     }
 }
