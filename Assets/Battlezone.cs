@@ -32,7 +32,7 @@ public class Battlezone : MonoBehaviour {
 	int gameState = 0, enemyRadar = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/2f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
-	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<=1f) return TouchJoy(t); else return TouchJoy(t).normalized;} return KeyJoy; } }
+	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<=1f) return TouchJoy(t); else if(TouchJoy(t).magnitude<=2f) return TouchJoy(t).normalized;} return KeyJoy; } }
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKey(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().orthographic = false;				// 3D perspective camera!
