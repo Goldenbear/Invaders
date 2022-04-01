@@ -30,9 +30,9 @@ public class Battlezone : MonoBehaviour {
 	int[][] missileLines = new int[][] {new int[]{0,1,2,3,0,4,5,1,5,6,2,6,7,3,7,4},new int[]{8,9,10,11,12,13,8},new int[]{14,15,16,17,18,19,14},new int[]{8,14,20},new int[]{9,15,20},new int[]{10,16,20},new int[]{11,17,20},new int[]{12,18,20},new int[]{13,19,20},new int[]{21,22,23,21,22,24,21}};
 	float gameStateTimer = 0f, fireTimer = 0f, waveTimer = 5f;
 	int gameState = 0, enemyRadar = 0;
-	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
+	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/2f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
-	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return KeyJoy; } }
+	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<=1f) return TouchJoy(t); else return TouchJoy(t).normalized;} return KeyJoy; } }
 	bool Fire { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).x<-2f) return true; } return Input.GetKey(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().orthographic = false;				// 3D perspective camera!
@@ -40,7 +40,7 @@ public class Battlezone : MonoBehaviour {
 		gameObject.AddComponent<BoxCollider>().isTrigger = true;			// Player collider
 		gameObject.GetComponent<BoxCollider>().size = new Vector3(0.5f, 0.5f, 0.5f);
 		gameObject.layer = 1;
-		transform.Translate(new Vector3(0f, 0.3f, 0f));
+		transform.position = new Vector3(0f, 0.3f, -10f);	// Z -10 so can see UI placed at Z 0
  		CreateVectorObject("Terrain1", MakeLines(terrainGeom),    0f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.1f).transform.parent = transform;
  		CreateVectorObject("Terrain2", MakeLines(terrainGeom), -200f, 0f, 40f, (2f*Mathf.PI*40f)/40f, 5f, 1f, 0f, 0f, 0f, 0, Color.green, true, 0.1f).transform.parent = transform;
 		for (int i=0; i<20; i++)
@@ -60,7 +60,7 @@ public class Battlezone : MonoBehaviour {
 			uiObjects[i].GetComponent<Text>().fontSize = i == 2 ? Screen.width/50 : Screen.width/30;
 			uiObjects[i].GetComponent<Text>().alignment = TextAnchor.MiddleLeft;		// Left align text within RectTransform
 			uiObjects[i].GetComponent<RectTransform>().pivot = new Vector2(0f, 0.5f);	// Position left of RectTransform
-			uiObjects[i].GetComponent<RectTransform>().localPosition = i == 1 ? new Vector3(Screen.width/8f, Screen.height/2.5f, 0f) : i == 2 ? new Vector3(Screen.width/8f, Screen.height/2.8f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.5f, 0f) : i == 4 ? new Vector3(-Screen.width/2.2f, Screen.height/2.8f, 0f) : new Vector3(0f, 0f, 0f);
+			uiObjects[i].GetComponent<RectTransform>().localPosition = i == 1 ? new Vector3(Screen.width/8f, Screen.height/2.5f, 0f) : i == 2 ? new Vector3(Screen.width/8f, Screen.height/2.8f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.3f, 0f) : i == 4 ? new Vector3(-Screen.width/2.2f, Screen.height/3f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 			uiObjects[i].GetComponent<Text>().color = Color.green;
 		}
@@ -179,8 +179,8 @@ public class Battlezone : MonoBehaviour {
 						if(go.GetComponent<GameData>().state == 0) {									// Aim at target position, retarget if reached
 							desiredDir = new Vector3(go.GetComponent<GameData>().targetPos.x-go.transform.position.x, 0f, go.GetComponent<GameData>().targetPos.z-go.transform.position.z);
 							if(desiredDir.magnitude < 0.1f) {
-								go.GetComponent<GameData>().state = ((Random.value > 0.5f) && (Time.unscaledTime > go.GetComponent<GameData>().stateTimeout)) ? 2 : 0;		// Target player (not straight away after spawn) or random position
-								go.GetComponent<GameData>().targetPos = go.transform.position + new Vector3(Random.Range(-10f,10f),0f,Random.Range(-10f,10f));
+								go.GetComponent<GameData>().state = (/*(Random.value > 0.5f) && */(Time.unscaledTime > go.GetComponent<GameData>().stateTimeout)) ? 2 : 0;		// Target player (not straight away after spawn) or random position
+								go.GetComponent<GameData>().targetPos = go.transform.position + new Vector3(Random.Range(-5f,5f),0f,Random.Range(-5f,5f));
 								break;
 							}
 						}
@@ -188,7 +188,7 @@ public class Battlezone : MonoBehaviour {
 							go.transform.Translate(-go.transform.forward*Time.deltaTime, Space.World);	// Drive backwards
 							if(Time.unscaledTime > go.GetComponent<GameData>().stateTimeout) {			// Until timeout
 								go.GetComponent<GameData>().state = 0;									// Drive to a position off to one side
-								go.GetComponent<GameData>().targetPos = go.transform.position + (go.transform.right * Random.Range(-10f,10f)) + (go.transform.forward * Random.Range(-10f,0));
+								go.GetComponent<GameData>().targetPos = go.transform.position + (go.transform.right * Random.Range(-5f,5f)) + (go.transform.forward * Random.Range(-1f,0f));
 							}
 							break;	// If backing-up dont do normal driving or collision handling
 						}
@@ -197,7 +197,7 @@ public class Battlezone : MonoBehaviour {
 						angle = (whichWay < 0.0f) ? -angle : angle;
 						if(Mathf.Abs(angle) < 3f)
 							go.transform.Translate(go.transform.forward*Time.deltaTime, Space.World);	// Drive if facing desiredDir
-						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -30f*Time.deltaTime, 30f*Time.deltaTime), 0f));	// Face desiredDir
+						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -20f*Time.deltaTime, 20f*Time.deltaTime), 0f));	// Face desiredDir
 						Collider[] ohits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<3)+(1<<4));
 						if((ohits != null) && (ohits.Length > 1)) {		// If hit an obstacle then back up and retarget (note always overlaps itself hence > 1)
 							go.GetComponent<GameData>().state = 1;
@@ -232,7 +232,7 @@ public class Battlezone : MonoBehaviour {
 			Destroy(dead);
 		}
 		allObjects.AddRange(added);
-		transform.Rotate(new Vector3(0f, Joystick.x*30f*Time.deltaTime, 0f));	// Player control - aka the camera
+		transform.Rotate(new Vector3(0f, Joystick.x*20f*Time.deltaTime, 0f));	// Player control - aka the camera
 		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
 		Collider[] phits = Physics.OverlapBox(gameObject.GetComponent<Collider>().bounds.center, gameObject.GetComponent<Collider>().bounds.extents, transform.rotation, (1<<3)+(1<<4));	// Hit tank or obstacle
 		if((phits != null) && (phits.Length > 0))
@@ -241,11 +241,11 @@ public class Battlezone : MonoBehaviour {
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if( (allObjects.Where(x => x.layer == 3 || x.layer == 7).Count() == 0) && ((waveTimer-=Time.deltaTime)<0f) ) {	// Wave complete when all tanks and missiles are dead
 			level++;
-			for (int i=0; i<(level%15<12?((level <= 30)?1:2):0); i++) {
-    	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), Random.Range(-10f, 10f), 0.05f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
+			for (int i=0; i<(((score>30000)&&(Random.value<0.2f))?0:(level<=30)?1:2); i++) {	// Missiles start at 30K (dont create any tanks)
+    	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), transform.position.x+Random.Range(-10f, 10f), 0.05f, transform.position.z+Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
-			if(level%15>=12)
+			if(allObjects.Where(x => x.layer == 3).Count() == 0)			// If no tanks created then create a missile
 				allObjects.Add( CreateVectorObject("Missile", MakeLines(missileGeom, missileLines), transform.position.x+transform.forward.x*20f, 10f, transform.position.z+transform.forward.z*20f, 0.2f, 0.2f, 0.2f, -10f, Quaternion.LookRotation(-transform.forward).eulerAngles.y, 0f, 7, Color.green) );
 			if(allObjects.Where(x => x.layer == 6).Count() == 0)			// Generate a new UFO if one doesnt exist
 				allObjects.Add( CreateVectorObject("UFO", MakeLines(ufoGeom, ufoLines), Random.Range(-10f, 10f), 0.5f, Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 6, Color.green) );
