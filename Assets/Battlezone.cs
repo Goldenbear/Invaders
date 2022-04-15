@@ -175,7 +175,7 @@ public class Battlezone : MonoBehaviour {
 							transform.Find("RadarHud/RadarHudChild7").localPosition = new Vector3(radarDir.x, radarDir.z, 0f);
 						enemyRadar |= (desiredDir.magnitude < 20f) ? 1 : 0;
 						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x<0)||(Camera.main.WorldToViewportPoint(go.transform.position).x>1)) ? ((Vector3.Dot(desiredDir, transform.right) > 0f) ? 2 : 4) : 0;
-						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x>0.4f)&&(Camera.main.WorldToViewportPoint(go.transform.position).x<0.6f)) ? 8 : 0;
+						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x>0.4f)&&(Camera.main.WorldToViewportPoint(go.transform.position).x<0.6f)&&(Vector3.Dot(desiredDir, transform.forward) < 0f)) ? 8 : 0;
 						if(go.GetComponent<GameData>().state == 0) {									// Aim at target position, retarget if reached
 							desiredDir = new Vector3(go.GetComponent<GameData>().targetPos.x-go.transform.position.x, 0f, go.GetComponent<GameData>().targetPos.z-go.transform.position.z);
 							if(desiredDir.magnitude < 0.1f) {
