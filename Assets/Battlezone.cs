@@ -161,7 +161,7 @@ public class Battlezone : MonoBehaviour {
 	        							added.Add(i<tankExpLines.Length?CreateVectorObject("Explosion", MakeLines(tankGeom, new int[1][]{tankExpLines[i]}), p.x, p.y, p.z, 0.5f, 0.5f, 0.5f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green):CreateVectorObject("Explosion", MakeLines(radarGeom), p.x, p.y, p.z, 0.05f, 0.05f, 0.05f, Random.Range(-180f,180f), Random.Range(-180f,180f), Random.Range(-180f,180f), 5, Color.green));
 										added[added.Count-1].GetComponent<GameData>().targetPos = new Vector3(Random.Range(-1f,1f),1f,Random.Range(-1f,1f));
 									}
-								Score( hits[h].gameObject.layer == 3 ? 1000 : hits[h].gameObject.layer == 7 ? 2000 : 5000);
+								Score( hits[h].gameObject.layer == 3 ? ((level<=30)?1000:3000) : hits[h].gameObject.layer == 7 ? 2000 : 5000);	// Tanks 1000, Super-tanks 3000, missiles 2000, UFOs 5000
 								destroyed.Add(hits[h].gameObject);				// Destroy tank/UFO/missile
 							}
 						}
