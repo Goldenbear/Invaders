@@ -22,6 +22,7 @@ public class Battlezone : MonoBehaviour {
 	float[,] cubeGeom = new float[,] { {-1f,0f,-1f}, {-1f,0f,1f}, {1f,0f,1f}, {1f,0f,-1f}, {-1f,0f,-1f}, {-1f,2f,-1f}, {-1f,2f,1f}, {1f,2f,1f}, {1f,2f,-1f}, {-1f,2f,-1f}, {-1f,0f,-1f}, {-1f,0f,1f}, {-1f,2f,1f}, {1f,2f,1f}, {1f,0f,1f}, {1f,0f,-1f}, {1f,2f,-1f} };
 	float[,] tankGeom = new float[,] { {-0.4f, -0.1f, -0.8f}, {-0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, 0.8f}, {0.4f, -0.1f, -0.8f}, {-0.5f, 0.1f, -1f}, {-0.5f, 0.1f, 1f}, {0.5f, 0.1f, 1f}, {0.5f, 0.1f, -1f}, {-0.4f, 0.3f, -0.8f}, {-0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, 0.5f}, {0.4f, 0.3f, -0.8f}, {-0.3f, 0.6f, -0.7f}, {0.3f, 0.6f, -0.7f}, {-0.1f, 0.5f, -0.35f}, {-0.1f, 0.5f, 1f}, {0.1f, 0.5f, 1f}, {0.1f, 0.5f, -0.35f}, {-0.1f, 0.55f, -0.55f}, {-0.1f, 0.55f, 1f}, {0.1f, 0.55f, 1f}, {0.1f, 0.55f, -0.55f} };
 	int[][] tankLines = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11, 8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17, 14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
+	int[][] superLines = new int[][] {new int[] {0, 1, 2, 3, 0, 12, 13, 3, 2, 13, 12, 1}, new int[] {14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
 	int[][] tankExpLines = new int[][] {new int[] {0, 1, 2, 3, 0, 4, 5, 1, 5, 6}, new int[] {4, 8, 9, 5, 9, 10, 6, 10, 11, 7, 11}, new int[] {8, 12, 9, 10, 13, 11, 13, 12, 14, 15, 16, 17}, new int[] {14, 18, 19, 15, 19, 20, 16, 20, 21, 17, 21, 18} };
 	float[,] radarGeom = new float[,] { {-2f, -0.5f, 1f}, { -1f, -1f, 0f}, { -1f, 1f, 0f}, { -2f, 0.5f, 1f}, { -2f, -0.5f, 1f}, {-1f, -1f, 0f}, { 1f, -1f, 0f}, { 1f, 1f, 0f}, { -1f, 1f, 0f}, { -1f, -1f, 0f}, {1f, -1f, 0f}, { 2f, -0.5f, 1f}, { 2f, 0.5f, 1f}, { 1f, 1f, 0f}, { 1f, -1f, 0f}, {0f, -1f, 0f}, {0f, -1.5f, 0f} };
 	float[,] ufoGeom = new float[,] { {0f,0.5f,0f}, {0f,0f,1f}, {0.7f,0f,0.7f}, {1f,0f,0f}, {0.7f,0f,-0.7f}, {0f,0f,-1f}, {-0.7f,0f,-0.7f}, {-1f,0f,0f}, {-0.7f,0f,0.7f}, {0f,-0.3f,0.2f}, {0.14f,-0.3f,0.14f}, {0.2f,-0.3f,0f}, {0.14f,-0.3f,-0.14f}, {0f,-0.3f,-0.2f}, {-0.14f,-0.3f,-0.14f}, {-0.2f,-0.3f,0f}, {-0.14f,-0.3f,0.14f} };
@@ -196,8 +197,8 @@ public class Battlezone : MonoBehaviour {
 						float whichWay = Vector3.Cross(go.transform.forward, desiredDir).y; 			// Left or right?
 						angle = (whichWay < 0.0f) ? -angle : angle;
 						if(Mathf.Abs(angle) < 3f)
-							go.transform.Translate(go.transform.forward*Time.deltaTime, Space.World);	// Drive if facing desiredDir
-						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, -20f*Time.deltaTime, 20f*Time.deltaTime), 0f));	// Face desiredDir
+							go.transform.Translate(go.transform.forward*Time.deltaTime*((level<=30)?1f:2f), Space.World);	// Drive if facing desiredDir
+						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, ((level<=30)?-20f:-40f)*Time.deltaTime, ((level<=30)?20f:40f)*Time.deltaTime), 0f));	// Face desiredDir
 						Collider[] ohits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<3)+(1<<4));
 						if((ohits != null) && (ohits.Length > 1)) {		// If hit an obstacle then back up and retarget (note always overlaps itself hence > 1)
 							go.GetComponent<GameData>().state = 1;
@@ -241,8 +242,8 @@ public class Battlezone : MonoBehaviour {
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if( (allObjects.Where(x => x.layer == 3 || x.layer == 7).Count() == 0) && ((waveTimer-=Time.deltaTime)<0f) ) {	// Wave complete when all tanks and missiles are dead
 			level++;
-			for (int i=0; i<(((score>30000)&&(Random.value<0.2f))?0:(level<=30)?1:2); i++) {	// Missiles start at 30K (dont create any tanks)
-    	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, tankLines), transform.position.x+Random.Range(-10f, 10f), 0.05f, transform.position.z+Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
+			for (int i=0; i<(((score>30000)&&(Random.value<0.2f))?0:(level<=50)?1:2); i++) {	// Missiles start at 30K (dont create any tanks)
+    	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, (level<=30)?tankLines:superLines), transform.position.x+Random.Range(-10f, 10f), 0.05f, transform.position.z+Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
 			if(allObjects.Where(x => x.layer == 3).Count() == 0)			// If no tanks created then create a missile
