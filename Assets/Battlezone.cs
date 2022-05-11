@@ -30,7 +30,7 @@ public class Battlezone : MonoBehaviour {
 	float[,] missileGeom = new float[,] { {-1f,0f,-1f},{-1f,0f,1f},{1f,0f,1f},{1f,0f,-1f},{-0.3f,1f,-0.3f},{-0.3f,1f,0.3f},{0.3f,1f,0.3f},{0.3f,1f,-0.3f},{-0.4f,1.4f,-1.5f},{0.4f,1.4f,-1.5f},{0.8f,2f,-1.5f},{0.4f,2.6f,-1.5f},{-0.4f,2.6f,-1.5f},{-0.8f,2f,-1.5f},{-1f,1f,0f},{1f,1f,0f},{1.5f,2f,0f},{1f,3f,0f},{-1f,3f,0f},{-1.5f,2f,0f},{0f,2f,8f},{0f,3f,0f},{0f,4f,0.2f},{-0.5f,2.5f,4f},{0.5f,2.5f,4f} };
 	int[][] missileLines = new int[][] {new int[]{0,1,2,3,0,4,5,1,5,6,2,6,7,3,7,4},new int[]{8,9,10,11,12,13,8},new int[]{14,15,16,17,18,19,14},new int[]{8,14,20},new int[]{9,15,20},new int[]{10,16,20},new int[]{11,17,20},new int[]{12,18,20},new int[]{13,19,20},new int[]{21,22,23,21,22,24,21}};
 	float gameStateTimer = 0f, fireTimer = 0f, waveTimer = 5f;
-	int gameState = 0, enemyRadar = 0;
+	int gameState = 3, enemyRadar = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/2f)) / (Screen.height/4f); }
 	Vector2 KeyJoy { get { return (Input.GetKey(KeyCode.LeftArrow)?-Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.RightArrow)?Vector2.right:Vector2.zero)+(Input.GetKey(KeyCode.DownArrow)?-Vector2.up:Vector2.zero)+(Input.GetKey(KeyCode.UpArrow)?Vector2.up:Vector2.zero); } }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<=1f) return TouchJoy(t); else if(TouchJoy(t).magnitude<=2f) return TouchJoy(t).normalized;} return KeyJoy; } }
@@ -58,7 +58,7 @@ public class Battlezone : MonoBehaviour {
 			uiObjects.Add( new GameObject("UIText") );
 			uiObjects[i].transform.parent = uiObjects[0].transform;
 			uiObjects[i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
-			uiObjects[i].GetComponent<Text>().fontSize = i == 5 ? Screen.width/6 : i == 2 ? Screen.width/50 : Screen.width/30;
+			uiObjects[i].GetComponent<Text>().fontSize = i == 5 ? Screen.width/12 : i == 2 ? Screen.width/50 : Screen.width/30;
 			uiObjects[i].GetComponent<Text>().alignment = TextAnchor.MiddleLeft;		// Left align text within RectTransform
 			uiObjects[i].GetComponent<RectTransform>().pivot = new Vector2(0f, 0.5f);	// Position left of RectTransform
 			uiObjects[i].GetComponent<RectTransform>().localPosition = i == 1 ? new Vector3(Screen.width/8f, Screen.height/2.5f, 0f) : i == 2 ? new Vector3(Screen.width/8f, Screen.height/2.8f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.3f, 0f) : i == 4 ? new Vector3(-Screen.width/2.2f, Screen.height/3f, 0f) : new Vector3(-Screen.width/4f, 0f, 0f);
@@ -119,7 +119,7 @@ public class Battlezone : MonoBehaviour {
 		uiObjects[2].GetComponent<Text>().text = string.Format("HIGH SCORE       {0:00000}", PlayerPrefs.GetInt("BattlezoneHighScore"));
 		uiObjects[3].GetComponent<Text>().text = ((enemyRadar&1)!=0) ? "ENEMY IN RANGE" : "";
 		uiObjects[4].GetComponent<Text>().text = ((enemyRadar&2)!=0) ? "ENEMY TO LEFT" : ((enemyRadar&4)!=0) ? "ENEMY TO RIGHT" : "";
-		uiObjects[5].GetComponent<Text>().text = gameState == 2 ? "GAME OVER" : "";
+		uiObjects[5].GetComponent<Text>().text = gameState == 3 ? "BATTLEZONE" : gameState == 2 ? "GAME OVER" : "";
 		transform.Find("RadarHud/RadarHudChild6").Rotate(new Vector3(0f, 0f, -90f*Time.deltaTime));	// Rotate radar second hand
 		transform.Find("RadarHud/RadarHudChild7").gameObject.SetActive((enemyRadar & 1)!=0);		// Only show enemy dot on radar if within range
 		transform.Find("XHairTop/XHairTopChild1").gameObject.SetActive((enemyRadar & 8)==0);		// Show XHair 1 if no enemy centred on screen
@@ -127,8 +127,8 @@ public class Battlezone : MonoBehaviour {
 		transform.Find("XHairTop/XHairTopChild2").gameObject.SetActive((enemyRadar & 8)!=0);		// Show XHair 2 if enemy centred on screen
 		transform.Find("XHairBot/XHairBotChild2").gameObject.SetActive((enemyRadar & 8)!=0);
 		if (gameState > 0) {
-			transform.Find("Crack").gameObject.SetActive(true);
-			if ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) {
+			transform.Find("Crack").gameObject.SetActive(gameState<3);
+			if ( ((gameState == 1) && (Time.unscaledTime > gameStateTimer)) || ((gameState == 3) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))) ){
 				transform.Find("Crack").gameObject.SetActive(false);
 				gameState = 0;																// Back to playing
 			}
