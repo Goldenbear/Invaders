@@ -61,7 +61,7 @@ public class Battlezone : MonoBehaviour {
 			uiObjects[i].GetComponent<Text>().fontSize = i == 5 ? Screen.width/12 : i == 2 ? Screen.width/50 : Screen.width/30;
 			uiObjects[i].GetComponent<Text>().alignment = TextAnchor.MiddleLeft;		// Left align text within RectTransform
 			uiObjects[i].GetComponent<RectTransform>().pivot = new Vector2(0f, 0.5f);	// Position left of RectTransform
-			uiObjects[i].GetComponent<RectTransform>().localPosition = i == 1 ? new Vector3(Screen.width/8f, Screen.height/2.5f, 0f) : i == 2 ? new Vector3(Screen.width/8f, Screen.height/2.8f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.3f, 0f) : i == 4 ? new Vector3(-Screen.width/2.2f, Screen.height/3f, 0f) : new Vector3(-Screen.width/4f, 0f, 0f);
+			uiObjects[i].GetComponent<RectTransform>().localPosition = i == 1 ? new Vector3(Screen.width/8f, Screen.height/2.5f, 0f) : i == 2 ? new Vector3(Screen.width/8f, Screen.height/2.8f, 0f) : i == 3 ? new Vector3(-Screen.width/2.2f, Screen.height/2.3f, 0f) : i == 4 ? new Vector3(-Screen.width/2.2f, Screen.height/3f, 0f) : new Vector3(-Screen.width/4f, Screen.height/5f, 0f);
 			uiObjects[i].GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width, 800);
 			uiObjects[i].GetComponent<Text>().color = Color.green;
 		}
