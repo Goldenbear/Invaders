@@ -35,7 +35,7 @@ public class Asteroids : MonoBehaviour {
 		playerBody = player.AddComponent<Rigidbody>();
 		playerBody.useGravity = false;
 		playerBody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
-		playerBody.drag = 0.5f;
+		playerBody.linearDamping = 0.5f;
 		saucer = CreateVectorObject("Saucer", saucershape, Vector3.zero, 0.3f, 5, false);
 		saucerTime = Time.time + 15f;// + Random.value * 30f;
 		for (int i = 0; i < (2 + level * 2); i++) {
@@ -59,7 +59,7 @@ public class Asteroids : MonoBehaviour {
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
-		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
 	}
 	GameObject CreateVectorObject(string label, Vector3[] shape, Vector3 pos, float radius, int layer, bool active = true) {
@@ -81,7 +81,7 @@ public class Asteroids : MonoBehaviour {
 	void KillPlayer() {
 		playerLives[lives].SetActive(false);
 		player.transform.position = RandomPosition;
-		playerBody.velocity = Vector3.zero;
+		playerBody.linearVelocity = Vector3.zero;
 		if (--lives < 0) {
 			player.SetActive(false);
 			gameOver = true;                            // Player dead = game over

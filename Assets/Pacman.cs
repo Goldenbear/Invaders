@@ -90,7 +90,7 @@ public class Pacman : MonoBehaviour {
 		for(int i=0; i<4; i++) {
 			uiObjects[1+i] = new GameObject("UIText");
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
-			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = 30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i <= 1 ? new Vector3(100f+i*300f, 0f, 0) : new Vector3((msgPos.x+4.5f)*100f, (msgPos.y-4.8f)*100f, 0f);

@@ -48,7 +48,7 @@ public class Centipede : MonoBehaviour {
 		for(int i=0; i<3; i++) {
 			uiObjects.Add( new GameObject("UIText") );
 			uiObjects[1+i].transform.parent = uiObjects[0].transform;
-			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+			uiObjects[1+i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 			uiObjects[1+i].GetComponent<Text>().fontSize = Screen.width/30;
 			uiObjects[1+i].GetComponent<Text>().alignment = TextAnchor.MiddleCenter;
 			uiObjects[1+i].GetComponent<Text>().color = levelColor;

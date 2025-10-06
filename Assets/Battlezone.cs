@@ -57,7 +57,7 @@ public class Battlezone : MonoBehaviour {
 		for(int i=1; i<=5; i++) {
 			uiObjects.Add( new GameObject("UIText") );
 			uiObjects[i].transform.parent = uiObjects[0].transform;
-			uiObjects[i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+			uiObjects[i].AddComponent<Text>().font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 			uiObjects[i].GetComponent<Text>().fontSize = i == 5 ? Screen.width/12 : i == 2 ? Screen.width/50 : Screen.width/30;
 			uiObjects[i].GetComponent<Text>().alignment = TextAnchor.MiddleLeft;		// Left align text within RectTransform
 			uiObjects[i].GetComponent<RectTransform>().pivot = new Vector2(0f, 0.5f);	// Position left of RectTransform

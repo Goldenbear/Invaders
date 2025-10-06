@@ -45,7 +45,7 @@ public class Breakout : MonoBehaviour
 		uiCanvas.GetComponent<RectTransform>().sizeDelta = new Vector2(1000f, 200f);
 		uiCanvas.GetComponent<RectTransform>().localScale = new Vector3(0.01f, 0.01f, 1f);
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
-		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
 		startTime = Time.time + 3f;
 	}

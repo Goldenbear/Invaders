@@ -53,7 +53,7 @@ public class Invaders : MonoBehaviour {
 		uiCanvas = new GameObject("UI").AddComponent<Canvas>();
 		uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
-		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
 	}
 	GameObject SetupObject(GameObject go, float px, float py, float sX, float sY, int layer, Color color, bool active, bool visible) {
