@@ -3,10 +3,22 @@
 --- !u!162 &1
 EditorUserSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 4
+  serializedVersion: 5
   m_ConfigSettings:
+    QuickInstaller_com.unity.purchasing_installRecorded:
+      value: 2550581500
+      flags: 0
+    QuickInstaller_com.unity.services.levelplay_installRecorded:
+      value: 2550581500
+      flags: 0
     RecentlyUsedSceneGuid-0:
       value: 550303505557515d5e0b0e774577071244164c73782970357b7c4461e4b46239
+      flags: 0
+    RecentlyUsedSceneGuid-1:
+      value: 010052025d0c0a035f085b7342775c434e151b2f287f76347b7f4f31b7e16c3a
+      flags: 0
+    RecentlyUsedSceneGuid-2:
+      value: 56540456075059085a0808201277074442161a727e7e75687e7b486bb4b6316d
       flags: 0
     RecentlyUsedScenePath-0:
       value: 22424703114646760800196c052d56040f
@@ -37,3 +49,4 @@ EditorUserSettings:
   m_VCScanLocalPackagesOnConnect: 1
   m_ArtifactGarbageCollection: 1
   m_CompressAssetsOnImport: 1
+  m_VCAutoRevertUnchangedFiles: 0

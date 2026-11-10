@@ -13,3 +13,4 @@ mono_crash*
 *.sln
 *.blob
 *__pycache__*
+*.slnx
