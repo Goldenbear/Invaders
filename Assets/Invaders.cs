@@ -13,6 +13,7 @@ public class Invaders : MonoBehaviour {
 	Vector3[] lander2Vs = { new Vector3(-0.2f, -0.5f, 0f), new Vector3(-0.4f, -0.3f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.21f, -0.47f, 0f), new Vector3(0.19f, -0.45f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Canvas uiCanvas;
 	Text uiScore;
+	AudioClip beep1, beep2, shoot, expl1, expl2;
 	bool invadersMovingLeft = true;
 	bool invadersMovingDown = false;
 	int numInvadersDead = 0;
@@ -55,6 +56,11 @@ public class Invaders : MonoBehaviour {
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
+		beep1 = AudioClip.Create("Beep1", 5000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 90f / 44100f; } });	// Sawtooth
+		beep2 = AudioClip.Create("Beep2", 5000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 60f / 44100f; } });	// Sawtooth
+		shoot = AudioClip.Create("Shoot", 11000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.Sin(v) * Random.Range(0f, 1f); v += Mathf.PI * 2 * Mathf.Lerp(2000f, 1000f,  i/(float)data.Length) / 44100; } });	// Sine w/ reducing frequency + 100% white hoise
+		expl1 = AudioClip.Create("Expl1", 11000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Random.Range(0.5f, 1f); v += Mathf.Lerp(2000f, 100f, i/(float)data.Length) / 44100f; } });	// Triangle w/ reducing frequency + 50% white noise
+		expl2 = AudioClip.Create("Expl2", 22000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Random.Range(0f, 1f); v += Mathf.Lerp(1000f, 500f, i/(float)data.Length) / 44100f; } });	// Triangle w/ reducing frequency + 100% white noise
 	}
 	GameObject SetupObject(GameObject go, float px, float py, float sX, float sY, int layer, Color color, bool active, bool visible) {
 		go.SetActive(active);
@@ -98,6 +104,7 @@ public class Invaders : MonoBehaviour {
 			invadersMovingDown = false;
 			int numInvadersAlive = (invaders.GetLength(0)*invaders.GetLength(1)) - numInvadersDead;
 			float invaderSpeed = 0.3f+((numInvadersDead/10)*0.1f)+((numInvadersAlive<=3)?((4-numInvadersAlive)*1f):0.0f);
+			bool firstAliveInvader = true;
 			for(int i=0; i<invaders.GetLength(0); i++)
 				for(int j=0; j<invaders.GetLength(1); j++)
 					if(invaders[i,j].activeSelf) {
@@ -111,12 +118,17 @@ public class Invaders : MonoBehaviour {
 							invadersMovingLeft = !invadersMovingLeft;
 							invadersMovingDown = true;
 						}
+						bool oldFrame = ((invaders[i,j].transform.position.x+10f)%1f)<0.5f;
+						bool newFrame = ((newPos.x+10f)%1f)<0.5f;
+						if(firstAliveInvader && (oldFrame != newFrame))
+							AudioSource.PlayClipAtPoint(newFrame?beep1:beep2, transform.position, 1f);				// Bib/bob
 						invaders[i,j].transform.position = newPos;
-						invaders[i,j].GetComponent<LineRenderer>().SetPositions( ((newPos.x+10f)%1f)<0.5f?lander1Vs:lander2Vs );		// Animate invader
+						invaders[i,j].GetComponent<LineRenderer>().SetPositions( newFrame?lander1Vs:lander2Vs );	// Animate invader
 						if( !bullets[(i%(bullets.Length-1))+1].activeSelf && ((j == 0) || !invaders[i,j-1].activeSelf) && (Random.value < 0.01f) ) {
 							bullets[(i%(bullets.Length-1))+1].transform.position = invaders[i,j].transform.position - (Vector3.up*0.5f);
 							bullets[(i%(bullets.Length-1))+1].SetActive(true);
 						}
+						firstAliveInvader = false;
 					}
 			for(int i=0; i<bullets.Length; i++)
 				if(bullets[i].activeSelf) {
@@ -130,6 +142,7 @@ public class Invaders : MonoBehaviour {
 							explosion.transform.position = hits[0].gameObject.transform.position;
 							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
 							explosion.GetComponent<ParticleSystem>().Emit(10);
+							AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
 							score+=10;
 							numInvadersDead++;
 						}
@@ -137,6 +150,7 @@ public class Invaders : MonoBehaviour {
 							explosion.transform.position = hits[0].gameObject.transform.position;
 							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
 							explosion.GetComponent<ParticleSystem>().Emit(10);
+							AudioSource.PlayClipAtPoint(expl2, transform.position, 1f);
 							if(--lives >= 0) {
 								playerLives[lives].SetActive(false);
 								player.SetActive(true);
@@ -154,6 +168,7 @@ public class Invaders : MonoBehaviour {
 			if( (Input.GetKeyDown(KeyCode.LeftShift) || Fire) && !bullets[0].activeSelf) {
 				bullets[0].transform.position = player.transform.position;
 				bullets[0].SetActive(true);									// Fire a player bullet
+				AudioSource.PlayClipAtPoint(shoot, transform.position, 0.5f);
 			}
 			if(numInvadersAlive == 0)
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Invaders");		// Reload scene for a new attack wave
