@@ -20,8 +20,9 @@ public class Asteroids : MonoBehaviour {
 	Vector3[] saucershape = { new Vector3(-1f, -0.4f, 0f), new Vector3(-0.5f, -0.8f, 0f), new Vector3(0.5f, -0.8f, 0f), new Vector3(1f, -0.4f, 0f), new Vector3(-1f, -0.4f, 0f), new Vector3(-0.4f, 0.1f, 0f), new Vector3(0.4f, 0.1f, 0f), new Vector3(1f, -0.4f, 0f), new Vector3(0.4f, 0.1f, 0f), new Vector3(0.2f, 0.4f, 0f), new Vector3(-0.2f, 0.4f, 0f), new Vector3(-0.4f, 0.1f, 0f) };
 	Canvas uiCanvas;
 	Text uiScore;
-	bool gameOver = false;
-	float saucerTime = 0f;
+	AudioClip beep1, beep2, shoot, expl1, expl2;
+	bool gameOver = false, beepNext = false;
+	float saucerTime = 0f, beepTime = 0f;
 	Vector3[] RandomAsteroidShape { get { float r = Random.value; return r < 0.33f ? astAshape : r < 0.66f ? astBshape : astCshape; } }
 	int RandomDirection { get { return (int)(Random.value * 3.9999f); } }
 	Vector3 RandomPosition { get { return new Vector3((Random.value * 10f) - 5f, (Random.value * 10f) - 5f, 0); } }
@@ -61,6 +62,12 @@ public class Asteroids : MonoBehaviour {
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
+		float v = 0f, t = 0f, r = 0f;
+		beep1 = AudioClip.Create("Beep1", 5000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/5000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 90f/44100f; } }); v=t=r=0f;	// Sawtooth
+		beep2 = AudioClip.Create("Beep2", 5000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/5000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 60f/44100f; } }); v=t=r=0f;	// Sawtooth
+		shoot = AudioClip.Create("Shoot", 4000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/4000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += Mathf.Lerp(800f, 200f, t)/44100f; } }); v=t=r=0f; // Sawtooth w/ reducing frequency
+		expl1 = AudioClip.Create("Expl1", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 1000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
+		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%50)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
 	}
 	GameObject CreateVectorObject(string label, Vector3[] shape, Vector3 pos, float radius, int layer, bool active = true) {
 		GameObject go = new GameObject(label);
@@ -82,6 +89,7 @@ public class Asteroids : MonoBehaviour {
 		playerLives[lives].SetActive(false);
 		player.transform.position = RandomPosition;
 		playerBody.linearVelocity = Vector3.zero;
+		AudioSource.PlayClipAtPoint(Random.value>0.5f?expl1:expl2, transform.position, 1f);
 		if (--lives < 0) {
 			player.SetActive(false);
 			gameOver = true;                            // Player dead = game over
@@ -90,6 +98,7 @@ public class Asteroids : MonoBehaviour {
 	void KillSaucer() {
 		saucer.SetActive(false);
 		saucerTime = Time.time + 5f + Random.value * 10f;
+		AudioSource.PlayClipAtPoint(Random.value>0.5f?expl1:expl2, transform.position, 1f);
 	}
 	void Score(int add) {
 		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Length - 1)) ? lives + 1 : lives) : lives;
@@ -117,6 +126,7 @@ public class Asteroids : MonoBehaviour {
 				Score( projectile.layer == 6 ? (hits[h].gameObject.layer == 2 ? 20 : hits[h].gameObject.layer == 3 ? 50 : 100) : 0 );
 				asteroids.Remove(hits[h].gameObject);
 				Destroy(hits[h].gameObject);
+				AudioSource.PlayClipAtPoint(Random.value>0.5f?expl1:expl2, transform.position, 1f);
 			}
 		}
 	}
@@ -129,15 +139,22 @@ public class Asteroids : MonoBehaviour {
 			}
 			return;
 		}
+		float totalAsteroidsLeft = 0f;
 		for (int i = 0; i < asteroids.Count; i++) {
 			int dir = int.Parse(asteroids[i].name);	// Name = direction to travel out of 4 possible diagonals (0-3)
 			float speed = asteroids[i].layer == 2 ? 0.5f : asteroids[i].layer == 3 ? 0.75f : 1f;
+			totalAsteroidsLeft += asteroids[i].layer == 2 ? 4f : asteroids[i].layer == 3 ? 2f : 1f;
 			float newX = asteroids[i].transform.position.x + ((dir % 2 == 0) ? speed : -speed) * Time.deltaTime;
 			float newY = asteroids[i].transform.position.y + ((dir >= 2) ? speed : -speed) * Time.deltaTime;
 			newX = Mathf.Abs(newX) < 5f ? newX : -newX;
 			newY = Mathf.Abs(newY) < 5f ? newY : -newY;
 			asteroids[i].transform.position = new Vector3(newX, newY, asteroids[i].transform.position.z);
 			DetectCollisions(asteroids[i], (1 << 1) + (1 << 5), true);
+		}
+		if(Time.time > beepTime) {
+			AudioSource.PlayClipAtPoint(beepNext?beep1:beep2, transform.position, 0.25f);
+			beepTime = Time.time + Mathf.Lerp(0.2f, 1f, totalAsteroidsLeft / ((2 + level * 2) * 4f));
+			beepNext = !beepNext;
 		}
 		for (int i = 0; i < bullets.Length; i++)
 			if (bullets[i].activeSelf) {
@@ -173,6 +190,7 @@ public class Asteroids : MonoBehaviour {
 			bullets[0].transform.position = player.transform.position + player.transform.up * 0.6f;
 			bullets[0].transform.rotation = player.transform.rotation;
 			bullets[0].SetActive(true);                                 // Fire a player bullet
+			AudioSource.PlayClipAtPoint(shoot, transform.position, 0.25f);
 		}
 		if (asteroids.Count == 0) {
 			level++;
