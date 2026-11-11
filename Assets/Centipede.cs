@@ -17,8 +17,9 @@ public class Centipede : MonoBehaviour {
 	int[] mushTopTris = new int[] {0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 7, 0, 7, 8};
 	Vector3[] mushBotVerts = { new Vector3(-0.25f, -0.5f, 0f), new Vector3(-0.25f, 0f, 0f), new Vector3(0.25f, -0.5f, 0f), new Vector3(0.25f, 0f, 0f) };
 	int[] mushBotTris = new int[] {0, 1, 2, 1, 3, 2};
+	AudioClip hbeat, shoot, expl1, expl2;
 	int gameState = 0;
-	float gameStateTimer = 0f;
+	float gameStateTimer = 0f, beatTime = 0f;
 	Color levelColor = new Color(1f, 0.2f, 1f);
 	int XToGridJ(float x) { return Mathf.RoundToInt((x + 4.5f) / 0.3f); }
 	int YToGridI(float y) { return Mathf.RoundToInt((4.5f - y) / 0.3f); }
@@ -55,6 +56,11 @@ public class Centipede : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-Screen.width/2.4f, Screen.height/2.2f, 0f) : i == 1 ? new Vector3(0f, Screen.height/2.2f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
+		float v = 0f, t = 0f, r = 0f;
+		hbeat = AudioClip.Create("hbeat", 4000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/4000f)  { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Mathf.Clamp01(1.5f-t); v += 100f/44100f; } }); v=t=r=0f;	// Sawtooth
+		shoot = AudioClip.Create("Shoot", 4000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/4000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; r = (i%10)==0?Random.Range(0f, 1f):r; data[i] *= r; v += Mathf.Lerp(1000f, 200f, t)/44100f; } }); v=t=r=0f; // Sawtooth w/ reducing frequency + low freq noise
+		expl1 = AudioClip.Create("Expl1", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 1000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
+		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%50)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
 	}
 	GameObject SetupObject(GameObject go, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active, Vector2Int targetCell) {
 		go.SetActive(active);
@@ -85,6 +91,7 @@ public class Centipede : MonoBehaviour {
 		mush.transform.GetChild(2).position += -(Vector3.forward*0.01f) - (Vector3.up*0.02f);
 	}
 	void KillPlayer() {
+		AudioSource.PlayClipAtPoint(expl2, transform.position, 1f);
 		playerLives[lives].SetActive(false);
 		gameState = 1;								// Player lost a life
 		gameStateTimer = Time.unscaledTime + 3f;
@@ -115,8 +122,14 @@ public class Centipede : MonoBehaviour {
 			}
 			return;
 		}
-		if(Fire && (allObjects.Where(x => x.layer == 6).Count() == 0))
+		if(Time.time > beatTime) {
+			AudioSource.PlayClipAtPoint(hbeat, transform.position, 1f);
+			beatTime = Time.time + 0.3f;
+		}
+		if(Fire && (allObjects.Where(x => x.layer == 6).Count() == 0)) {
         	allObjects.Add( CreateMeshObject("Bullet", bulletVerts, bulletTris, XToGridJ(allObjects[0].transform.position.x), YToGridI(allObjects[0].transform.position.y), 0.3f, 6, new Color(0.8f, 0f, 0f)) );
+			AudioSource.PlayClipAtPoint(shoot, transform.position, 1f);
+		}
 		foreach(GameObject go in allObjects) {
 			if(go.layer == 5) {																										// Player
 				go.transform.position += new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;
@@ -151,6 +164,7 @@ public class Centipede : MonoBehaviour {
 					destroyed.Add(hits[h].gameObject);
 					destroyed.Add(go);
 					Score(10);
+					AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
 				}
 				else if((go.layer == 5) && (hits[h].gameObject.layer < 10))															// Player hit mushroom
 					go.transform.position -= new Vector3(Joystick.x, Joystick.y, 0f) * 2f * Time.deltaTime;							// Move player back
