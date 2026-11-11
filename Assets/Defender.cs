@@ -16,6 +16,8 @@ public class Defender : MonoBehaviour {
 	Vector3[] landerVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] humanVs = { new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] sqrVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
+	AudioClip intro, engin, shoot, expl1, expl2;
+	AudioSource engineSource;
 	float camOffset = 0f, gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
@@ -59,6 +61,18 @@ public class Defender : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().localPosition = i == 0 ? new Vector3(-Screen.width/2.4f, Screen.height/2.2f, 0f) : i == 1 ? new Vector3(0f, Screen.height/2.2f, 0f) : new Vector3(0f, 0f, 0f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
+		float v = 0f, t = 0f, r = 0f;
+		intro = AudioClip.Create("Intro", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= /*t<0.3f?1f:t<0.6f?0.6f:0.3f*/1.3f-t; v += Mathf.Lerp(800f, 200f, Mathf.Repeat(t*6f, 1f))/44100f; } }); v=t=r=0f; // Sawtooth w/ rec freq loop
+		engin = AudioClip.Create("Engin", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; r = (i%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 1000f/44100f); } }); v=t=r=0f;	// Low frequency random noise
+		shoot = AudioClip.Create("Shoot", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; r = (i%(int)Mathf.Lerp(1f, 100f, t))==0?Random.Range(-1f, 1f):r; v = r; } }); v=t=r=0f;	// High->low frequency tapered noise
+		expl1 = AudioClip.Create("Expl1", 8000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/8000f)  { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Mathf.Clamp01(1.75f-t); v += Mathf.Lerp(500f, 100f, t*4f)/44100f; } }); v=t=r=0f;	// Low freq triangle w/ volume taper
+		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%(int)Mathf.Lerp(50f, 100f, t))==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
+		engineSource = gameObject.AddComponent<AudioSource>();
+		engineSource.clip = engin;
+		engineSource.loop = true;
+		engineSource.volume = 0f;
+		engineSource.Play();
+		AudioSource.PlayClipAtPoint(intro, transform.position, 1f);
     }
 	GameObject CreateVectorObject(string label, Vector3[] shape, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float thickness=0.04f, Gradient gradient=null) {
 		GameObject go = new GameObject(label);
@@ -84,6 +98,7 @@ public class Defender : MonoBehaviour {
 		playerLives[lives].SetActive(false);
 		gameState = (--lives >= 0) ? 1 : 3;         // Player lost a life or player dead = game over?
 		gameStateTimer = Time.unscaledTime + 3f;
+		AudioSource.PlayClipAtPoint(expl2, transform.position, 1f);
 	}
 	void Score(int add) {
 		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Count - 1)) ? lives + 1 : lives) : lives;
@@ -106,18 +121,21 @@ public class Defender : MonoBehaviour {
 				player.transform.position = Vector3.zero;
 				player.SetActive(true);
 				gameState = 0;
+				AudioSource.PlayClipAtPoint(intro, new Vector3(player.transform.position.x+camOffset, transform.position.y, transform.position.z), 1f);
 			}
 			if ((gameState >= 2) && ((Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))) {
 				level++;
 				if (gameState == 3) { score = 0; lives = 2; level = 1; }                    // New game
 				UnityEngine.SceneManagement.SceneManager.LoadScene("Defender");         // Reload scene for new level
 			}
+			engineSource.volume = 0f;
 			return;
 		}
 		List<GameObject> destroyed = new List<GameObject>(), added = new List<GameObject>();
 		if (Fire && (Time.unscaledTime > gameStateTimer)) {
 			allObjects.Add(CreateVectorObject("Laser", bulletVs, player.transform.position.x + Mathf.Sign(player.transform.localScale.x) * 0.6f, player.transform.position.y - 0.05f, player.transform.position.z, Mathf.Sign(player.transform.localScale.x), 0.1f, 1f, 2, Color.HSVToRGB(Random.value, 1f, 1f)));
 			gameStateTimer = Time.unscaledTime + 0.2f;
+			AudioSource.PlayClipAtPoint(shoot, transform.position, 0.5f);
 		}
 		camOffset = Mathf.Clamp(camOffset+Mathf.Sign(player.transform.localScale.x)*10f*Time.deltaTime, -4.5f, 4.5f);
 		gameObject.transform.position = new Vector3(player.transform.position.x+camOffset, gameObject.transform.position.y, gameObject.transform.position.z);
@@ -127,7 +145,8 @@ public class Defender : MonoBehaviour {
 /* Player */	case 1:	sX = Input.GetKey(KeyCode.LeftArrow)||Joystick.x<-0.5f ? -Mathf.Abs(sX) : Input.GetKey(KeyCode.RightArrow)||Joystick.x>0.5f ? Mathf.Abs(sX) : sX;
 						pX += ((Input.GetKey(KeyCode.LeftArrow)||Joystick.x<-0.5f ? -10f : Input.GetKey(KeyCode.RightArrow)||Joystick.x>0.5f ? 10f : 0f) * Time.deltaTime);
 						pY += ((Input.GetKey(KeyCode.DownArrow)||Joystick.y<-0.5f ? -5f  : Input.GetKey(KeyCode.UpArrow)||Joystick.y>0.5f ? 5f : 0f) * Time.deltaTime);
-						pY = Mathf.Clamp(pY, -4.5f, 4f); 
+						pY = Mathf.Clamp(pY, -4.5f, 4f);
+						engineSource.volume = (pX == go.transform.position.x) ? 0f : 1f;
 				break;
 /* Laser */		case 2: pX += Mathf.Sign(sX)*30f*Time.deltaTime; 
 						sX += Mathf.Sign(sX)*30f*Time.deltaTime;
@@ -198,6 +217,7 @@ public class Defender : MonoBehaviour {
 					destroyed.Add(go);
 					destroyed.Add(hits[h].gameObject);
 					Score(go.layer == 4 ? 150 : 0);
+					AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
 				}
 				else if(hits[h].gameObject.layer == 3) {					// Human
 					if( ((go == player) && (go.GetComponent<GameData>().target == null) && (hits[h].gameObject.transform.position.y > -4.4f)) || 
