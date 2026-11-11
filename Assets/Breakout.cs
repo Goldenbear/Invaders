@@ -16,6 +16,7 @@ public class Breakout : MonoBehaviour
 	float ballSpeed = 1f;
 	Canvas uiCanvas;
 	Text uiScore;
+	AudioClip beep1, beep2, beep3;
 	int numBricksDead = 0;
 	float startTime = 0f;
 	bool gameOver = false;
@@ -48,6 +49,11 @@ public class Breakout : MonoBehaviour
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
 		startTime = Time.time + 3f;
+		float v = 0f, t = 0f, r = 0f;
+		// Min samples seems to be 2000 to play back reliably so we keep data short (500) and fill with zeroes
+		beep1 = AudioClip.Create("Beep1", 2000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/500f) { data[i] = t <= 1f ? Mathf.PingPong(v, 1) * 2f - 1f : 0f; v += 2000f/44100; } }); v=t=r=0f;
+		beep2 = AudioClip.Create("Beep2", 2000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/500f) { data[i] = t <= 1f ? Mathf.PingPong(v, 1) * 2f - 1f : 0f; v += 2500f/44100; } }); v=t=r=0f;
+		beep3 = AudioClip.Create("Beep3", 2000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/500f) { data[i] = t <= 1f ? Mathf.PingPong(v, 1) * 2f - 1f : 0f; v += 3000f/44100; } }); v=t=r=0f;
 	}
 
 	GameObject CreateObject(string label, float px, float py, float sx, float sy, int layer, Color color) 
@@ -74,19 +80,23 @@ public class Breakout : MonoBehaviour
                 {
 					float bathitX = (hits[0].ClosestPoint(ball.transform.position) - hits[0].gameObject.transform.position).x / hits[0].bounds.extents.x;
                     ballVelocity = new Vector3(bathitX, Mathf.Abs(ballVelocity.y), ballVelocity.z);				// Give upward velocity, left-right velocity based on hit position on bat
+					AudioSource.PlayClipAtPoint(beep3, transform.position, 1f);
                 }
 				else if(hits[0].gameObject.layer == 2)      // Top border
 				{
                     ballVelocity = new Vector3(ballVelocity.x, -Mathf.Abs(ballVelocity.y), ballVelocity.z);		// Give downward velocity
 					bat.transform.localScale = new Vector3(0.3f, 0.2f, 0.5f);	// Bat halves in size if hit top
+					AudioSource.PlayClipAtPoint(beep2, transform.position, 1f);
 				}
                 else if (hits[0].gameObject.layer == 3)     // Left border
                 {
                     ballVelocity = new Vector3(Mathf.Abs(ballVelocity.x), ballVelocity.y, ballVelocity.z);		// Give rightward velocity
+					AudioSource.PlayClipAtPoint(beep2, transform.position, 1f);
                 }
 				else if (hits[0].gameObject.layer == 4)     // Right border
 				{
 					ballVelocity = new Vector3(-Mathf.Abs(ballVelocity.x), ballVelocity.y, ballVelocity.z);		// Give leftward velocity
+					AudioSource.PlayClipAtPoint(beep2, transform.position, 1f);
 				}
 				else if (hits[0].gameObject.layer >= 5)     // Brick
 				{
@@ -95,6 +105,7 @@ public class Breakout : MonoBehaviour
 					numBricksDead++;
 					ballVelocity = new Vector3(ballVelocity.x, -ballVelocity.y, ballVelocity.z);				// Reverse vertical velocity
 					ballSpeed = Mathf.Max((hits[0].gameObject.layer>=6)?4f:(numBricksDead >= 12) ? 3f : (numBricksDead >= 4) ? 2f : 1f, ballSpeed);
+					AudioSource.PlayClipAtPoint(beep1, transform.position, 1f);
 				}
 			}
 			if(ball.transform.position.y < -4)
