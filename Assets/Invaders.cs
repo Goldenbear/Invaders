@@ -56,11 +56,12 @@ public class Invaders : MonoBehaviour {
 		uiScore = uiCanvas.gameObject.AddComponent<Text>();
 		uiScore.font = Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf") as Font;
 		uiScore.fontSize = 50;
-		beep1 = AudioClip.Create("Beep1", 5000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 90f / 44100f; } });	// Sawtooth
-		beep2 = AudioClip.Create("Beep2", 5000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 60f / 44100f; } });	// Sawtooth
-		shoot = AudioClip.Create("Shoot", 11000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.Sin(v) * Random.Range(0f, 1f); v += Mathf.PI * 2 * Mathf.Lerp(2000f, 1000f,  i/(float)data.Length) / 44100; } });	// Sine w/ reducing frequency + 100% white hoise
-		expl1 = AudioClip.Create("Expl1", 11000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Random.Range(0.5f, 1f); v += Mathf.Lerp(2000f, 100f, i/(float)data.Length) / 44100f; } });	// Triangle w/ reducing frequency + 50% white noise
-		expl2 = AudioClip.Create("Expl2", 22000, 1, 44100, false, (data) => { float v = 0f; for(int i = 0; i < data.Length; i++) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Random.Range(0f, 1f); v += Mathf.Lerp(1000f, 500f, i/(float)data.Length) / 44100f; } });	// Triangle w/ reducing frequency + 100% white noise
+		float v = 0f, t = 0f, r = 0f;
+		beep1 = AudioClip.Create("Beep1", 5000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/5000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 90f/44100f; } }); v=t=r=0f;	// Sawtooth
+		beep2 = AudioClip.Create("Beep2", 5000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/5000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; v += 60f/44100f; } }); v=t=r=0f;	// Sawtooth
+		shoot = AudioClip.Create("Shoot", 8000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/8000f)  { data[i] = Mathf.Sin(v); r = (i%10)==0?Random.Range(0f, 1f):r; data[i] *= r; v += Mathf.PI * 2 * Mathf.Lerp(2500f, 2000f, t)/44100; } }); v=t=r=0f; // Sine w/ reducing frequency + 100% white hoise
+		expl1 = AudioClip.Create("Expl1", 11000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/11000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Random.Range(0.5f, 1f); v += Mathf.Lerp(2500f, 500f, Mathf.Repeat(t*3f, 1f))/44100f; } }); v=t=r=0f; // Triangle w/ reducing frequency + 50% white noise
+		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%50)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
 	}
 	GameObject SetupObject(GameObject go, float px, float py, float sX, float sY, int layer, Color color, bool active, bool visible) {
 		go.SetActive(active);
