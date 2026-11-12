@@ -35,9 +35,10 @@ public class Pacman : MonoBehaviour {
 	GameObject pacman, ghostExit;
 	Vector3 pacStart, msgPos;
 	Vector3[] ghostStarts = new Vector3[4];
-	int pacdir = 0, blueScore = 200, gameState = 0;
+	int pacdir = 0, blueScore = 200, gameState = 0, eatNext = 0;
 	float fruitTime = 0f, blueTime = 0f, pauseTime = 0f;
 	GameObject[] ghosts = new GameObject[4], playerLives = new GameObject[20], uiObjects = new GameObject[10];
+	AudioClip eatp1, eatp2, gulp1, death;
 	int[] ghostdir = new int[4], ghostState = new int[4];
 	int[][] ghostSideTry = { new int[3], new int[3], new int[3], new int[3] };     // Ghosts' attempts to move sideways on a particular maze cell. [0] = dir, [1] = i, [2] = j
 	int XToMazeJ(float x) { return Mathf.RoundToInt((x + 4.5f) / 0.3f); }
@@ -97,6 +98,11 @@ public class Pacman : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().localScale = new Vector3(1f, 1f, 1f);
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(200f, 35f);
 		}
+		float v = 0f, t = 0f, r = 0f;
+		eatp1 = AudioClip.Create("EatP1", 5000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/5000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; data[i] *= 1f-t; v += Mathf.Lerp(200f, 800f, t*t)/44100f; } }); v=t=r=0f;
+		eatp2 = AudioClip.Create("EatP2", 5000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/5000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; data[i] *= t;    v += Mathf.Lerp(800f, 200f, t*t)/44100f; } }); v=t=r=0f;
+		gulp1 = AudioClip.Create("Gulp1", 10000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/10000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; v += Mathf.Lerp(800f, 200f, t<=0.5f?t*2f:(1f-t)*2f)/44100f; } }); v=t=r=0f;
+		death = AudioClip.Create("Death", 60000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/60000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; int q=(int)(t/0.25f); float l=(t%0.25f)*4f; r = Mathf.Lerp(1400f-(q*100f), 700f-(q*100f), l); v += r/44100f; } }); v=t=r=0f;
     }
 	GameObject SetupObject(GameObject go, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active, bool visible, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		go.SetActive(active);
@@ -111,10 +117,8 @@ public class Pacman : MonoBehaviour {
 		GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 		go.name = label;
 		go.GetComponent<MeshRenderer>().material = new Material(Shader.Find("Sprites/Default"));
-		go.GetComponent<MeshFilter>().mesh = new Mesh();
-		go.GetComponent<MeshFilter>().mesh.vertices = verts;
-		go.GetComponent<MeshFilter>().mesh.triangles = tris;
-		return SetupObject(go, x, y, size, size, size, layer, color, active, visible, xOffset, yOffset, zOffset);
+        go.GetComponent<MeshFilter>().mesh = new Mesh { vertices = verts, triangles = tris };
+        return SetupObject(go, x, y, size, size, size, layer, color, active, visible, xOffset, yOffset, zOffset);
 	}
 	GameObject CreateVectorObject(string label, Vector3[] shape, int x, int y, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float xOffset=0f, float yOffset=0f, float zOffset=0f) {
 		GameObject go = new GameObject(label);
@@ -128,6 +132,7 @@ public class Pacman : MonoBehaviour {
 		return SetupObject(go, x, y, sX, sY, sZ, layer, color, active, visible, xOffset, yOffset, zOffset);
 	}
 	void KillPlayer() {
+		AudioSource.PlayClipAtPoint(death, transform.position, 1f);
 		playerLives[lives].SetActive(false);
 		pacman.transform.position = pacStart;
 		for(int g=0; g<ghosts.Length; g++)
@@ -146,6 +151,7 @@ public class Pacman : MonoBehaviour {
 		PlayerPrefs.SetInt("HighScore", score > PlayerPrefs.GetInt("HighScore") ? score : PlayerPrefs.GetInt("HighScore"));
 		uiObjects[4].GetComponent<RectTransform>().localPosition = go != null ? new Vector3((go.transform.position.x+4.5f)*100f, (go.transform.position.y-4.8f)*100f, 0f) : uiObjects[4].GetComponent<RectTransform>().localPosition;
 		uiObjects[4].GetComponent<Text>().text = go != null ? string.Format("{0}", add) : uiObjects[4].GetComponent<Text>().text;
+		AudioSource.PlayClipAtPoint(add==10 ? (eatNext++%2)==0?eatp1:eatp2 : gulp1, transform.position, 1f);
 	}
 	int ChangeDirectionTo(GameObject objA, GameObject objB, int currDir, float randomness) {
 		Vector3 diff = objB.transform.position - objA.transform.position;
