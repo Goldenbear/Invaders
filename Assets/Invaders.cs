@@ -3,6 +3,7 @@ using UnityEngine.UI;
 public class Invaders : MonoBehaviour {
 	static int score = 0;
 	static int lives = 2;
+	string[] baseShape = new string[] { " 0000000 ", "000000000", "000000000", "000000000", "000000000", "000   000" };
 	Light dirlight;
 	GameObject player;
 	GameObject[,] invaders = new GameObject[11, 5];
@@ -26,21 +27,24 @@ public class Invaders : MonoBehaviour {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
 		dirlight = new GameObject("Light").AddComponent<Light>();
 		dirlight.type = LightType.Directional;
-		player = CreateCubeObject("Player", -7, -4, 0.75f, 0.5f, 1, Color.green);
+		player = CreateCubeObject("Player", -7, -4, 0.75f, 0.3f, 1, Color.green);
+		CreateCubeObject("PlayerTurret", -7, -3.8f, 0.2f, 0.1f, 0, Color.green).transform.parent = player.transform;
 		for(int i=0; i<invaders.GetLength(0); i++)
 			for(int j=0; j<invaders.GetLength(1); j++) {
 				invaders[i,j] = CreateVectorObject("Invader", lander1Vs, i-5, (j*0.5f)+1, (j==(invaders.GetLength(1)-1))?0.4f:0.6f, 0.4f, 2, Color.white);	// Top row are smaller and harder to hit
 			}
 		for(int b=0; b<4; b++)
-			for(int i=0; i<5; i++)
-				for(int j=0; j<4; j++) {
-					CreateCubeObject("BaseBrick", (b*2.2f)+(i*0.2f)-3.6f, (j*0.2f)-3, 0.2f, 0.2f, 3, Color.green);
+			for(int j=0; j<baseShape.Length; j++)
+				for(int i=0; i<baseShape[j].Length; i++) {
+					if(baseShape[j][i] == '0')
+						CreateCubeObject("BaseBrick", (b*3.5f)+(i*0.2f)-6f, (j*-0.2f)-2.2f, 0.2f, 0.2f, 3, Color.green);
 				}
 		for(int i=0; i<bullets.Length; i++) {
 			bullets[i] = CreateCubeObject("Bullet", 0f, 0f, 0.1f, 0.5f, (i==0)?4:5, (i==0)?Color.green:Color.white);	// Bullet 0 is player bullet
 		}
 		for(int i=0; (i<playerLives.Length)&&(i<lives); i++) {
-			playerLives[i] = CreateCubeObject("Life", -6+(i*1f), -5, 0.75f, 0.5f, 0, Color.green);
+			playerLives[i] = CreateCubeObject("Life", -6+(i*1f), -4.8f, 0.75f, 0.3f, 0, Color.green);
+			CreateCubeObject("LifeTurret", -6+(i*1f), -4.6f, 0.2f, 0.1f, 0, Color.green).transform.parent = playerLives[i].transform;
 		}
 		explosion = new GameObject("Explosion");
 		explosion.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
