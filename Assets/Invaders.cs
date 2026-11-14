@@ -5,20 +5,23 @@ public class Invaders : MonoBehaviour {
 	static int lives = 2;
 	string[] baseShape = new string[] { " 0000000 ", "000000000", "000000000", "000000000", "000000000", "000   000" };
 	Light dirlight;
-	GameObject player;
+	GameObject player, saucer;
 	GameObject[,] invaders = new GameObject[11, 5];
 	GameObject[] bullets = new GameObject[4];		// Bullet 0 is player's, rest are invader's
 	GameObject[] playerLives = new GameObject[2];
 	GameObject explosion;
 	Vector3[] lander1Vs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.4f, -0.3f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.51f, -0.45f, 0f), new Vector3(0.49f, -0.47f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] lander2Vs = { new Vector3(-0.2f, -0.5f, 0f), new Vector3(-0.4f, -0.3f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.21f, -0.47f, 0f), new Vector3(0.19f, -0.45f, 0f), new Vector3(0.4f, -0.3f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
+	Vector3[] saucerVs = { new Vector3(-1f, -0.4f, 0f), new Vector3(-0.5f, -0.8f, 0f), new Vector3(0.5f, -0.8f, 0f), new Vector3(1f, -0.4f, 0f), new Vector3(-1f, -0.4f, 0f), new Vector3(-0.4f, 0.1f, 0f), new Vector3(0.4f, 0.1f, 0f), new Vector3(1f, -0.4f, 0f), new Vector3(0.4f, 0.1f, 0f), new Vector3(0.2f, 0.4f, 0f), new Vector3(-0.2f, 0.4f, 0f), new Vector3(-0.4f, 0.1f, 0f) };
 	Canvas uiCanvas;
 	Text uiScore;
-	AudioClip beep1, beep2, shoot, expl1, expl2;
+	AudioClip beep1, beep2, shoot, expl1, expl2, siren;
+	AudioSource saucerSource;
 	bool invadersMovingLeft = true;
 	bool invadersMovingDown = false;
 	int numInvadersDead = 0;
 	bool gameOver = false;
+	float saucerTime = 0f, saucerVel = -3f;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/4f)) / (Screen.height/4f); }
 	Vector2 Joystick { get { for(int t=0; t<Input.touchCount; t++) {if(TouchJoy(t).magnitude<2f) return TouchJoy(t);} return Vector2.zero; } }
 	Vector2 DPad { get { Vector2 dpad = Vector2.zero; if(Mathf.Abs(Joystick.x)>0.1f) dpad.x = Mathf.Sign(Joystick.x); return dpad; } }
@@ -29,6 +32,8 @@ public class Invaders : MonoBehaviour {
 		dirlight.type = LightType.Directional;
 		player = CreateCubeObject("Player", -7, -4, 0.75f, 0.3f, 1, Color.green);
 		CreateCubeObject("PlayerTurret", -7, -3.8f, 0.2f, 0.1f, 0, Color.green).transform.parent = player.transform;
+		saucer = CreateVectorObject("Saucer", saucerVs, 7f, 4f, 0.3f, 0.3f, 6, Color.red, false);
+		saucerTime = Time.time + 15f;
 		for(int i=0; i<invaders.GetLength(0); i++)
 			for(int j=0; j<invaders.GetLength(1); j++) {
 				invaders[i,j] = CreateVectorObject("Invader", lander1Vs, i-5, (j*0.5f)+1, (j==(invaders.GetLength(1)-1))?0.4f:0.6f, 0.4f, 2, Color.white);	// Top row are smaller and harder to hit
@@ -66,6 +71,12 @@ public class Invaders : MonoBehaviour {
 		shoot = AudioClip.Create("Shoot", 8000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/8000f)  { data[i] = Mathf.Sin(v); r = (i%10)==0?Random.Range(0f, 1f):r; data[i] *= r; v += Mathf.PI * 2 * Mathf.Lerp(2500f, 2000f, t)/44100; } }); v=t=r=0f; // Sine w/ reducing frequency + low freq noise
 		expl1 = AudioClip.Create("Expl1", 11000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/11000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Random.Range(0.5f, 1f); v += Mathf.Lerp(2500f, 500f, Mathf.Repeat(t*3f, 1f))/44100f; } }); v=t=r=0f; // Triangle w/ reducing frequency + 50% white noise
 		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%50)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
+		siren = AudioClip.Create("Siren", 7000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/7000f)  { data[i] = Mathf.Repeat(v, 1) * 2f - 1f; int q=(int)(t/0.5f); float l=(t%0.5f)*2f; v += Mathf.Lerp(q==0?600f:1400f, q==0?1400f:600f, l)/44100f; } }); v=t=r=0f;
+		saucerSource = gameObject.AddComponent<AudioSource>();
+		saucerSource.clip = siren;
+		saucerSource.loop = true;
+		saucerSource.volume = 0f;
+		saucerSource.Play();
 	}
 	GameObject SetupObject(GameObject go, float px, float py, float sX, float sY, int layer, Color color, bool active, bool visible) {
 		go.SetActive(active);
@@ -96,7 +107,7 @@ public class Invaders : MonoBehaviour {
 		go.AddComponent<BoxCollider>();
 		LineRenderer line = go.AddComponent<LineRenderer>();
 		line.useWorldSpace = false;
-		line.widthMultiplier = 0.1f;
+		line.widthMultiplier = 0.05f;
 		line.material = new Material(Shader.Find("Sprites/Default"));
 		line.positionCount = shape.Length;
 		line.SetPositions(shape);
@@ -139,11 +150,20 @@ public class Invaders : MonoBehaviour {
 				if(bullets[i].activeSelf) {
 					float newBulletY = bullets[i].transform.position.y + ((i==0)?20f:-5f) * Time.deltaTime;
 					bullets[i].transform.position = new Vector3(bullets[i].transform.position.x, newBulletY, bullets[i].transform.position.z);
-					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, ((i==0)?(1<<2)+(1<<5):(1<<1)+(1<<4))+(1<<3));
+					Collider[] hits = Physics.OverlapBox(bullets[i].GetComponent<Collider>().bounds.center, bullets[i].GetComponent<Collider>().bounds.extents, bullets[i].transform.rotation, ((i==0)?(1<<2)+(1<<5)+(1<<6):(1<<1)+(1<<4))+(1<<3));
 					if((hits != null) && (hits.Length > 0)) {
 						bullets[i].SetActive(false);
 						hits[0].gameObject.SetActive(false);
-						if(hits[0].gameObject.layer == 2) {
+/* Saucer */			if(hits[0].gameObject.layer == 6) {
+							explosion.transform.position = hits[0].gameObject.transform.position;
+							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
+							explosion.GetComponent<ParticleSystem>().Emit(10);
+							AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
+							score+=100;
+							saucerTime = Time.time + 10f + Random.value * 10f;
+						}
+						else
+/* Invader */			if(hits[0].gameObject.layer == 2) {
 							explosion.transform.position = hits[0].gameObject.transform.position;
 							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
 							explosion.GetComponent<ParticleSystem>().Emit(10);
@@ -151,7 +171,7 @@ public class Invaders : MonoBehaviour {
 							score+=10;
 							numInvadersDead++;
 						}
-						else if(hits[0].gameObject.layer == 1) {
+/* Player */			else if(hits[0].gameObject.layer == 1) {
 							explosion.transform.position = hits[0].gameObject.transform.position;
 							explosion.GetComponent<Renderer>().material.color = hits[0].gameObject.GetComponent<Renderer>().material.color;
 							explosion.GetComponent<ParticleSystem>().Emit(10);
@@ -168,6 +188,19 @@ public class Invaders : MonoBehaviour {
 					if((bullets[i].transform.position.y < -4) || (bullets[i].transform.position.y > 4))
 						bullets[i].SetActive(false);
 				}
+			if (saucer.activeSelf) {
+				saucer.transform.position = saucer.transform.position + saucer.transform.right * saucerVel * Time.deltaTime;
+				if ((saucer.transform.position.x < -7f) || (saucer.transform.position.x > 7f)) {
+					saucer.SetActive(false);
+					saucerTime = Time.time + 10f + Random.value * 10f;
+				}
+			}
+			else if ( (numInvadersAlive >= 8) && (Time.time > saucerTime) ) {
+				saucer.transform.position = Random.value < 0.5 ? new Vector3(7f, saucer.transform.position.y, 0f) : new Vector3(-7f, saucer.transform.position.y, 0f);
+				saucerVel = saucer.transform.position.x > 0f ? -3f : 3f;
+				saucer.SetActive(true);
+			}
+			saucerSource.volume = saucer.activeSelf ? 0.2f : 0f;
 			float newPlayerX = player.transform.position.x + ((Input.GetAxis("Horizontal")+DPad.x) * 10f * Time.deltaTime);
 			player.transform.position = new Vector3(Mathf.Clamp(newPlayerX, -7f, 7f), -4f, 0f);
 			if( (Input.GetKeyDown(KeyCode.LeftShift) || Fire) && !bullets[0].activeSelf) {

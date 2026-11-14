@@ -62,7 +62,7 @@ public class Defender : MonoBehaviour {
 			uiObjects[1+i].GetComponent<RectTransform>().sizeDelta = new Vector2(800f, 800f);
 		}
 		float v = 0f, t = 0f, r = 0f;
-		intro = AudioClip.Create("Intro", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= /*t<0.3f?1f:t<0.6f?0.6f:0.3f*/1.3f-t; v += Mathf.Lerp(800f, 200f, Mathf.Repeat(t*6f, 1f))/44100f; } }); v=t=r=0f; // Sawtooth w/ rec freq loop
+		intro = AudioClip.Create("Intro", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= 1.3f-t; v += Mathf.Lerp(800f, 200f, Mathf.Repeat(t*6f, 1f))/44100f; } }); v=t=r=0f; // Sawtooth w/ rec freq loop
 		engin = AudioClip.Create("Engin", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; r = (i%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 1000f/44100f); } }); v=t=r=0f;	// Low frequency random noise
 		shoot = AudioClip.Create("Shoot", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; r = (i%(int)Mathf.Lerp(1f, 100f, t))==0?Random.Range(-1f, 1f):r; v = r; } }); v=t=r=0f;	// High->low frequency tapered noise
 		expl1 = AudioClip.Create("Expl1", 8000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/8000f)  { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Mathf.Clamp01(1.75f-t); v += Mathf.Lerp(500f, 100f, t*4f)/44100f; } }); v=t=r=0f;	// Low freq triangle w/ volume taper
