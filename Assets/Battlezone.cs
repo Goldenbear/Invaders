@@ -11,7 +11,7 @@ public class Battlezone : MonoBehaviour {
 	static int score = 0, lives = 2, level = 0;
 	List<GameObject> allObjects = new List<GameObject>(), uiObjects = new List<GameObject>();
 	float[,] radarHudGeom = new float[,] { {-1f,0f,0f}, {-0.8f,0f,0f}, {0.8f,0f,0f}, {1f,0f,0f}, {0f,-1f,0f}, {0f,-0.8f,0f}, {0f,0.8f,0f}, {0f,1f,0f}, {0f,0f,0f}, {-0.7f,0.7f,0f}, {0.7f,0.7f,0f}, {0f,1f,0f}, {-0.05f,-0.05f,0f}, {0.05f,-0.05f,0f}, {0.05f,0.05f,0f}, {-0.05f,0.05f,0f} };
-	int[][] radarHudLines = new int[][] {new int[]{0,1}, new int[]{2,3}, new int[]{4,5}, new int[]{6,7}, new int[]{8,9}, new int[]{8,10}, new int[]{8,11}, new int[]{12,13,14,15,12} };
+	int[][] radarHudLines = new int[][] {new int[]{0,1}, new int[]{2,3}, new int[]{4,5}, new int[]{6,7}, new int[]{8,9}, new int[]{8,10}, new int[]{8,11}, new int[]{12,13,14,15,12}, new int[]{12,13,14,15,12} };
 	float[,] xhairGeom = new float[,] { {-1f, -0.5f, 0f}, {-0.5f, -0.5f, 0f}, {-1f, 0f, 0f}, {0f, 0f, 0f}, {0f, 1f, 0f}, {1f, 0f, 0f}, {1f, -0.5f, 0f}, {0.5f, -0.5f, 0f} };
 	int[][] xhairLines = new int[][] {new int[]{3, 4}, new int[]{0, 2, 5, 6}, new int[]{1, 2, 5, 7} };
 	float[,] crackGeom = new float[,] { {0f,0f,0f}, {-0.2f,0.2f,0f}, {-0.4f,0.3f,0f}, {-0.45f,0.32f,0f}, {-0.6f,0.05f,0f}, {0f,0.35f,0f}, {-0.2f,0.5f,0f}, {-0.4f,0.65f,0f}, {-0.1f,0.65f,0f}, {0.2f, 0.2f,0f}, {0.25f,0.3f,0f}, {0.4f,0.3f,0f}, {0.6f,0.4f,0f}, {0.4f,0.5f,0f}, {-0.1f,-0.2f,0f}, {0.1f,-0.3f,0f}, {0.3f,-0.6f,0f} };
@@ -29,6 +29,7 @@ public class Battlezone : MonoBehaviour {
 	int[][] ufoLines = new int[][] {new int[]{0,1,9},new int[]{0,2,10},new int[]{0,3,11},new int[]{0,4,12},new int[]{0,5,13},new int[]{0,6,14},new int[]{0,7,15},new int[]{0,8,16},new int[]{1,2,3,4,5,6,7,8,1},new int[]{9,10,11,12,13,14,15,16,9} };
 	float[,] missileGeom = new float[,] { {-1f,0f,-1f},{-1f,0f,1f},{1f,0f,1f},{1f,0f,-1f},{-0.3f,1f,-0.3f},{-0.3f,1f,0.3f},{0.3f,1f,0.3f},{0.3f,1f,-0.3f},{-0.4f,1.4f,-1.5f},{0.4f,1.4f,-1.5f},{0.8f,2f,-1.5f},{0.4f,2.6f,-1.5f},{-0.4f,2.6f,-1.5f},{-0.8f,2f,-1.5f},{-1f,1f,0f},{1f,1f,0f},{1.5f,2f,0f},{1f,3f,0f},{-1f,3f,0f},{-1.5f,2f,0f},{0f,2f,8f},{0f,3f,0f},{0f,4f,0.2f},{-0.5f,2.5f,4f},{0.5f,2.5f,4f} };
 	int[][] missileLines = new int[][] {new int[]{0,1,2,3,0,4,5,1,5,6,2,6,7,3,7,4},new int[]{8,9,10,11,12,13,8},new int[]{14,15,16,17,18,19,14},new int[]{8,14,20},new int[]{9,15,20},new int[]{10,16,20},new int[]{11,17,20},new int[]{12,18,20},new int[]{13,19,20},new int[]{21,22,23,21,22,24,21}};
+	AudioClip engin, shoot, expl1;
 	float gameStateTimer = 0f, fireTimer = 0f, waveTimer = 5f;
 	int gameState = 3, enemyRadar = 0;
 	Vector2 TouchJoy(int t) { return (Input.GetTouch(t).position - new Vector2(Screen.width-(Screen.height/4f), Screen.height/2f)) / (Screen.height/4f); }
@@ -65,6 +66,11 @@ public class Battlezone : MonoBehaviour {
 			uiObjects[i].GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width, 800);
 			uiObjects[i].GetComponent<Text>().color = Color.green;
 		}
+		float v = 0f, t = 0f, r = 0f;
+		engin = AudioClip.Create("Engin", 4000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/4000f)  { data[i] = v; r = (i%500)==0?(i<3500)?Random.Range(-1f, 1f):0f:r; v = Mathf.MoveTowards(v, r, 2f/300f); } }); v=t=r=0f;	// Low frequency random noise, returns to 0 so loops
+		shoot = AudioClip.Create("Shoot", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2f/100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
+		expl1 = AudioClip.Create("Expl1", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%200)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2f/100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
+		AudioSource engineSource = gameObject.AddComponent<AudioSource>(); (engineSource.clip, engineSource.loop, engineSource.volume) = (engin, true, 1f); engineSource.Play();
     }
 	Vector3[][] MakeLines(float[,] geom, int[][] geomIndexLines=null) {
 		Vector3[][] vLines = new Vector3[(geomIndexLines!=null) ? geomIndexLines.GetLength(0) : 1][];		// No line indices then default to 1 line
@@ -82,13 +88,9 @@ public class Battlezone : MonoBehaviour {
 			GameObject linego = (i==0) ? go : new GameObject(label+"Child"+i);					// Create a child object for every additional line
 			linego.transform.parent = (i==0) ? go.transform.parent : go.transform;
 			LineRenderer linerend = linego.AddComponent<LineRenderer>();
-			linerend.useWorldSpace = false;
-			linerend.widthMultiplier = thickness;
-			linerend.positionCount = vLines[i].Length;
+			(linerend.useWorldSpace, linerend.widthMultiplier, linerend.positionCount, linerend.material) = (false, thickness, vLines[i].Length, new Material(Shader.Find("Sprites/Default")) { color = color });
 			linerend.SetPositions(vLines[i]);
-			linerend.material = new Material(Shader.Find("Sprites/Default"));
-			linerend.material.color = color;
-			bounds.Encapsulate(GeometryUtility.CalculateBounds(vLines[i], Matrix4x4.identity));	// Expand parent's bounding box collider to include child lines
+            bounds.Encapsulate(GeometryUtility.CalculateBounds(vLines[i], Matrix4x4.identity));	// Expand parent's bounding box collider to include child lines
 		}
 		go.AddComponent<BoxCollider>().isTrigger = true;
 		go.GetComponent<BoxCollider>().center = bounds.center;
@@ -103,6 +105,7 @@ public class Battlezone : MonoBehaviour {
 		return go;
 	}
 	void KillPlayer(List<GameObject> destroyed) {
+		AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
 		transform.Find("Life"+lives).gameObject.SetActive(false);
 		gameState = (--lives >= 0) ? 1 : 2;         // Player lost a life or player dead = game over?
 		gameStateTimer = Time.unscaledTime + 3f;
@@ -122,6 +125,7 @@ public class Battlezone : MonoBehaviour {
 		uiObjects[5].GetComponent<Text>().text = gameState == 3 ? "BATTLEZONE" : gameState == 2 ? "GAME OVER" : "";
 		transform.Find("RadarHud/RadarHudChild6").Rotate(new Vector3(0f, 0f, -90f*Time.deltaTime));	// Rotate radar second hand
 		transform.Find("RadarHud/RadarHudChild7").gameObject.SetActive((enemyRadar & 1)!=0);		// Only show enemy dot on radar if within range
+		transform.Find("RadarHud/RadarHudChild8").gameObject.SetActive((enemyRadar & 16)!=0);		// Second enemy dot on radar if within range
 		transform.Find("XHairTop/XHairTopChild1").gameObject.SetActive((enemyRadar & 8)==0);		// Show XHair 1 if no enemy centred on screen
 		transform.Find("XHairBot/XHairBotChild1").gameObject.SetActive((enemyRadar & 8)==0);
 		transform.Find("XHairTop/XHairTopChild2").gameObject.SetActive((enemyRadar & 8)!=0);		// Show XHair 2 if enemy centred on screen
@@ -142,6 +146,7 @@ public class Battlezone : MonoBehaviour {
 		if (Fire && (Time.unscaledTime > fireTimer)) {
 			Vector3 pos = transform.position + transform.forward*1f;
 			allObjects.Add(CreateVectorObject("Bullet", MakeLines(bulletGeom), pos.x, pos.y, pos.z, 0.05f, 0.05f, 0.2f, 0f, transform.eulerAngles.y, 0f, 2, Color.green));
+			AudioSource.PlayClipAtPoint(shoot, transform.position, 0.5f);
 			fireTimer = Time.unscaledTime + 1f;
 		}
 		enemyRadar = 0;
@@ -163,6 +168,7 @@ public class Battlezone : MonoBehaviour {
 									}
 								Score( hits[h].gameObject.layer == 3 ? ((level<=30)?1000:3000) : hits[h].gameObject.layer == 7 ? 2000 : 5000);	// Tanks 1000, Super-tanks 3000, missiles 2000, UFOs 5000
 								destroyed.Add(hits[h].gameObject);				// Destroy tank/UFO/missile
+								AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
 							}
 						}
 						go.transform.Translate(go.transform.forward*10f*Time.deltaTime, Space.World);
@@ -172,9 +178,9 @@ public class Battlezone : MonoBehaviour {
 /* Tank */		case 3: go.transform.Find("Radar").Rotate(new Vector3(0f, 60f*Time.deltaTime, 0f));		// Rotate radar
 						Vector3 desiredDir = new Vector3(transform.position.x-go.transform.position.x, 0f, transform.position.z-go.transform.position.z);
 						Vector3 radarDir = transform.InverseTransformPoint(go.transform.position) * 0.05f;
-						if((desiredDir.magnitude < 20f) && ( ((enemyRadar&1)==0) || (radarDir.magnitude < transform.Find("RadarHud/RadarHudChild7").localPosition.magnitude)))
-							transform.Find("RadarHud/RadarHudChild7").localPosition = new Vector3(radarDir.x, radarDir.z, 0f);
-						enemyRadar |= (desiredDir.magnitude < 20f) ? 1 : 0;
+						if(desiredDir.magnitude < 20f)
+							transform.Find((enemyRadar&1)==0 ? "RadarHud/RadarHudChild7" : "RadarHud/RadarHudChild8").localPosition = new Vector3(radarDir.x, radarDir.z, 0f);
+						enemyRadar |= (desiredDir.magnitude < 20f) ? ((enemyRadar&1)==0 ? 1 : 16) : 0;
 						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x<0)||(Camera.main.WorldToViewportPoint(go.transform.position).x>1)) ? ((Vector3.Dot(desiredDir, transform.right) > 0f) ? 2 : 4) : 0;
 						enemyRadar |= ((Camera.main.WorldToViewportPoint(go.transform.position).x>0.4f)&&(Camera.main.WorldToViewportPoint(go.transform.position).x<0.6f)&&(Vector3.Dot(desiredDir, transform.forward) < 0f)) ? 8 : 0;
 						if(go.GetComponent<GameData>().state == 0) {									// Aim at target position, retarget if reached
@@ -187,10 +193,8 @@ public class Battlezone : MonoBehaviour {
 						}
 						else if(go.GetComponent<GameData>().state == 1) {								// Back up
 							go.transform.Translate(-go.transform.forward*Time.deltaTime, Space.World);	// Drive backwards
-							if(Time.unscaledTime > go.GetComponent<GameData>().stateTimeout) {			// Until timeout
-								go.GetComponent<GameData>().state = 0;									// Drive to a position off to one side
-								go.GetComponent<GameData>().targetPos = go.transform.position + (go.transform.right * Random.Range(-5f,5f)) + (go.transform.forward * Random.Range(-1f,0f));
-							}
+							if(Time.unscaledTime > go.GetComponent<GameData>().stateTimeout)			// Until timeout
+								(go.GetComponent<GameData>().state, go.GetComponent<GameData>().targetPos) = (0, go.transform.position + (go.transform.right * Random.Range(-5f,5f)) + (go.transform.forward * Random.Range(-1f,0f)));	// Drive to a position off to one side
 							break;	// If backing-up dont do normal driving or collision handling
 						}
 						float angle = Quaternion.Angle(go.transform.rotation, Quaternion.LookRotation(desiredDir, Vector3.up));	// Angle to desiredDir
@@ -200,10 +204,8 @@ public class Battlezone : MonoBehaviour {
 							go.transform.Translate(go.transform.forward*Time.deltaTime*((level<=30)?1f:2f), Space.World);	// Drive if facing desiredDir
 						go.transform.Rotate(new Vector3(0f, Mathf.Clamp(angle, ((level<=30)?-20f:-40f)*Time.deltaTime, ((level<=30)?20f:40f)*Time.deltaTime), 0f));	// Face desiredDir
 						Collider[] ohits = Physics.OverlapBox(go.GetComponent<Collider>().bounds.center, go.GetComponent<Collider>().bounds.extents, go.transform.rotation, (1<<1)+(1<<3)+(1<<4));
-						if((ohits != null) && (ohits.Length > 1)) {		// If hit an obstacle then back up and retarget (note always overlaps itself hence > 1)
-							go.GetComponent<GameData>().state = 1;
-							go.GetComponent<GameData>().stateTimeout = Time.unscaledTime + 1f;
-						}
+						if((ohits != null) && (ohits.Length > 1))		// If hit an obstacle then back up and retarget (note always overlaps itself hence > 1)
+							(go.GetComponent<GameData>().state, go.GetComponent<GameData>().stateTimeout) = (1, Time.unscaledTime + 1f);
 						if(go.GetComponent<GameData>().state == 2) {			// Attack player (desiredDir defaults to player direction)
 							if ( (desiredDir.magnitude < 10f) && (Mathf.Abs(angle) < 3f) && ((Time.unscaledTime > go.GetComponent<GameData>().stateTimeout)) ) {
 								Vector3 pos = go.transform.position + go.transform.forward*1f + go.transform.up*0.3f;
@@ -228,13 +230,11 @@ public class Battlezone : MonoBehaviour {
 				break;
 			}
 		}
-		foreach(GameObject dead in destroyed) {
-			allObjects.Remove(dead);
-			Destroy(dead);
-		}
+		foreach(GameObject dead in destroyed) {	allObjects.Remove(dead); Destroy(dead);	}
 		allObjects.AddRange(added);
 		transform.Rotate(new Vector3(0f, Joystick.x*20f*Time.deltaTime, 0f));	// Player control - aka the camera
 		transform.Translate(new Vector3(0f, 0f, Joystick.y*1f*Time.deltaTime));
+		GetComponent<AudioSource>().pitch = Mathf.MoveTowards(GetComponent<AudioSource>().pitch, 0.7f + Mathf.Abs(Joystick.y) * 0.7f, 2f * Time.deltaTime);
 		Collider[] phits = Physics.OverlapBox(gameObject.GetComponent<Collider>().bounds.center, gameObject.GetComponent<Collider>().bounds.extents, transform.rotation, (1<<3)+(1<<4));	// Hit tank or obstacle
 		if((phits != null) && (phits.Length > 0))
 			transform.Translate(new Vector3(0f, 0f, -Joystick.y*1f*Time.deltaTime));
@@ -242,7 +242,7 @@ public class Battlezone : MonoBehaviour {
 		transform.Find("Terrain2").transform.localPosition = new Vector3(transform.GetChild(0).transform.localPosition.x+((transform.eulerAngles.y<180f)?-(2f*Mathf.PI*40f):(2f*Mathf.PI*40f)), 0f, 40f);	// Wrap second copy of terrain on end that needs it
 		if( (allObjects.Where(x => x.layer == 3 || x.layer == 7).Count() == 0) && ((waveTimer-=Time.deltaTime)<0f) ) {	// Wave complete when all tanks and missiles are dead
 			level++;
-			for (int i=0; i<(((score>30000)&&(Random.value<0.2f))?0:(level<=50)?1:2); i++) {	// Missiles start at 30K (dont create any tanks)
+			for (int i=0; i<(((score>30000)&&(Random.value<0.2f))?0:(level<=50)?1:2); i++) {	// Missiles start at 30K (dont create any tanks), 2 x tanks at level 50
     	    	allObjects.Add( CreateVectorObject("Tank", MakeLines(tankGeom, (level<=30)?tankLines:superLines), transform.position.x+Random.Range(-10f, 10f), 0.05f, transform.position.z+Random.Range(-10f, 10f), 0.5f, 0.5f, 0.5f, 0f, 0f, 0f, 3, Color.green) );
 				CreateVectorObject("Radar", MakeLines(radarGeom), allObjects[allObjects.Count-1].transform.position.x, 0.42f, allObjects[allObjects.Count-1].transform.position.z-0.35f, 0.05f, 0.05f, 0.05f, 0f, 0f, 0f, 0, Color.green).transform.parent = allObjects[allObjects.Count-1].transform;
 			}
