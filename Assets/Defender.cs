@@ -194,7 +194,7 @@ public class Defender : MonoBehaviour {
 						}
 						else																					// No humans left to target
 							go.GetComponent<GameData>().target = player;										// Target player
-						if(Random.value < (go.GetComponent<Renderer>().material.color == Color.magenta ? 0.03f : 0.005f)) {																// Shoot at player
+						if(Random.value < ((go.GetComponent<Renderer>().material.color == Color.magenta ? 5f : 1f) * Time.deltaTime)) {		// Shoot at player randomly based on frame rate
         					GameObject bullet = CreateVectorObject("Bullet", sqrVs, pX, pY, go.transform.position.z, 0.05f, 0.05f, 0.05f, 5, Color.white);
 							bullet.transform.LookAt( (bullet.transform.position + Vector3.forward), Vector3.Normalize(player.transform.position - bullet.transform.position) );
 							added.Add(bullet);
