@@ -4,7 +4,9 @@ using UnityEngine.UI;
 using System.Linq;
 public class Defender : MonoBehaviour {
 	public class GameData : MonoBehaviour {
-		public GameObject target;
+		public GameObject target = null;
+		public float timeout = 0f;
+		public float random = 0f;
 	}
 	static int score = 0, lives = 2, level = 1;
 	GameObject explosion, player;
@@ -16,7 +18,7 @@ public class Defender : MonoBehaviour {
 	Vector3[] landerVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.2f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(-0.1f, 0f, 0f), new Vector3(-0.35f, 0.1f, 0f), new Vector3(-0.4f, 0.2f, 0f), new Vector3(-0.4f, 0.3f, 0f), new Vector3(-0.35f, 0.4f, 0f), new Vector3(-0.1f, 0.5f, 0f), new Vector3(0.1f, 0.5f, 0f), new Vector3(0.35f, 0.4f, 0f), new Vector3(0.4f, 0.3f, 0f), new Vector3(0.4f, 0.2f, 0f), new Vector3(0.35f, 0.1f, 0f), new Vector3(0.1f, 0f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] humanVs = { new Vector3(0f, -0.5f, 0f), new Vector3(0f, 0f, 0f), new Vector3(0f, 0.5f, 0f) };
 	Vector3[] sqrVs = { new Vector3(-0.5f, -0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(-0.5f, -0.5f, 0f) };
-	AudioClip intro, engin, shoot, expl1, expl2;
+	AudioClip intro, engin, shoot, expl1, expl2, spawn;
 	AudioSource engineSource;
 	float camOffset = 0f, gameStateTimer = 0f;	// Both timer for losing life and auto-fire!
 	int gameState = 0;
@@ -25,18 +27,12 @@ public class Defender : MonoBehaviour {
 	bool Fire { get { for (int t=0; t<Input.touchCount; t++) { if(TouchJoy(t).x < -2f) return true; } return Input.GetKey(KeyCode.LeftShift); } }
 	void Start() {
 		gameObject.GetComponent<Camera>().backgroundColor = Color.black;
-		explosion = new GameObject("Explosion");
-		explosion.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-		explosion.AddComponent<ParticleSystem>().Pause();
+		explosion = new GameObject("Explosion", typeof(ParticleSystem));
 		explosion.GetComponent<ParticleSystemRenderer>().material = new Material(Shader.Find("Sprites/Default"));
-		ParticleSystem.MainModule main = explosion.GetComponent<ParticleSystem>().main;
-		main.startSize = 0.025f;
-		main.startLifetime = 2f;
-		main.startSpeed = 10f;
-		main.scalingMode = ParticleSystemScalingMode.Shape;
- 		Gradient gradient = new Gradient();
-		gradient.colorKeys = new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.white, 0.5f), new GradientColorKey(Color.grey, 1f) };
-		allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 0.6f, 0.2f, 1f, 1, Color.white, true, true, 0.1f, gradient) );
+		var emit = explosion.GetComponent<ParticleSystem>().emission; emit.enabled = false;	// No continuous emission
+		var main = explosion.GetComponent<ParticleSystem>().main; (main.loop, main.startSize, main.scalingMode) = (false, 0.025f, ParticleSystemScalingMode.Shape);
+        Gradient gradient = new Gradient { colorKeys = new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.white, 0.5f), new GradientColorKey(Color.grey, 1f) } };
+        allObjects.Add( player = CreateVectorObject("Player", playerVs, 0f, 0f, 0f, 0.6f, 0.2f, 1f, 1, Color.white, true, true, 0.1f, gradient) );
         allObjects.Add( CreateVectorObject("Terrain1", terrainVs, -10f,     -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
         allObjects.Add( CreateVectorObject("Terrain2", terrainVs, -10f+40f, -4f, 0f, 1f, 1f, 1f, 0, new Color(0.6f, 0.3f, 0.1f)) );
 		for (int i=0; i<20; i++) {
@@ -49,7 +45,7 @@ public class Defender : MonoBehaviour {
 		for(int i=0; i<10; i++)
         	allObjects.Add( CreateVectorObject("Human", humanVs, Random.Range(-40f, 40f), -4.5f, 0f, 0.15f, 0.3f, 0.2f, 3, Color.white, true, true, 0.1f, gradient) );
 		for(int i=0; i<5+(level*5); i++)
-        	allObjects.Add( CreateVectorObject("Lander", landerVs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), 4f, 0f, 0.35f, 0.3f, 0.2f, 4, Color.green) );
+        	allObjects.Add( CreateVectorObject("Lander", landerVs, Random.Range(4f, 40f)*(Random.value<0.5f?-1f:1f), 4f, 0f, 0.35f, 0.3f, 0.2f, 4, Color.green, false) );
 		uiObjects[0] = new GameObject("UICanvas");
 		uiObjects[0].AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
 		for(int i=0; i<4; i++) {
@@ -63,15 +59,12 @@ public class Defender : MonoBehaviour {
 		}
 		float v = 0f, t = 0f, r = 0f;
 		intro = AudioClip.Create("Intro", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= 1.3f-t; v += Mathf.Lerp(800f, 200f, Mathf.Repeat(t*6f, 1f))/44100f; } }); v=t=r=0f; // Sawtooth w/ rec freq loop
-		engin = AudioClip.Create("Engin", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; r = (i%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 1000f/44100f); } }); v=t=r=0f;	// Low frequency random noise
+		engin = AudioClip.Create("Engin", 44000, 1, 44100, false, (data) => { for(int i = 0, j=(int)(t*44000f); i < data.Length; i++, j++, t+=1f/44000f) { data[i] = v; r = (j%100)==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2f/100f); } }); v=t=r=0f;	// Low frequency random noise
 		shoot = AudioClip.Create("Shoot", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; r = (i%(int)Mathf.Lerp(1f, 100f, t))==0?Random.Range(-1f, 1f):r; v = r; } }); v=t=r=0f;	// High->low frequency tapered noise
 		expl1 = AudioClip.Create("Expl1", 8000,  1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/8000f)  { data[i] = Mathf.PingPong(v, 1) * 2f - 1f; data[i] *= Mathf.Clamp01(1.75f-t); v += Mathf.Lerp(500f, 100f, t*4f)/44100f; } }); v=t=r=0f;	// Low freq triangle w/ volume taper
-		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%(int)Mathf.Lerp(50f, 100f, t))==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2000f/44100f); } }); v=t=r=0f;	// Low frequency random noise w/ volume taper
-		engineSource = gameObject.AddComponent<AudioSource>();
-		engineSource.clip = engin;
-		engineSource.loop = true;
-		engineSource.volume = 0f;
-		engineSource.Play();
+		expl2 = AudioClip.Create("Expl2", 44000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/44000f) { data[i] = v; data[i] *= 1f-t; r = (i%(int)Mathf.Lerp(50f, 100f, t))==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2f/50f); } }); v=t=r=0f;	// High->low frequency tapered noise with ramp up/down
+		spawn = AudioClip.Create("Spawn", 66000, 1, 44100, false, (data) => { for(int i = 0; i < data.Length; i++, t+=1f/66000f) { data[i] = v; data[i] *= 1f-t; r = (i%(int)Mathf.Lerp(70f, 10f, t))==0?Random.Range(-1f, 1f):r; v = Mathf.MoveTowards(v, r, 2f/10f); } }); v=t=r=0f;	// Low->High frequency tapered noise with ramp up/down
+		engineSource = gameObject.AddComponent<AudioSource>(); (engineSource.clip, engineSource.loop, engineSource.volume) = (engin, true, 0f); engineSource.Play();
 		AudioSource.PlayClipAtPoint(intro, transform.position, 1f);
     }
 	GameObject CreateVectorObject(string label, Vector3[] shape, float pX, float pY, float pZ, float sX, float sY, float sZ, int layer, Color color, bool active = true, bool visible = true, float thickness=0.04f, Gradient gradient=null) {
@@ -87,10 +80,9 @@ public class Defender : MonoBehaviour {
 		go.layer = layer;
 		go.transform.position = new Vector3(pX, pY, pZ);
 		go.transform.localScale = new Vector3(sX, sY, sZ);
-		go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
-		go.GetComponent<Renderer>().material.color = color;
-		go.GetComponent<Renderer>().enabled = visible;
-		go.AddComponent<GameData>();
+        go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { color = color };
+        go.GetComponent<Renderer>().enabled = visible;
+		go.AddComponent<GameData>().random = Random.value;
 		return go;
 	}
 	void KillPlayer() {
@@ -98,7 +90,8 @@ public class Defender : MonoBehaviour {
 		playerLives[lives].SetActive(false);
 		gameState = (--lives >= 0) ? 1 : 3;         // Player lost a life or player dead = game over?
 		gameStateTimer = Time.unscaledTime + 3f;
-		AudioSource.PlayClipAtPoint(expl2, transform.position, 1f);
+		foreach(GameObject go in allObjects.Where(x => x.layer == 4))	// Deactivate all landers to give player a chance to escape before they spawn + drop any humans held by landers.
+		{ go.SetActive(false); go.GetComponent<GameData>().timeout = 0f; if( go.GetComponent<GameData>().target && (go.GetComponent<GameData>().target != player) ) go.GetComponent<GameData>().target.GetComponent<GameData>().target = null; }
 	}
 	void Score(int add) {
 		lives = (score / 10000) < ((score + add) / 10000) ? ((lives < (playerLives.Count - 1)) ? lives + 1 : lives) : lives;
@@ -106,11 +99,17 @@ public class Defender : MonoBehaviour {
 		score += add;
 		PlayerPrefs.SetInt("DefenderHighScore", score > PlayerPrefs.GetInt("DefenderHighScore") ? score : PlayerPrefs.GetInt("DefenderHighScore"));
 	}
-	void Explode(GameObject go, int numParticles=20) {
-		go.SetActive(false);
-		explosion.transform.position = go.transform.position;
-		explosion.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
-		explosion.GetComponent<ParticleSystem>().Emit(numParticles);
+	void Explode(GameObject go, int numParticles=20, bool doSpawn=false) {	// Explode or spawn vfx. Instantiated so each spawn vfx has it's own radial centre. Destroyed after duration.
+		go.SetActive(doSpawn ? go.activeSelf : false);
+		GameObject vfxGO = Instantiate(explosion, go.transform.position, Quaternion.identity);
+		vfxGO.GetComponent<Renderer>().material.color = go.GetComponent<Renderer>().material.color;
+		vfxGO.GetComponent<ParticleSystem>().Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);	// Stop required to set the duration below otherwise Unity throws an error (*sigh*)
+		var main = vfxGO.GetComponent<ParticleSystem>().main; (main.duration, main.startLifetime, main.startSpeed, main.stopAction) = doSpawn ? (1f, 1f, 0f, ParticleSystemStopAction.Destroy) : (2f, 2f, 10f, ParticleSystemStopAction.Destroy);
+		var shape = vfxGO.GetComponent<ParticleSystem>().shape; (shape.shapeType, shape.radius) = doSpawn ? (ParticleSystemShapeType.Donut, 10f) : (ParticleSystemShapeType.Cone, 0.1f);
+		var vel = vfxGO.GetComponent<ParticleSystem>().velocityOverLifetime; (vel.enabled, vel.radial) = doSpawn ? (true, -10f) : (false, 0f);
+		vfxGO.GetComponent<ParticleSystem>().Emit(numParticles);
+		if( (go.layer == 1) || (go.layer == 4) || (go.layer == 5) )
+			AudioSource.PlayClipAtPoint(doSpawn ? spawn : go.layer == 1 ? expl2 : expl1, transform.position, 1f-Mathf.Max(Mathf.Abs(go.transform.position.x-transform.position.x)-15f, 0f));
 	}
 	void Update() {
 		uiObjects[1].GetComponent<Text>().text = string.Format("{0:00000}", score);
@@ -164,7 +163,15 @@ public class Defender : MonoBehaviour {
 							pY = -4.5f;
 						}
 				break;
-/* Lander */	case 4: if( go.GetComponent<GameData>().target == null ) {										// If we dont have a human target
+/* Lander */	case 4: if(!go.activeSelf) {
+							if( (go.GetComponent<GameData>().timeout == 0f) && (Random.value < (0.2f * Time.deltaTime)) ) {		// Spawn landers over time
+								Explode(go, 20, true);
+								go.GetComponent<GameData>().timeout = Time.time + 1f;											// Wait for reverse explosion to complete before activating
+							}
+							go.SetActive( (go.GetComponent<GameData>().timeout > 0f) && (Time.time > go.GetComponent<GameData>().timeout) );
+							break;
+						}
+						if( go.GetComponent<GameData>().target == null ) {										// If we dont have a human target
 							float nearest = float.MaxValue;														// Target the nearest free human
 							foreach(GameObject human in allObjects.Where(x => x.layer == 3 && x.GetComponent<GameData>().target == null)) {
 								if(Mathf.Abs(human.transform.position.x-go.transform.position.x) < nearest) {
@@ -177,9 +184,10 @@ public class Defender : MonoBehaviour {
 							if( (go.GetComponent<GameData>().target == player) ||								// If our target is the player or
 								(go.GetComponent<GameData>().target.GetComponent<GameData>().target == null) ){	// our target hasnt been picked up by anyone yet
 								Vector3 diff = go.GetComponent<GameData>().target.transform.position - go.transform.position;	// Move towards them
-								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : ((go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 0f) + (Time.time%2f)) - go.transform.position.y;		// Stay high until near
-								pX += Mathf.Sign(diff.x) * 1.0f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : 1f);
-								pY += Mathf.Sign(diff.y) * 0.8f*Time.deltaTime * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : 1f);
+								float speed = 0.5f+go.GetComponent<GameData>().random;
+								diff.y = Mathf.Abs(diff.x) < 3f ? diff.y : ((go.GetComponent<Renderer>().material.color == Color.magenta ? 2f : 0f) + (Time.time*speed%2f)) - go.transform.position.y;		// Stay high until near
+								pX += Mathf.Sign(diff.x) * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : speed) * Time.deltaTime;
+								pY += Mathf.Sign(diff.y) * (go.GetComponent<Renderer>().material.color == Color.magenta ? 4f : speed) * Time.deltaTime;
 							}
 							else if(go.GetComponent<GameData>().target.GetComponent<GameData>().target == go) {	// If we picked up our target
 								pY += pY < 4f ? 0.5f*Time.deltaTime : 0f;										// Go up
@@ -217,7 +225,6 @@ public class Defender : MonoBehaviour {
 					destroyed.Add(go);
 					destroyed.Add(hits[h].gameObject);
 					Score(go.layer == 4 ? 150 : 0);
-					AudioSource.PlayClipAtPoint(expl1, transform.position, 1f);
 				}
 				else if(hits[h].gameObject.layer == 3) {					// Human
 					if( ((go == player) && (go.GetComponent<GameData>().target == null) && (hits[h].gameObject.transform.position.y > -4.4f)) || 
